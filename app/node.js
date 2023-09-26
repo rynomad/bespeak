@@ -20,6 +20,7 @@ import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
 import { ChatInput } from "./chat-input-node.js";
+import { DevDefault } from "./dev-default.js";
 
 export class Node extends LitPresets.classic.Node {
     static get properties() {
@@ -583,18 +584,39 @@ export class ReteNode extends Classic.Node {
     }
 
     static deserialize(ide, editor, definition) {
-        return new this(
+        const node = new this(
             ide,
             editor,
             this.components.get(definition.Component),
             definition.id
         );
+
+        if (definition.initialValues && definition.initialValues.length > 0) {
+            node.parameters$
+                .pipe(
+                    take(1),
+                    tap((params) => {
+                        for (const param of params) {
+                            const value = definition.initialValues.find(
+                                ({ type }) => type === param.type
+                            )?.value;
+                            if (value) {
+                                param.subject.next(value);
+                            }
+                        }
+                    })
+                )
+                .subscribe();
+        }
+
+        return node;
     }
 
     serialize() {
         return {
             id: this.id,
             Component: this.Component.name,
+            selected: this.selected,
         };
     }
 
@@ -794,3 +816,4 @@ ReteNode.registerComponent(GPT);
 ReteNode.registerComponent(ChatInput);
 ReteNode.registerComponent(InputNodeComponent);
 ReteNode.registerComponent(OutputNodeComponent);
+ReteNode.registerComponent(DevDefault);

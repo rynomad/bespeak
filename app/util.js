@@ -154,6 +154,7 @@ export function addDefaultValuesToSchema(schema) {
         schema.required = schema.required || [];
 
         schema.required.forEach((key) => {
+            // console.log(key, schema);
             if (schema.properties[key].type === "object") {
                 schema.properties[key].default =
                     schema.properties[key].default || {};

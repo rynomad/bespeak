@@ -34,7 +34,10 @@ import {
     filter,
     debounceTime,
     tap,
+    map,
 } from "https://esm.sh/rxjs";
+import { DevDefault } from "./dev-default.js";
+import { debug } from "./operators.js";
 
 import { ReteNode, InputNode, OutputNode } from "./node.js";
 import { ChatInput } from "./chat-input-node.js";
@@ -109,6 +112,8 @@ export class Editor extends LitElement {
         super();
         this.editor = new NodeEditor();
         this.events$ = new Subject();
+        this.state$ = new Subject();
+        this.crud$ = new Subject();
     }
 
     async connectedCallback() {
@@ -186,6 +191,9 @@ export class Editor extends LitElement {
 
         this.setupArrange();
         this.setupStorage();
+        this.setupCrud();
+        this.setupState();
+        this.setupIO();
 
         AreaExtensions.zoomAt(area, editor.getNodes());
 
@@ -255,15 +263,119 @@ export class Editor extends LitElement {
         }
 
         this.hydrated$.next(true);
+        setTimeout(() => {
+            this.events$.next({ type: "hydrated" });
+        }, 0);
+    }
 
-        if (!snapshot?.nodes?.length && this.inputs$) {
-            const input = new ReteNode(this.ide, this, InputNodeComponent);
-            const output = new ReteNode(this.ide, this, OutputNodeComponent);
-            const chatNode = new ReteNode(this.ide, this, ChatInput);
-            await this.addNode(input, null, true);
-            await this.addNode(output, null, true);
-            await this.addNode(chatNode, null, true);
-        }
+    setupState() {
+        this.storageSubscription = this.hydrated$
+            .pipe(
+                take(1),
+                switchMap(() => {
+                    return this.events$;
+                }),
+                filter(
+                    (event) =>
+                        event.type === "connectioncreated" ||
+                        event.type === "connectionremoved" ||
+                        event.type === "noderemoved" ||
+                        event.type === "nodecreated" ||
+                        event.type === "hydrated" ||
+                        event.type === "custom-node-selected"
+                ),
+                debounceTime(1000),
+                map(() => {
+                    const nodes = this.editor
+                        .getNodes()
+                        .map((node) => node.serialize());
+                    const connections = JSON.parse(
+                        JSON.stringify(this.editor.getConnections())
+                    );
+                    const Components = this.editor.nodes
+                        .map((node) => node.Component)
+                        .map((C) => ({
+                            type: C.name,
+                            parameters: C.parameters,
+                            outputs: C.outputs,
+                        }));
+
+                    return {
+                        nodes,
+                        connections,
+                        Components,
+                    };
+                })
+            )
+            .subscribe(this.state$);
+    }
+
+    setupCrud() {
+        this.crudSubscription = this.crud$
+            .pipe(
+                filter((crud) => !crud.fromStorage),
+                debug(this, "crud$"),
+                tap((operations) => {
+                    const create = operations.create;
+                    const remove = operations.delete;
+                    for (const serialized of create.nodes || []) {
+                        const node = ReteNode.deserialize(
+                            this.ide,
+                            this,
+                            serialized
+                        );
+                        const source = this.editor.nodes.find(
+                            (n) => (n.id = serialized.from)
+                        );
+                        this.addNode(node, source);
+                    }
+                })
+            )
+            .subscribe();
+    }
+
+    setupIO() {
+        this.hydrated$.pipe(take(1)).subscribe(async () => {
+            if (this.inputs$) {
+                const nodes = this.editor.getNodes();
+                let input, output;
+                if (nodes.length === 0) {
+                    input = new ReteNode(this.ide, this, InputNodeComponent);
+                    output = new ReteNode(this.ide, this, OutputNodeComponent);
+                    const devDefault = new ReteNode(this.ide, this, DevDefault);
+                    await this.addNode(input, null, true);
+                    await this.addNode(output, null, true);
+                    await this.addNode(devDefault, null, true);
+                    await this.addConnection({
+                        id: `${input.id}-${devDefault.id}`,
+                        source: input.id,
+                        target: devDefault.id,
+                        sourceOutput: "output",
+                        targetInput: "input",
+                    });
+
+                    await this.addConnection({
+                        id: `${devDefault.id}-${output.id}`,
+                        source: devDefault.id,
+                        target: output.id,
+                        sourceOutput: "output",
+                        targetInput: "input",
+                    });
+                } else {
+                    input = nodes.find(
+                        (node) => node.Component === InputNodeComponent
+                    );
+                    output = nodes.find(
+                        (node) => node.Component === OutputNodeComponent
+                    );
+                }
+
+                this.inputs$.subscribe(input.outputs$);
+                output.inputs$
+                    .pipe(debug(this, "output inputs"))
+                    .subscribe(this.outputs$);
+            }
+        });
     }
 
     selectNode(node) {

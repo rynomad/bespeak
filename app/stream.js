@@ -50,7 +50,7 @@ export class Stream {
     }
 
     async init() {
-        let initialValue = (await this.db.get("streams", this.id))?.data;
+        let initialValue = (await this.db?.get("streams", this.id))?.data;
         this.dataFromStorage = this.formData = initialValue;
         try {
             // console.log(this.id, "got from db", initialValue);
@@ -61,7 +61,7 @@ export class Stream {
         if (!initialValue) {
             const defaultValue = this.getDefaultValue();
             initialValue = defaultValue;
-            await this.db.put("streams", { id: this.id, data: defaultValue });
+            await this.db?.put("streams", { id: this.id, data: defaultValue });
         }
 
         this.subject
@@ -71,7 +71,7 @@ export class Stream {
             .subscribe((value) => {
                 // console.log(this.id, "saving to db", value);
                 this.db
-                    .put("streams", { id: this.id, data: value })
+                    ?.put("streams", { id: this.id, data: value })
                     .catch((error) => {
                         console.warn("error saving stream to db", error);
                     });
@@ -123,38 +123,6 @@ export class Stream {
         throw new Error("No schema provided.");
     }
 
-    async getDB() {
-        let db;
-
-        // Open the database without specifying a version to get the current version
-        db = await openDB(Stream.db + "-" + this.type);
-        let dbVersion = db.version;
-
-        if (!db.objectStoreNames.contains(this.id)) {
-            await db.close();
-            dbVersion++;
-
-            // Add the operation to the queue
-            Stream.dbOpenQueue = Stream.dbOpenQueue.then(async () => {
-                db = await openDB(Stream.db + "-" + this.type, dbVersion, {
-                    upgrade: (db) => {
-                        if (!db.objectStoreNames.contains(this.id)) {
-                            db.createObjectStore(this.id, {
-                                autoIncrement: true,
-                            });
-                        }
-                    },
-                });
-                return db;
-            });
-
-            // Wait for the queue to finish before returning the db
-            db = await Stream.dbOpenQueue;
-        }
-
-        return db;
-    }
-
     async getInitialValue(db) {
         const tx = db.transaction(this.id, "readonly");
         const store = tx.objectStore(this.id);
@@ -181,7 +149,7 @@ export class Stream {
 
             return tx.done;
         } catch (error) {
-            this.node.streamErrors$.next({ stream: this, error });
+            this.node?.streamErrors$.next({ stream: this, error });
             // Handle or rethrow error
         }
     }
@@ -191,7 +159,7 @@ export class Stream {
         // include: name, description, schema (in code block), id, node.id
         return `## ${this.name}\n\n${this.description}\n\n\n\nStream id: ${
             this.id
-        }\n\nNode id:${this.node.id}\`\`\`json\n${JSON.stringify(
+        }\n\nNode id:${this.node?.id}\`\`\`json\n${JSON.stringify(
             this.schema,
             null,
             4

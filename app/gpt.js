@@ -361,7 +361,10 @@ export class GPT extends LitElement {
                 debug(this, "got output chat stream"),
                 tap((output) => {
                     output.subject.pipe(take(1)).subscribe((value) => {
-                        if (value === output.dataFromStorage) {
+                        if (
+                            value === output.dataFromStorage &&
+                            value.messages
+                        ) {
                             const lastMessage = JSON.parse(
                                 JSON.stringify(value.messages)
                             )
