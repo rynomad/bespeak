@@ -792,5 +792,5 @@ export class ReteNode extends Classic.Node {
 
 ReteNode.registerComponent(GPT);
 ReteNode.registerComponent(ChatInput);
-ReteNode.registerComponent(InputNode);
-ReteNode.registerComponent(OutputNode);
+ReteNode.registerComponent(InputNodeComponent);
+ReteNode.registerComponent(OutputNodeComponent);
