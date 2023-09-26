@@ -349,9 +349,9 @@ export class InputNode extends LitPresets.classic.Node {
         x ||= 0;
         y ||= 0;
         const box = area.container.getBoundingClientRect();
-        const halfWidth = box.width / 2;
+        const halfWidth = box.width / 2 / k;
         const height = 0;
-        return { x: halfWidth - x, y: height - y / k };
+        return { x: halfWidth - x / k, y: height - y / k };
     }
 
     render() {
@@ -460,9 +460,9 @@ export class OutputNode extends LitPresets.classic.Node {
         x ||= 0;
         y ||= 0;
         const box = area.container.getBoundingClientRect();
-        const halfWidth = box.width / 2;
-        const height = box.height;
-        return { x: halfWidth - x, y: height - y };
+        const halfWidth = box.width / 2 / k;
+        const height = (box.height - 30) / k;
+        return { x: halfWidth - x / k, y: height - y / k };
     }
 
     render() {

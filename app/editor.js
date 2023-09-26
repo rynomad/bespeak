@@ -244,8 +244,11 @@ export class Editor extends LitElement {
                 await this.addConnection(connection);
             }
             setTimeout(() => {
-                const node = this.structures.leaves().nodes().pop();
+                let node = this.structures.leaves().nodes().pop();
                 if (node) {
+                    if (node.Component === OutputNodeComponent) {
+                        node = this.structures.incomers(node.id).nodes().pop();
+                    }
                     this.doLayout([node]);
                 }
             }, 100);
@@ -400,9 +403,18 @@ export class Editor extends LitElement {
                         if (nodes.length > 0) {
                             return this.doLayout([event.data]);
                         } else {
-                            return this.doLayout(
-                                this.structures.leaves().nodes()
+                            const leaves = this.structures.leaves().nodes();
+                            const nodes = leaves.filter(
+                                (node) => node.Component !== OutputNodeComponent
                             );
+                            if (leaves.length && !nodes.length) {
+                                nodes.push(
+                                    this.structures
+                                        .incomers(leaves[0].id)
+                                        .nodes()
+                                );
+                            }
+                            return this.doLayout(nodes.flat());
                         }
                     },
                     { cancel: () => {} }
