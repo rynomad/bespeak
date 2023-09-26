@@ -172,7 +172,7 @@ export class GPT extends LitElement {
                     },
                     role: {
                         type: "string",
-                        enum: ["user", "system"],
+                        enum: ["user", "system", "assistant"],
                     },
                 },
             },
@@ -272,8 +272,7 @@ export class GPT extends LitElement {
 
                 const messages = (chat.data.messages || [])
                     .map((message) =>
-                        !Array.isArray(message) ||
-                        config.mergeStrategy === "all"
+                        !Array.isArray(message) || config.chooser === "all"
                             ? message
                             : message[0]
                     )

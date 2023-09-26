@@ -1,7 +1,7 @@
 import { Presets as LitPresets } from "https://esm.sh/gh/rynomad/rete-lit-plugin/dist/rete-litv-plugin.esm.local.js";
 import { ClassicPreset as Classic } from "https://esm.sh/rete";
 import { css } from "https://esm.sh/lit";
-import { html } from "https://esm.sh/lit";
+import { html, LitElement } from "https://esm.sh/lit";
 import {
     ReplaySubject,
     filter,
@@ -19,6 +19,7 @@ import {
 import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
+import { ChatInput } from "./chat-input-node.js";
 
 export class Node extends LitPresets.classic.Node {
     static get properties() {
@@ -141,7 +142,7 @@ export class Node extends LitPresets.classic.Node {
                     position: relative;
                     user-select: none;
                     line-height: initial;
-                    font-family: Arial;
+                    font-family: sans-serif;
                 }
 
                 .node:hover {
@@ -267,6 +268,136 @@ export class Node extends LitPresets.classic.Node {
 }
 
 customElements.define("bespeak-node", Node);
+
+export class InputNode extends LitPresets.classic.Node {
+    static get properties() {
+        return {
+            data: { type: Object },
+            emit: { type: Function },
+        };
+    }
+
+    constructor() {
+        super();
+        this.updateComplete.then(() => {
+            this.data.editorNode = this;
+        });
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        if (this.initialized) return;
+        this.initialized = true;
+        const output = this.data.outputs?.output || {};
+
+        const socket = document.createElement("ref-element");
+        socket.class = "output-socket";
+        socket.data = {
+            type: "socket",
+            side: "output",
+            editor: true,
+            key: output.label,
+            nodeId: this.data?.id,
+            payload: output.socket,
+        };
+        socket.emit = (event) => {
+            this.emit(event);
+        };
+        socket.testid = "output-socket";
+        socket.style =
+            " display:flex; justify-content: center; align-items: center";
+
+        const parent =
+            this.parentElement.parentElement.parentElement.querySelector(
+                ".io-sockets"
+            );
+        parent.prepend(socket);
+    }
+
+    render() {
+        return html``;
+    }
+}
+
+export class OutputNode extends LitPresets.classic.Node {
+    static get properties() {
+        return {
+            data: { type: Object },
+            emit: { type: Function },
+        };
+    }
+
+    constructor() {
+        super();
+        this.updateComplete.then(() => {
+            this.data.editorNode = this;
+        });
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        if (this.initialized) return;
+        this.initialized = true;
+        const input = this.data.outputs?.input || {};
+
+        const socket = document.createElement("ref-element");
+        socket.class = "input-socket";
+        socket.data = {
+            type: "socket",
+            side: "input",
+            editor: true,
+            key: input.label,
+            nodeId: this.data?.id,
+            payload: input.socket,
+        };
+        socket.emit = (event) => {
+            this.emit(event);
+        };
+        socket.testid = "input-socket";
+        socket.style = ` display:flex; justify-content: center; align-items: center";`;
+        const parent =
+            this.parentElement.parentElement.parentElement.querySelector(
+                ".io-sockets"
+            );
+
+        parent.appendChild(socket);
+    }
+
+    render() {
+        return html``;
+    }
+}
+
+customElements.define("bespeak-input-node", InputNode);
+customElements.define("bespeak-output-node", OutputNode);
+
+export class InputNodeComponent extends LitElement {
+    static styles = css`
+        :host {
+            display: none;
+        }
+    `;
+
+    render() {
+        return html`<slot></slot>`;
+    }
+}
+
+customElements.define("bespeak-input-node-component", InputNodeComponent);
+
+export class OutputNodeComponent extends LitElement {
+    static styles = css`
+        :host {
+            display: none;
+        }
+    `;
+
+    render() {
+        return html`<slot></slot>`;
+    }
+}
+
+customElements.define("bespeak-output-node-component", OutputNodeComponent);
 
 export class ReteNode extends Classic.Node {
     static globals = new Map();
@@ -544,3 +675,6 @@ export class ReteNode extends Classic.Node {
 }
 
 ReteNode.registerComponent(GPT);
+ReteNode.registerComponent(ChatInput);
+ReteNode.registerComponent(InputNode);
+ReteNode.registerComponent(OutputNode);

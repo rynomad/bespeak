@@ -54,7 +54,7 @@ class BespeakWorkspace extends LitElement {
             .querySelector("bespeak-chat")
             .subject.pipe(debug(this, "workspace chat spy"))
             .subscribe(
-                this.shadowRoot.querySelector("bespeak-canvas").chatInputSubject
+                this.shadowRoot.querySelector("bespeak-canvas").chatInput$
             );
 
         const sidebar = this.shadowRoot.querySelector("bespeak-sidebar");
@@ -87,11 +87,6 @@ class BespeakWorkspace extends LitElement {
         return html`
             <div id="main">
                 <bespeak-canvas id=${this.id} .ide=${this.ide}></bespeak-canvas>
-                <bespeak-chat
-                    .handleFocus=${this.handleFocus.bind(this)}
-                    .handleBlur=${this.handleBlur.bind(this)}
-                    .ide=${this.ide}
-                    .clearMessage=${true}></bespeak-chat>
             </div>
             <bespeak-sidebar id=${this.id} .ide=${this.ide}></bespeak-sidebar>
         `;

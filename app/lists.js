@@ -55,13 +55,15 @@ class BespeakWorkspaceList extends LitElement {
         return html`
             <bespeak-list>
                 <slot></slot>
-                ${this.workspaces?.map(
-                    (workspace) =>
-                        html`<bespeak-workspace-pill
-                            .workspace=${workspace}
-                            .active=${this.activeWorkspace === workspace.id}
-                            .ide=${this.ide}></bespeak-workspace-pill>`
-                )}
+                ${this.workspaces
+                    ?.filter(({ id }) => !id.endsWith("dev"))
+                    .map(
+                        (workspace) =>
+                            html`<bespeak-workspace-pill
+                                .workspace=${workspace}
+                                .active=${this.activeWorkspace === workspace.id}
+                                .ide=${this.ide}></bespeak-workspace-pill>`
+                    )}
             </bespeak-list>
         `;
     }
