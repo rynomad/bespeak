@@ -52,7 +52,9 @@ class IDEElement extends LitElement {
     async connectedCallback() {
         super.connectedCallback();
         await this.updateComplete;
-        const workspaces = await this.db.getAll("workspaces");
+        const workspaces = (await this.db.getAll("workspaces")).filter(
+            ({ id }) => !id.endsWith("dev")
+        );
         this.workspaces$.next(workspaces);
         if (workspaces.length > 0) {
             this.loadWorkspace(workspaces[0].id);

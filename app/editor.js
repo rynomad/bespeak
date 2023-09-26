@@ -256,7 +256,7 @@ export class Editor extends LitElement {
 
         this.hydrated$.next(true);
 
-        if (!snapshot?.nodes?.length) {
+        if (!snapshot?.nodes?.length && this.inputs$) {
             const input = new ReteNode(this.ide, this, InputNodeComponent);
             const output = new ReteNode(this.ide, this, OutputNodeComponent);
             const chatNode = new ReteNode(this.ide, this, ChatInput);
@@ -403,18 +403,7 @@ export class Editor extends LitElement {
                         if (nodes.length > 0) {
                             return this.doLayout([event.data]);
                         } else {
-                            const leaves = this.structures.leaves().nodes();
-                            const nodes = leaves.filter(
-                                (node) => node.Component !== OutputNodeComponent
-                            );
-                            if (leaves.length && !nodes.length) {
-                                nodes.push(
-                                    this.structures
-                                        .incomers(leaves[0].id)
-                                        .nodes()
-                                );
-                            }
-                            return this.doLayout(nodes.flat());
+                            return this.layoutLeaves();
                         }
                     },
                     { cancel: () => {} }
@@ -449,6 +438,17 @@ export class Editor extends LitElement {
                 })
             )
             .subscribe();
+    }
+
+    layoutLeaves() {
+        const leaves = this.structures.leaves().nodes();
+        const nodes = leaves.filter(
+            (node) => node.Component !== OutputNodeComponent
+        );
+        if (leaves.length && !nodes.length) {
+            nodes.push(this.structures.incomers(leaves[0].id).nodes());
+        }
+        return this.doLayout(nodes.flat());
     }
 
     zoom(nodes) {
@@ -509,6 +509,15 @@ export class Editor extends LitElement {
     toggleOpen() {
         this.open = !this.open;
         this.classList.toggle("open");
+        if (this.open) {
+            setTimeout(() => {
+                this.events$.next({
+                    type: "editor-open",
+                    data: this,
+                });
+                this.layoutLeaves();
+            }, 100);
+        }
         this.requestUpdate();
     }
 }

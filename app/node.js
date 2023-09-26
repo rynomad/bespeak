@@ -331,7 +331,7 @@ export class InputNode extends LitPresets.classic.Node {
         this.data.editor.events$
             .pipe(
                 filter((event) =>
-                    ["zoomed", "translated"].includes(event.type)
+                    ["zoomed", "translated", "editor-open"].includes(event.type)
                 ),
                 tap(this.updatePosition.bind(this))
             )
@@ -435,7 +435,7 @@ export class OutputNode extends LitPresets.classic.Node {
         this.data.editor.events$
             .pipe(
                 filter((event) =>
-                    ["zoomed", "translated"].includes(event.type)
+                    ["zoomed", "translated", "editor-open"].includes(event.type)
                 ),
                 tap(this.updatePosition.bind(this))
             )
