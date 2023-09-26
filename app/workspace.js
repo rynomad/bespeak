@@ -50,12 +50,12 @@ class BespeakWorkspace extends LitElement {
     async connectedCallback() {
         super.connectedCallback();
         await this.updateComplete;
-        this.chatSubscription = this.shadowRoot
-            .querySelector("bespeak-chat")
-            .subject.pipe(debug(this, "workspace chat spy"))
-            .subscribe(
-                this.shadowRoot.querySelector("bespeak-canvas").chatInput$
-            );
+        // this.chatSubscription = this.shadowRoot
+        //     .querySelector("bespeak-chat")
+        //     .subject.pipe(debug(this, "workspace chat spy"))
+        //     .subscribe(
+        //         this.shadowRoot.querySelector("bespeak-canvas").chatInput$
+        //     );
 
         const sidebar = this.shadowRoot.querySelector("bespeak-sidebar");
 

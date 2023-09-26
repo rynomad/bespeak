@@ -282,40 +282,94 @@ export class InputNode extends LitPresets.classic.Node {
         this.updateComplete.then(() => {
             this.data.editorNode = this;
         });
+        this.test = Math.random();
+        this.constructedAt = Date.now();
+
+        const targetNode = this;
+        const config = { attributes: true, attributeFilter: ["style"] };
+
+        const callback = (mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (
+                    mutation.type === "attributes" &&
+                    mutation.attributeName === "style"
+                ) {
+                    const newValue = targetNode.getAttribute("style");
+
+                    // Check if change is allowed or if it's an empty string
+                    if (this.allowStyleChange || newValue === "") {
+                        return;
+                    }
+                    // Set flag to indicate internal change
+                    this.allowStyleChange = true;
+
+                    // Revert the change
+                    this.style = "";
+
+                    // Reset flag
+                    this.allowStyleChange = false;
+                }
+            }
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, config);
+    }
+
+    setAttribute(name, value) {
+        if (name === "style") {
+            return;
+        }
+        super.setAttribute(name, value);
     }
 
     connectedCallback() {
         super.connectedCallback();
         if (this.initialized) return;
         this.initialized = true;
-        const output = this.data.outputs?.output || {};
+        this.updatePosition();
+        this.data.editor.events$
+            .pipe(
+                filter((event) =>
+                    ["zoomed", "translated"].includes(event.type)
+                ),
+                tap(this.updatePosition.bind(this))
+            )
+            .subscribe();
+    }
 
-        const socket = document.createElement("ref-element");
-        socket.class = "output-socket";
-        socket.data = {
-            type: "socket",
-            side: "output",
-            editor: true,
-            key: output.label,
-            nodeId: this.data?.id,
-            payload: output.socket,
-        };
-        socket.emit = (event) => {
-            this.emit(event);
-        };
-        socket.testid = "output-socket";
-        socket.style =
-            " display:flex; justify-content: center; align-items: center";
+    updatePosition() {
+        const { x, y } = this.getPosition();
+        this.data.editor.area.translate(this.data.id, { x, y });
+    }
 
-        const parent =
-            this.parentElement.parentElement.parentElement.querySelector(
-                ".io-sockets"
-            );
-        parent.prepend(socket);
+    getPosition() {
+        const area = this.data.editor.area;
+        let { x, y, k } = area.area.transform;
+        x ||= 0;
+        y ||= 0;
+        const box = area.container.getBoundingClientRect();
+        const halfWidth = box.width / 2;
+        const height = 0;
+        return { x: halfWidth - x, y: height - y / k };
     }
 
     render() {
-        return html``;
+        const output = this.data.outputs?.output || {};
+        return html`
+            <ref-element
+                class="output-socket"
+                .data=${{
+                    type: "socket",
+                    side: "output",
+                    key: output.label,
+                    nodeId: this.data?.id,
+                    payload: output.socket,
+                }}
+                .emit=${this.emit}
+                data-testid="output-socket">
+            </ref-element>
+        `;
     }
 }
 
@@ -327,44 +381,106 @@ export class OutputNode extends LitPresets.classic.Node {
         };
     }
 
+    static styles = css`
+        :host,
+        .node {
+            display: block;
+        }
+    `;
+
     constructor() {
         super();
         this.updateComplete.then(() => {
             this.data.editorNode = this;
         });
+        this.test = Math.random();
+        this.constructedAt = Date.now();
+
+        const targetNode = this;
+        const config = { attributes: true, attributeFilter: ["style"] };
+
+        const callback = (mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (
+                    mutation.type === "attributes" &&
+                    mutation.attributeName === "style"
+                ) {
+                    const newValue = targetNode.getAttribute("style");
+
+                    // Check if change is allowed or if it's an empty string
+                    if (this.allowStyleChange || newValue === "") {
+                        return;
+                    }
+                    // Set flag to indicate internal change
+                    this.allowStyleChange = true;
+
+                    // Revert the change
+                    this.style = "";
+
+                    // Reset flag
+                    this.allowStyleChange = false;
+                }
+            }
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, config);
     }
 
     connectedCallback() {
         super.connectedCallback();
         if (this.initialized) return;
         this.initialized = true;
-        const input = this.data.outputs?.input || {};
+        this.updatePosition();
+        this.data.editor.events$
+            .pipe(
+                filter((event) =>
+                    ["zoomed", "translated"].includes(event.type)
+                ),
+                tap(this.updatePosition.bind(this))
+            )
+            .subscribe();
+    }
 
-        const socket = document.createElement("ref-element");
-        socket.class = "input-socket";
-        socket.data = {
-            type: "socket",
-            side: "input",
-            editor: true,
-            key: input.label,
-            nodeId: this.data?.id,
-            payload: input.socket,
-        };
-        socket.emit = (event) => {
-            this.emit(event);
-        };
-        socket.testid = "input-socket";
-        socket.style = ` display:flex; justify-content: center; align-items: center";`;
-        const parent =
-            this.parentElement.parentElement.parentElement.querySelector(
-                ".io-sockets"
-            );
+    updatePosition() {
+        const { x, y } = this.getPosition();
+        this.data.editor.area.translate(this.data.id, { x, y });
+    }
 
-        parent.appendChild(socket);
+    setAttribute(name, value) {
+        if (name === "style") {
+            return;
+        }
+        super.setAttribute(name, value);
+    }
+
+    getPosition() {
+        const area = this.data.editor.area;
+        let { x, y, k } = area.area.transform;
+        x ||= 0;
+        y ||= 0;
+        const box = area.container.getBoundingClientRect();
+        const halfWidth = box.width / 2;
+        const height = box.height;
+        return { x: halfWidth - x, y: height - y };
     }
 
     render() {
-        return html``;
+        const input = this.data.inputs?.input || {};
+        return html`
+            <ref-element
+                class="input-socket"
+                .data=${{
+                    type: "socket",
+                    side: "input",
+                    key: input.label,
+                    nodeId: this.data?.id,
+                    payload: input.socket,
+                }}
+                .emit=${this.emit}
+                data-testid="output-socket">
+            </ref-element>
+        `;
     }
 }
 

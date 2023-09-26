@@ -98,18 +98,6 @@ export class Editor extends LitElement {
 
             span.closed {
             }
-
-            .io-sockets {
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                align-items: center;
-            }
         `;
     }
 
@@ -265,11 +253,13 @@ export class Editor extends LitElement {
 
         this.hydrated$.next(true);
 
-        if (!snapshot?.nodes?.length && this.inputs$) {
+        if (!snapshot?.nodes?.length) {
             const input = new ReteNode(this.ide, this, InputNodeComponent);
             const output = new ReteNode(this.ide, this, OutputNodeComponent);
+            const chatNode = new ReteNode(this.ide, this, ChatInput);
             await this.addNode(input, null, true);
             await this.addNode(output, null, true);
+            await this.addNode(chatNode, null, true);
         }
     }
 
@@ -499,9 +489,7 @@ export class Editor extends LitElement {
                 <div
                     class="content ${!this.collapsable || this.open
                         ? "open"
-                        : "closed"}">
-                    <div class="io-sockets"></div>
-                </div>
+                        : "closed"}"></div>
             </div>
         `;
     }

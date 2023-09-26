@@ -71,7 +71,7 @@ class BespeakCanvas extends LitElement {
                 devEditor.ide = this.ide;
                 devEditor.canvas = this;
                 devEditor.collapsable = true;
-                devEditor.open = false;
+                devEditor.open = true;
                 devEditor.status = "waiting";
                 devEditor.inputs$ = new ReplaySubject(1);
                 devEditor.outputs$ = new ReplaySubject(1);
