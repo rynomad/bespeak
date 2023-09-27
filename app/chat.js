@@ -125,8 +125,10 @@ class ChatInput extends PropagationStopper(LitElement) {
         }
     }
 
-    focus() {
+    async focus() {
+        await this.updateComplete;
         const editableDiv = this.shadowRoot.querySelector(".editable");
+
         editableDiv.focus();
     }
 

@@ -41,6 +41,7 @@ import { debug } from "./operators.js";
 
 import { ReteNode, InputNode, OutputNode } from "./node.js";
 import { ChatInput } from "./chat-input-node.js";
+import { CONFIG } from "./types/gpt.js";
 
 export class Editor extends LitElement {
     static get properties() {
@@ -378,7 +379,7 @@ export class Editor extends LitElement {
         });
     }
 
-    selectNode(node) {
+    selectNode(node, focus = true) {
         this.selector.add({
             id: node.id,
             unselect() {
@@ -387,7 +388,35 @@ export class Editor extends LitElement {
             translate() {},
         });
         node.selected = true;
-        node.component.focus();
+        if (focus && node.component) {
+            node.component.focus();
+        }
+    }
+
+    findConfigurable(nodes) {
+        nodes ||= this.structures.roots().nodes();
+
+        if (nodes.length === 0) {
+            return null;
+        }
+
+        for (const node of nodes) {
+            for (const param of node.Component.parameters || []) {
+                if (param.type === CONFIG.type) {
+                    return node;
+                }
+            }
+        }
+
+        const next = nodes
+            .map((node) => this.structures.outgoers(node.id).nodes())
+            .flat();
+
+        return this.findConfigurable(next);
+    }
+
+    selected() {
+        return this.editor.getNodes().find((node) => node.selected);
     }
 
     deselectNode(node) {

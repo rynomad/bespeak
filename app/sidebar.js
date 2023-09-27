@@ -8,6 +8,8 @@ import {
     switchScan,
     combineLatest,
     distinctUntilChanged,
+    withLatestFrom,
+    merge,
 } from "https://esm.sh/rxjs@7.3.0";
 import "./tabs.js";
 import "./yaml.js";
@@ -110,26 +112,49 @@ class MySidebar extends LitElement {
     async connectedCallback() {
         super.connectedCallback();
 
+        this.addEventListener("mouseover", () => (this.mouseInSidebar = true));
+        this.addEventListener("mouseout", () => (this.mouseInSidebar = false));
+
         await this.updateComplete;
         this.editor$
             .pipe(
-                switchMap((editor) => {
-                    return editor.events$;
-                }),
-                filter((event) =>
-                    ["custom-node-selected", "custom-node-deselected"].some(
-                        (type) => event.type === type
-                    )
+                switchMap(({ editor, devEditor }) =>
+                    merge(editor.events$, devEditor.events$)
                 ),
-                switchScan(async (acc, event) => {
-                    if (event.type === "custom-node-selected") {
+                filter((event) =>
+                    [
+                        "chat-focus",
+                        "chat-blur",
+                        "custom-node-selected",
+                        "node-selected",
+                    ].some((type) => event.type === type)
+                ),
+                filter(() => !this.mouseInSidebar),
+                withLatestFrom(this.editor$),
+
+                switchScan(async (acc, [event, { editor, devEditor }]) => {
+                    let target = null;
+                    let hide = true;
+                    if (event.type === "chat-focus") {
+                        target = devEditor.findConfigurable();
+                    } else if (event.type === "chat-blur") {
+                        target = editor.selected();
+                    } else {
+                        target = event.data;
+                    }
+
+                    if (target) {
                         acc.forEach((sub) => sub.unsubscribe());
                         acc = [
-                            event.data.parameters$.subscribe(this.parameters$),
-                            event.data.inputs$.subscribe(this.inputs$),
-                            event.data.outputs$.subscribe(this.outputs$),
+                            target.parameters$.subscribe(this.parameters$),
+                            target.inputs$.subscribe(this.inputs$),
+                            target.outputs$.subscribe(this.outputs$),
                         ];
+                        this.show();
                         this.requestUpdate();
+                    } else {
+                        acc = [];
+                        this.hide();
                     }
                     return acc;
                 }, [])

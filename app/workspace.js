@@ -55,12 +55,7 @@ class BespeakWorkspace extends LitElement {
 
         this.editorSubscription = this.shadowRoot
             .querySelector("bespeak-canvas")
-            .editor$.pipe(
-                tap(() => {
-                    this.shadowRoot.querySelector("bespeak-chat").focus();
-                }),
-                debug(this, "workspace editor spy")
-            )
+            .editor$.pipe(debug(this, "workspace editor spy"))
             .subscribe(sidebar.editor$);
     }
 

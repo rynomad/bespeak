@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
 import { Editor } from "./editor.js";
 import { structures } from "https://esm.sh/rete-structures";
-import { ReteNode } from "./node.js";
+import { InputNodeComponent, ReteNode } from "./node.js";
 import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
@@ -17,6 +17,7 @@ import {
     switchScan,
     map,
     filter,
+    debounceTime,
     scan,
     take,
     tap,
@@ -64,7 +65,7 @@ class BespeakCanvas extends LitElement {
         this.editor$
             .pipe(
                 debug(this, "editor"),
-                switchMap((editor) => {
+                switchMap(({ editor }) => {
                     return editor.state$;
                 }),
                 debug(this, "editor state")
@@ -85,8 +86,6 @@ class BespeakCanvas extends LitElement {
                     editor.collapsable = false;
                     editor.open = true;
 
-                    this.editor$.next(editor);
-
                     const devEditor = document.createElement("bespeak-editor");
                     devEditor.id = id + "-dev";
                     devEditor.ide = this.ide;
@@ -97,6 +96,7 @@ class BespeakCanvas extends LitElement {
                     devEditor.inputs$ = new ReplaySubject(1);
                     devEditor.outputs$ = new ReplaySubject(1);
 
+                    this.editor$.next({ editor, devEditor });
                     const chat = document.createElement("bespeak-chat");
                     chat.ide = this.ide;
                     chat.clearMessage = true;
@@ -120,22 +120,46 @@ class BespeakCanvas extends LitElement {
                     devEditor.inputs$.next(devInputs);
 
                     const _subs = [
+                        this.chatFocus$
+                            .pipe(
+                                debounceTime(100),
+                                debug(this, "handle chat focus"),
+                                map(() => ({
+                                    type: "chat-focus",
+                                }))
+                            )
+                            .subscribe(devEditor.events$),
+                        this.chatBlur$
+                            .pipe(
+                                debounceTime(100),
+                                debug(this, "handle chat blur"),
+                                map(() => ({
+                                    type: "chat-blur",
+                                }))
+                            )
+                            .subscribe(devEditor.events$),
                         chat.subject.subscribe(prompt$.subject),
                         this.editorState$.subscribe(editorState$.subject),
                         devEditor.outputs$
                             .pipe(
+                                filter((outputs) =>
+                                    outputs.some(
+                                        (o) => o.type === EDITOR_CRUD.type
+                                    )
+                                ),
                                 switchMap(
                                     (outputs) =>
                                         outputs.find(
                                             (output) =>
                                                 output.type === EDITOR_CRUD.type
-                                        )?.subject || from([])
+                                        )?.subject
                                 )
                             )
                             .subscribe(this.editorCrud$),
                     ];
 
                     this.replaceChildren(editor, chat, devEditor);
+                    chat.focus();
 
                     return _subs;
                 }, [])
@@ -146,7 +170,7 @@ class BespeakCanvas extends LitElement {
             .pipe(
                 withLatestFrom(this.editor$),
                 debug(this, "editor crud"),
-                tap(([crud, editor]) => {
+                tap(([crud, { editor }]) => {
                     editor.crud$.next(crud);
                 })
             )
