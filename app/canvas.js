@@ -106,7 +106,7 @@ class BespeakCanvas extends LitElement {
                     chat.handleBlur = this.chatBlur$.next.bind(this.chatBlur$);
 
                     const devInputs = [PROMPT, EDITOR_STATE].map(
-                        (def) => new Stream(devEditor, def)
+                        (def) => new Stream(devEditor, def, def.type)
                     );
 
                     const prompt$ = devInputs.find(

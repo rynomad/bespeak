@@ -14,6 +14,12 @@ class ChatInput extends PropagationStopper(LitElement) {
             clearMessage: {
                 type: Boolean,
             },
+            handleMessage: {
+                type: Function,
+            },
+            value: {
+                type: String,
+            },
         };
     }
     static styles = css`
@@ -67,7 +73,7 @@ class ChatInput extends PropagationStopper(LitElement) {
     updated(changedProperties) {
         super.updated(changedProperties);
 
-        if (changedProperties.has("subject")) {
+        if (changedProperties.has("subject") && this.subject) {
             this.subjectSubscription?.unsubscribe();
 
             this.subjectSubscription = this.subject.subscribe((message) => {
@@ -79,6 +85,13 @@ class ChatInput extends PropagationStopper(LitElement) {
                     editableDiv.innerText = message.content;
                 }
             });
+        }
+
+        if (changedProperties.has("value")) {
+            const editableDiv = this.shadowRoot.querySelector(".editable");
+            if (this.value !== editableDiv.innerText) {
+                editableDiv.innerText = this.value;
+            }
         }
     }
 
@@ -102,11 +115,15 @@ class ChatInput extends PropagationStopper(LitElement) {
         const content = editableDiv.innerText.trim();
 
         if (content !== "") {
-            this.subject.next({ content });
+            this.subject?.next({ content });
         }
 
         if (this.clearMessage) {
             editableDiv.innerText = "";
+        }
+
+        if (this.handleMessage) {
+            this.handleMessage({ content });
         }
 
         const button = this.shadowRoot.querySelector("button");

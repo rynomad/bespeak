@@ -25,7 +25,7 @@ export class ChatInput extends LitElement {
 
     static get properties() {
         return {
-            node: { type: Object },
+            _node: { type: Object },
         };
     }
 
@@ -40,24 +40,24 @@ export class ChatInput extends LitElement {
         this.initialized = true;
 
         const outputs = this.constructor.outputs.map(
-            (p) => new Stream(this.node, p)
+            (p) => new Stream(this._node, p)
         );
 
-        this.config$ = new Stream(this.node, CONFIG);
-        this.node.parameters$.next([this.config$]);
+        this.config$ = new Stream(this._node, CONFIG);
+        this._node.parameters$.next([this.config$]);
 
-        this.node.outputs$.next(outputs);
+        this._node.outputs$.next(outputs);
 
-        const upstreamChat$ = this.node.inputs$.pipe(
+        const upstreamChat$ = this._node.inputs$.pipe(
             map((inputs) => inputs.find((input) => input.type === CHAT.type))
         );
 
-        this.node.editor.canvas.chatInput$
+        this._node.editor.canvas.chatInput$
             .pipe(
                 filter(() => {
                     return (
-                        this.node.editor.structures
-                            .outgoers(this.node.id)
+                        this._node.editor.structures
+                            .outgoers(this._node.id)
                             .nodes().length > 0
                     );
                 }),
@@ -80,65 +80,35 @@ export class ChatInput extends LitElement {
                 }
             });
 
-        this.node.editor.canvas.chatInput$
+        this._node.editor.canvas.chatInput$
             .pipe(
                 filter(() => {
                     return (
-                        this.node.editor.structures
-                            .outgoers(this.node.id)
+                        this._node.editor.structures
+                            .outgoers(this._node.id)
                             .nodes().length === 0
                     );
                 }),
                 debug(this, "default chat input spy"),
                 tap(async (message) => {
                     const target = new ReteNode(
-                        this.node.ide,
-                        this.node.editor
+                        this._node.ide,
+                        this._node.editor
                     );
                     const source =
-                        this.node.editor.editor.nodes.find(
-                            (n) => n.selected && n !== this.node
+                        this._node.editor.editor.nodes.find(
+                            (n) => n.selected && n !== this._node
                         ) ||
-                        this.node.editor.structures
+                        this._node.editor.structures
                             .leaves()
                             .nodes()
-                            .find((n) => n !== this.node);
-                    await this.node.editor.addNode(target, source);
+                            .find((n) => n !== this._node);
+                    await this._node.editor.addNode(target, source);
 
-                    target.parameters$
-                        .pipe(
-                            take(1),
-                            withLatestFrom(source?.parameters$ || from([[]]))
-                        )
-                        .subscribe(([params, sourceParams]) => {
-                            const prompt$ = params.find(
-                                ({ type }) => type === PROMPT.type
-                            );
-                            const config$ = params.find(
-                                ({ type }) => type === CONFIG.type
-                            );
-
-                            const sourceConfig$ = sourceParams.find(
-                                ({ type }) => type === CONFIG.type
-                            );
-
-                            config$.subject
-                                .pipe(
-                                    take(1),
-                                    withLatestFrom(
-                                        sourceConfig$.subject ||
-                                            this.config$.subject
-                                    )
-                                )
-                                .subscribe(([_, config]) => {
-                                    config$.subject.next(config);
-                                    prompt$.subject
-                                        .pipe(take(1))
-                                        .subscribe(() => {
-                                            prompt$.subject.next(message);
-                                        });
-                                });
-                        });
+                    target.component.prompt = message;
+                    if (source && source.component.config) {
+                        target.component.config = source.component.config;
+                    }
                 })
             )
             .subscribe();

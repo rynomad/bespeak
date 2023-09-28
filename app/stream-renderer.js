@@ -45,6 +45,7 @@ const StreamRenderer = class extends PropagationStopper(LitElement) {
 
     static properties = {
         subject: { type: Object },
+        content: { type: String },
     };
 
     constructor() {
@@ -66,17 +67,19 @@ const StreamRenderer = class extends PropagationStopper(LitElement) {
                     tap(this.renderContent.bind(this))
                 )
                 .subscribe();
+        } else if (changedProperties.has("content")) {
+            this.renderContent(this.content);
         }
     }
 
     renderContent(content) {
-        this.content = content ? marked(content.trim()) : "";
+        this.html = content ? marked(content.trim()) : "";
         this.requestUpdate();
     }
 
     render() {
-        return html`<div class="content ${this.content ? "show" : "hide"}">
-            ${unsafeHTML(this.content)}
+        return html`<div class="content ${this.html ? "show" : "hide"}">
+            ${unsafeHTML(this.html)}
         </div> `;
     }
 };

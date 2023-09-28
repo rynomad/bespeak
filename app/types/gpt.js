@@ -53,6 +53,7 @@ export const CHAT = {
 export const CONFIG = {
     label: "Chat GPT",
     type: "config",
+    name: "config",
     chainable: true,
     display: false,
     showSubmit: true,
@@ -103,5 +104,31 @@ export const CONFIG = {
     },
     widgets: {
         updown: UpDownWidget,
+    },
+};
+
+export const API_KEY = {
+    label: "api_key",
+    type: "api_key",
+    name: "OpenAI API Key",
+    global: true,
+    schema: {
+        $schema: "http://json-schema.org/draft-07/schema#",
+        type: "object",
+        properties: {
+            api_key: {
+                type: "string",
+                title: "Key",
+                minLength: 51,
+                maxLength: 51,
+                description: "https://platform.openai.com/account/api-keys",
+            },
+        },
+        required: ["api_key"],
+    },
+    uiSchema: {
+        api_key: {
+            "ui:widget": "password",
+        },
     },
 };

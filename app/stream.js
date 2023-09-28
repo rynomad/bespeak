@@ -19,9 +19,43 @@ import { openDB } from "https://esm.sh/idb@6.0.0";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import { addDefaultValuesToSchema } from "./util.js";
 import { debug } from "./operators.js";
+function createSchema(name, type) {
+    let schema;
 
+    switch (type) {
+        case String:
+            schema = { type: "string" };
+            break;
+        case Number:
+            schema = { type: "number" };
+            break;
+        case Boolean:
+            schema = { type: "boolean" };
+            break;
+        case Object:
+            schema = { type: "object", additionalProperties: true };
+            break;
+        case Array:
+            schema = { type: "array", items: {} };
+            break;
+        default:
+            return {
+                ...type,
+                name: name,
+            };
+    }
+
+    return {
+        label: name,
+        name: name,
+        type: type.type || schema.type,
+        schema: schema,
+    };
+}
 export class Stream {
-    constructor(node, definition) {
+    static storage = new Set();
+    constructor(node, definition, name) {
+        definition = createSchema(name || definition.name, definition);
         const uiSchema = definition.uiSchema || {};
         delete definition.uiSchema;
         Object.assign(this, definition);
@@ -30,7 +64,7 @@ export class Stream {
             .toLowerCase()
             .replace(/ /g, "-")}`;
         this.socket = node.socket;
-        this.name = definition.name;
+        this.name = name || definition.name;
         this.description = definition.description;
         this.schema = definition.schema;
         this.type = definition.type;
@@ -53,20 +87,24 @@ export class Stream {
         let initialValue = (await this.db?.get("streams", this.id))?.data;
         this.dataFromStorage = this.formData = initialValue;
         try {
-            // console.log(this.id, "got from db", initialValue);
-            initialValue.fromStorage = true;
+            Stream.storage.add(initialValue);
+            this.node.component.__locals.add(initialValue);
         } catch (error) {
             console.warn("error adding fromStorage to initialValue", error);
         }
         if (!initialValue) {
             const defaultValue = this.getDefaultValue();
             initialValue = defaultValue;
-            await this.db?.put("streams", { id: this.id, data: defaultValue });
         }
 
         this.subject
             .pipe(
-                filter((value) => value !== initialValue && !value.fromStorage)
+                filter((value) =>
+                    this.node?.component?.__locals
+                        ? this.node?.component?.__locals.has(value)
+                        : true
+                ),
+                filter((value) => !Stream.storage.has(value))
             )
             .subscribe((value) => {
                 // console.log(this.id, "saving to db", value);
@@ -78,7 +116,7 @@ export class Stream {
             });
 
         const timeout = setTimeout(() => {
-            // console.log("PUBLISH INITIAL VALUE", initialValue);
+            console.log("PUBLISH INITIAL VALUE", initialValue);
             this.subject.next(initialValue);
         }, 100);
 
@@ -121,37 +159,6 @@ export class Stream {
         }
 
         throw new Error("No schema provided.");
-    }
-
-    async getInitialValue(db) {
-        const tx = db.transaction(this.id, "readonly");
-        const store = tx.objectStore(this.id);
-        const result = await store.get("value");
-
-        if (!result || JSON.stringify(result) === "{}") {
-            this.firstCreation.next(true);
-        }
-
-        this.queue.next(false);
-
-        return result ? result : null;
-    }
-
-    async saveToDB(value) {
-        try {
-            const db = await this.getDB();
-            const tx = db.transaction(this.id, "readwrite");
-            const store = tx.objectStore(this.id);
-            await store.put(value, "value");
-
-            await tx.done;
-            await db.close();
-
-            return tx.done;
-        } catch (error) {
-            this.node?.streamErrors$.next({ stream: this, error });
-            // Handle or rethrow error
-        }
     }
 
     toPromptString() {

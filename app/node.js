@@ -19,7 +19,6 @@ import {
 import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
-import { ChatInput } from "./chat-input-node.js";
 import { DevDefault } from "./dev-default.js";
 
 export class Node extends LitPresets.classic.Node {
@@ -644,7 +643,7 @@ export class ReteNode extends Classic.Node {
 
     setupComponent() {
         this.component = new this.Component();
-        this.component.node = this;
+        this.component._node = this;
     }
 
     getConnection$() {
@@ -755,7 +754,7 @@ export class ReteNode extends Classic.Node {
             this.inputs$
         )
             .pipe(
-                debug(this, "inputs spy"),
+                debug(this, "parameters inputs spy"),
                 switchScan(async (subs, [parameters, inputs]) => {
                     for (const sub of subs) {
                         sub.unsubscribe();
@@ -813,7 +812,6 @@ export class ReteNode extends Classic.Node {
 }
 
 ReteNode.registerComponent(GPT);
-ReteNode.registerComponent(ChatInput);
 ReteNode.registerComponent(InputNodeComponent);
 ReteNode.registerComponent(OutputNodeComponent);
 ReteNode.registerComponent(DevDefault);

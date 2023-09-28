@@ -38,9 +38,9 @@ import {
 } from "https://esm.sh/rxjs";
 import { DevDefault } from "./dev-default.js";
 import { debug } from "./operators.js";
+import { Stream } from "./stream.js";
 
 import { ReteNode, InputNode, OutputNode } from "./node.js";
-import { ChatInput } from "./chat-input-node.js";
 import { CONFIG } from "./types/gpt.js";
 
 export class Editor extends LitElement {
@@ -314,7 +314,7 @@ export class Editor extends LitElement {
     setupCrud() {
         this.crudSubscription = this.crud$
             .pipe(
-                filter((crud) => !crud.fromStorage),
+                filter((crud) => !Stream.storage.has(crud)),
                 debug(this, "crud$"),
                 tap((operations) => {
                     const create = operations.create;
@@ -329,6 +329,15 @@ export class Editor extends LitElement {
                             (n) => (n.id = serialized.from)
                         );
                         this.addNode(node, source);
+
+                        if (serialized.initialValues) {
+                            for (const initialValue of serialized.initialValues) {
+                                setTimeout(() => {
+                                    node.component[initialValue.name] =
+                                        initialValue.value;
+                                }, 0);
+                            }
+                        }
                     }
                 })
             )
@@ -445,15 +454,17 @@ export class Editor extends LitElement {
     }
 
     async addNode(node, nodeToConnect, select = false) {
-        await this.editor.addNode(node);
+        await this.editor.addNode(node).catch((e) => {});
         if (nodeToConnect) {
-            await this.editor.addConnection({
-                id: `${node.id}-${nodeToConnect.id}`,
-                source: nodeToConnect.id,
-                target: node.id,
-                sourceOutput: "output",
-                targetInput: "input",
-            });
+            await this.editor
+                .addConnection({
+                    id: `${node.id}-${nodeToConnect.id}`,
+                    source: nodeToConnect.id,
+                    target: node.id,
+                    sourceOutput: "output",
+                    targetInput: "input",
+                })
+                .catch((e) => {});
             await this.deselectNode(nodeToConnect);
         }
 
@@ -535,6 +546,7 @@ export class Editor extends LitElement {
         this.events$
             .pipe(
                 filter((event) => event.type === "custom-node-resize"),
+                debounceTime(100),
                 scan(
                     (applier, event) => {
                         applier?.cancel();

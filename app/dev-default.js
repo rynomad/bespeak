@@ -26,7 +26,7 @@ export class DevDefault extends LitElement {
 
     static get properties() {
         return {
-            node: { type: Object },
+            _node: { type: Object },
         };
     }
 
@@ -41,24 +41,24 @@ export class DevDefault extends LitElement {
         this.initialized = true;
 
         const outputs = this.constructor.outputs.map(
-            (p) => new Stream(this.node, p)
+            (p) => new Stream(this._node, p)
         );
 
         const parameters = this.constructor.parameters.map(
-            (p) => new Stream(this.node, p)
+            (p) => new Stream(this._node, p)
         );
 
-        this.config$ = new Stream(this.node, CONFIG);
-        this.node.parameters$.next(parameters);
-        this.node.outputs$.next(outputs);
+        this.config$ = new Stream(this._node, CONFIG);
+        this._node.parameters$.next(parameters);
+        this._node.outputs$.next(outputs);
 
-        const upstreamChat$ = this.node.inputs$.pipe(
+        const upstreamChat$ = this._node.inputs$.pipe(
             map((inputs) => inputs.find((input) => input.type === CHAT.type))
         );
 
         this.gptPipeline = combineLatest(
-            this.node.parameters$,
-            this.node.inputs$
+            this._node.parameters$,
+            this._node.inputs$
         )
             .pipe(
                 debug(this, "default dev chat input"),
@@ -130,10 +130,12 @@ export class DevDefault extends LitElement {
                                     from: source?.id,
                                     initialValues: [
                                         {
+                                            name: config.stream.type,
                                             type: config.stream.type,
                                             value: config.data,
                                         },
                                         {
+                                            name: prompt.stream.type,
                                             type: prompt.stream.type,
                                             value: prompt.data,
                                         },
