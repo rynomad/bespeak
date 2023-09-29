@@ -21,6 +21,7 @@ import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
 import { DevDefault } from "./dev-default.js";
 import { CodeFrequencyTable, FrequencyTable } from "./frequency.js";
+import { Custom } from "./custom.js";
 
 export class Node extends LitPresets.classic.Node {
     static get properties() {
@@ -587,7 +588,9 @@ export class ReteNode extends Classic.Node {
         const node = new this(
             ide,
             editor,
-            this.components.get(definition.Component),
+            definition.Component instanceof Function
+                ? definition.Component
+                : this.components.get(definition.Component),
             definition.id
         );
 
@@ -818,3 +821,4 @@ ReteNode.registerComponent(ChatFlowOutput);
 ReteNode.registerComponent(DevDefault);
 ReteNode.registerComponent(FrequencyTable);
 ReteNode.registerComponent(CodeFrequencyTable);
+ReteNode.registerComponent(Custom);

@@ -95,6 +95,7 @@ export class Stream {
         if (!initialValue) {
             const defaultValue = this.getDefaultValue();
             initialValue = defaultValue;
+            Stream.storage.add(initialValue);
         }
 
         this.subject

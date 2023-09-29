@@ -130,6 +130,10 @@ export const ComponentMixin = (
             return titleCaseName;
         }
 
+        static get tagName() {
+            return this.name.toLowerCase().replace(/ /g, "-");
+        }
+
         constructor() {
             super();
             this.errors$ = new BehaviorSubject(null);
@@ -160,13 +164,13 @@ export const ComponentMixin = (
         }
 
         __debouncedSuperUpdate = debounce(() => {
-            super.updated(this.__accumulatedProperties);
             this.__lastChangedProperties = this.__accumulatedProperties;
-            // Clear the accumulated properties after they've been used
+            super.updated(this.__accumulatedProperties);
             this.__accumulatedProperties = new Map();
+            // Clear the accumulated properties after they've been used
         }, 300); // Adjust the debounce time as needed
 
-        isFromCache() {
+        get isFromCache() {
             for (const key in this.constructor.properties) {
                 if (Base.properties.hasOwnProperty(key)) {
                     const prop = Base.properties[key];
@@ -179,7 +183,7 @@ export const ComponentMixin = (
             return true;
         }
 
-        hasAllInputs() {
+        get hasAllInputs() {
             for (const key in this.constructor.properties) {
                 if (Base.properties.hasOwnProperty(key)) {
                     if (!key.endsWith("_output") && !this[key]) {
@@ -204,19 +208,19 @@ export const ComponentMixin = (
             return true;
         }
 
-        didInputsChange() {
+        get didInputsChange() {
             for (const key in this.constructor.properties) {
                 if (Base.properties.hasOwnProperty(key)) {
                     if (
                         !key.endsWith("_output") &&
-                        !this.__lastChangedProperties?.has(key)
+                        this.__lastChangedProperties?.has(key)
                     ) {
-                        return false;
+                        return true;
                     }
                 }
             }
 
-            return true;
+            return false;
         }
 
         connectedCallback() {
