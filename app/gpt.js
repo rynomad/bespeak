@@ -5,7 +5,7 @@ import { PROMPT, CONFIG, API_KEY, CHAT } from "./types/gpt.js";
 import { ComponentMixin } from "./component.js";
 
 export const GPT = ComponentMixin(
-    class extends LitElement {
+    class ChatGPT extends LitElement {
         static get properties() {
             return {
                 chat_input: { type: CHAT },
@@ -29,14 +29,10 @@ export const GPT = ComponentMixin(
         }
 
         shouldCallOpenAI(changedProperties) {
-            if (!(this.api_key?.api_key && this.prompt?.content)) {
-                return false;
-            }
-
             if (
-                ["prompt", "config", "chat_input", "api_key"].some((prop) =>
-                    changedProperties.has(prop)
-                )
+                this.hasAllInputs() &&
+                this.didInputsChange() &&
+                !this.isFromCache()
             ) {
                 return true;
             }
@@ -81,14 +77,21 @@ export const GPT = ComponentMixin(
                 n: 1,
             };
 
-            const remainderOptions = {
-                ...options,
-                n: options.n - 1,
-            };
-
             const stream = await openai.chat.completions.create(streamOptions);
 
             let streamContent = "";
+
+            const remainderResponses = [];
+            for (let i = 0; i < remainder; i += 10) {
+                const batchSize = Math.min(remainder - i, 10);
+                const remainderOptions = {
+                    ...options,
+                    n: batchSize,
+                };
+                remainderResponses.push(
+                    openai.chat.completions.create(remainderOptions)
+                );
+            }
 
             const allResponses = (
                 await Promise.all([
@@ -102,18 +105,11 @@ export const GPT = ComponentMixin(
                         }
                         return streamContent;
                     })(),
-                    (async () => {
-                        if (remainder > 0) {
-                            const e = await openai.chat.completions.create(
-                                remainderOptions
-                            );
-                            const choices = e.choices.map(
-                                (e) => e.message.content
-                            );
-                            return choices;
-                        }
-                        return [];
-                    })(),
+                    Promise.all(remainderResponses).then((responses) => {
+                        return responses.flatMap((e) =>
+                            e.choices.map((e) => e.message.content)
+                        );
+                    }),
                 ])
             )
                 .flat()

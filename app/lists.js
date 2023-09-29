@@ -1,8 +1,10 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
 import { merge, tap } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
+import { ChatFlowInput, ChatFlowOutput, ReteNode } from "./node.js";
 
 import "./pills.js";
+import { DevDefault } from "./dev-default.js";
 
 class BespeakList extends LitElement {
     static styles = css`
@@ -71,10 +73,27 @@ class BespeakWorkspaceList extends LitElement {
 customElements.define("bespeak-workspace-list", BespeakWorkspaceList);
 
 class BespeakNodeList extends LitElement {
+    static properties = {
+        components: { type: Array },
+    };
+
+    constructor() {
+        super();
+        this.components = Array.from(ReteNode.components.values()).filter(
+            (component) =>
+                ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(component)
+        );
+    }
+
     render() {
         return html`
             <bespeak-list>
                 <slot></slot>
+                ${this.components.map(
+                    (component) =>
+                        html`<bespeak-node-pill
+                            .component=${component}></bespeak-node-pill>`
+                )}
             </bespeak-list>
         `;
     }

@@ -13,7 +13,7 @@ import {
     ArrangeAppliers,
 } from "https://esm.sh/rete-auto-arrange-plugin";
 import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin";
-import { InputNodeComponent, Node, OutputNodeComponent } from "./node.js";
+import { ChatFlowInput, Node, ChatFlowOutput } from "./node.js";
 import { BetterDomSocketPosition } from "./socket-position.js";
 import { Connection } from "./connection.js";
 import { structures } from "https://esm.sh/rete-structures";
@@ -124,6 +124,9 @@ export class Editor extends LitElement {
             this.classList.add("open");
         }
 
+        this.addEventListener("dragover", this.handleDragOver);
+        this.addEventListener("drop", this.handleDrop);
+
         await this.updateComplete;
     }
 
@@ -159,9 +162,9 @@ export class Editor extends LitElement {
                 socketPositionWatcher: new BetterDomSocketPosition(),
                 customize: {
                     node({ payload: node }) {
-                        if (node.Component === InputNodeComponent) {
+                        if (node.Component === ChatFlowInput) {
                             return InputNode;
-                        } else if (node.Component === OutputNodeComponent) {
+                        } else if (node.Component === ChatFlowOutput) {
                             return OutputNode;
                         }
 
@@ -255,7 +258,7 @@ export class Editor extends LitElement {
             setTimeout(() => {
                 let node = this.structures.leaves().nodes().pop();
                 if (node) {
-                    if (node.Component === OutputNodeComponent) {
+                    if (node.Component === ChatFlowOutput) {
                         node = this.structures.incomers(node.id).nodes().pop();
                     }
                     this.doLayout([node]);
@@ -350,8 +353,8 @@ export class Editor extends LitElement {
                 const nodes = this.editor.getNodes();
                 let input, output;
                 if (nodes.length === 0) {
-                    input = new ReteNode(this.ide, this, InputNodeComponent);
-                    output = new ReteNode(this.ide, this, OutputNodeComponent);
+                    input = new ReteNode(this.ide, this, ChatFlowInput);
+                    output = new ReteNode(this.ide, this, ChatFlowOutput);
                     const devDefault = new ReteNode(this.ide, this, DevDefault);
                     await this.addNode(input, null, true);
                     await this.addNode(output, null, true);
@@ -373,10 +376,10 @@ export class Editor extends LitElement {
                     });
                 } else {
                     input = nodes.find(
-                        (node) => node.Component === InputNodeComponent
+                        (node) => node.Component === ChatFlowInput
                     );
                     output = nodes.find(
-                        (node) => node.Component === OutputNodeComponent
+                        (node) => node.Component === ChatFlowOutput
                     );
                 }
 
@@ -596,7 +599,7 @@ export class Editor extends LitElement {
     layoutLeaves() {
         const leaves = this.structures.leaves().nodes();
         const nodes = leaves.filter(
-            (node) => node.Component !== OutputNodeComponent
+            (node) => node.Component !== ChatFlowOutput
         );
         if (leaves.length && !nodes.length) {
             nodes.push(this.structures.incomers(leaves[0].id).nodes());
@@ -634,6 +637,21 @@ export class Editor extends LitElement {
     setStatus(message) {
         this.statusMessage = message;
         this.requestUpdate();
+    }
+
+    // ...
+
+    handleDragOver(event) {
+        event.preventDefault();
+    }
+
+    handleDrop(event) {
+        event.preventDefault();
+        const componentName = event.dataTransfer.getData("text/plain");
+        const component = ReteNode.components.get(componentName);
+        if (component) {
+            this.addNode(new ReteNode(this.ide, this, component), null, true);
+        }
     }
 
     render() {

@@ -20,6 +20,7 @@ import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
 import { DevDefault } from "./dev-default.js";
+import { CodeFrequencyTable, FrequencyTable } from "./frequency.js";
 
 export class Node extends LitPresets.classic.Node {
     static get properties() {
@@ -487,7 +488,7 @@ export class OutputNode extends LitPresets.classic.Node {
 customElements.define("bespeak-input-node", InputNode);
 customElements.define("bespeak-output-node", OutputNode);
 
-export class InputNodeComponent extends LitElement {
+export class ChatFlowInput extends LitElement {
     static styles = css`
         :host {
             display: none;
@@ -499,9 +500,9 @@ export class InputNodeComponent extends LitElement {
     }
 }
 
-customElements.define("bespeak-input-node-component", InputNodeComponent);
+customElements.define("bespeak-input-node-component", ChatFlowInput);
 
-export class OutputNodeComponent extends LitElement {
+export class ChatFlowOutput extends LitElement {
     static styles = css`
         :host {
             display: none;
@@ -513,7 +514,7 @@ export class OutputNodeComponent extends LitElement {
     }
 }
 
-customElements.define("bespeak-output-node-component", OutputNodeComponent);
+customElements.define("bespeak-output-node-component", ChatFlowOutput);
 
 export class ReteNode extends Classic.Node {
     static globals = new Map();
@@ -812,6 +813,8 @@ export class ReteNode extends Classic.Node {
 }
 
 ReteNode.registerComponent(GPT);
-ReteNode.registerComponent(InputNodeComponent);
-ReteNode.registerComponent(OutputNodeComponent);
+ReteNode.registerComponent(ChatFlowInput);
+ReteNode.registerComponent(ChatFlowOutput);
 ReteNode.registerComponent(DevDefault);
+ReteNode.registerComponent(FrequencyTable);
+ReteNode.registerComponent(CodeFrequencyTable);

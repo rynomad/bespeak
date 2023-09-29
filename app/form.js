@@ -45,6 +45,14 @@ export const RJSFComponent = CardStyleMixin(
                     onSubmit: (e) => {
                         delete e.formData.fromStorage;
                         this.props.subject?.next(e.formData);
+                        if (
+                            this.props.node &&
+                            this.props.node.component &&
+                            this.props.name
+                        ) {
+                            this.props.node.component[this.props.name] =
+                                e.formData;
+                        }
                     },
                     validator: validator,
                 };

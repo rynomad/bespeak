@@ -144,3 +144,43 @@ class BespeakWorkspacePill extends LitElement {
 }
 
 customElements.define("bespeak-workspace-pill", BespeakWorkspacePill);
+
+class BespeakNodePill extends LitElement {
+    static styles = BespeakWorkspacePill.styles;
+
+    static properties = {
+        component: { type: Object },
+    };
+
+    constructor() {
+        super();
+        this.name = "";
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.name = this.component.name;
+    }
+
+    handleDragStart(event) {
+        event.dataTransfer.setData("text/plain", this.name);
+        const dragImage = event.currentTarget.cloneNode(true);
+        dragImage.style.position = "absolute";
+        dragImage.style.top = "-1000px";
+        document.body.appendChild(dragImage);
+        event.dataTransfer.setDragImage(dragImage, 0, 0);
+    }
+
+    render() {
+        return html`
+            <div
+                class="pill-container"
+                draggable="true"
+                @dragstart=${this.handleDragStart}>
+                <div class="name">${this.name}</div>
+            </div>
+        `;
+    }
+}
+
+customElements.define("bespeak-node-pill", BespeakNodePill);

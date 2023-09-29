@@ -109,7 +109,10 @@ export class Stream {
             .subscribe((value) => {
                 // console.log(this.id, "saving to db", value);
                 this.db
-                    ?.put("streams", { id: this.id, data: value })
+                    ?.put("streams", {
+                        id: this.id,
+                        data: value,
+                    })
                     .catch((error) => {
                         console.warn("error saving stream to db", error);
                     });

@@ -3,7 +3,7 @@ import { css, LitElement, html } from "https://esm.sh/lit";
 
 export const PropagationStopper = dedupeMixin(
     (Base, events = ["pointerdown", "wheel", "dblclick", "contextmenu"]) =>
-        class Overriden extends Base {
+        class extends Base {
             static styles = [
                 css`
                     :host {

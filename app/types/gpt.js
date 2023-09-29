@@ -25,6 +25,7 @@ export const PROMPT = {
                 enum: ["user", "system", "assistant"],
             },
         },
+        required: ["content"],
     },
 };
 
@@ -47,6 +48,7 @@ export const CHAT = {
                 },
             },
         },
+        required: ["messages"],
     },
 };
 
@@ -89,7 +91,7 @@ export const CONFIG = {
             quantity: {
                 type: "number",
                 minimum: 1,
-                maximum: 10,
+                maximum: 100,
                 default: 1,
             },
         },
