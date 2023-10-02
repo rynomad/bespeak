@@ -2,25 +2,8 @@ import { LitElement, html, css } from "https://esm.sh/lit";
 import { ComponentMixin } from "./component.js";
 import * as monaco from "https://esm.sh/monaco-editor";
 import { monacoStyles } from "./monaco-styles.js";
-import { ChatGPT } from "./gpt.js";
-import * as TYPES from "./types/index.js";
 import { ReteNode } from "./node.js";
-
-const defaultComponent = `${Object.keys(TYPES).reduce(
-    (acc, key) => {
-        acc += `export const ${key} = ${JSON.stringify(
-            TYPES[key],
-            null,
-            4
-        )};\n`;
-        return acc;
-    },
-    `import { LitElement, html, css } from "https://esm.sh/lit";
-import OpenAI from "https://esm.sh/openai";
-`
-)}
-export default ${ChatGPT.toString()}
-`;
+import Swal from "https://esm.sh/sweetalert2";
 
 export const COMPONENT = {
     label: "Component",
@@ -30,7 +13,6 @@ export const COMPONENT = {
         properties: {
             source: {
                 type: "string",
-                default: defaultComponent,
             },
         },
     },
@@ -49,11 +31,42 @@ export const MODULE = {
     },
 };
 
+function transformSource(source) {
+    const baseUrl = new URL(".", import.meta.url).href;
+    return source.replace(
+        /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
+        (match, importList, importPath) => {
+            if (importPath.startsWith(".")) {
+                const absoluteUrl = new URL(importPath, baseUrl).href;
+                if (importList) {
+                    return `import ${importList} from "${absoluteUrl}"`;
+                } else {
+                    return `import "${absoluteUrl}"`;
+                }
+            }
+            return match;
+        }
+    );
+}
+export const OVERWRITE_OPTIONS = {
+    label: "Overwrite Options",
+    type: "overwrite_options",
+    schema: {
+        type: "object",
+        properties: {
+            overwrite: {
+                type: "boolean",
+            },
+        },
+    },
+};
+
 export const Custom = ComponentMixin(
     class Custom extends LitElement {
         static get properties() {
             return {
-                component: { type: COMPONENT },
+                component_input: { type: COMPONENT },
+                overwrite_input: { type: OVERWRITE_OPTIONS },
             };
         }
 
@@ -61,14 +74,36 @@ export const Custom = ComponentMixin(
             this.initEditor();
         }
 
-        updated(changedProperties) {
+        constructor() {
+            super();
+            this.customElementVersion = 0;
+        }
+
+        async connectedCallback() {
+            super.connectedCallback();
+            if (this.customElement && !this.customNode) {
+                this.attach();
+                if (this.customElement?.quine) {
+                    this.component_input = {
+                        source: await this.customElement?.quine(),
+                    };
+                    this.editor.setValue(this.component_input?.source || "");
+                }
+            }
+        }
+
+        async updated(changedProperties) {
             if (
-                changedProperties.has("component") &&
+                changedProperties.has("component_input") &&
                 this.editor &&
-                this.component.source
+                this.component_input.source &&
+                this.component_input.source !==
+                    (await this.customElement?.quine())
             ) {
-                this.editor.setValue(this.component?.source || "");
+                this.editor.setValue(this.component_input?.source || "");
                 this.deploy();
+            } else if (changedProperties.has("customElement")) {
+                this.attach();
             }
         }
 
@@ -103,7 +138,10 @@ export const Custom = ComponentMixin(
         }
 
         deploy() {
-            const blob = new Blob([this.component.source], {
+            const transformedSource = transformSource(
+                this.component_input.source
+            );
+            const blob = new Blob([transformedSource], {
                 type: "text/javascript",
             });
             this.module = {
@@ -115,46 +153,126 @@ export const Custom = ComponentMixin(
                 for (const sub of this.subscriptions) {
                     sub.unsubscribe();
                 }
-                if (this.customElement) {
-                    // unregister the custom element
-                    customElements.delete(
-                        `bespeak-custom-${this.customElement.tagName}`
-                    );
-                }
 
-                this.customElement = ComponentMixin(module.default);
+                this.customElement = ComponentMixin(
+                    module.default,
+                    undefined,
+                    module.quine
+                );
+                this.customElementVersion++;
 
                 customElements.define(
-                    `bespeak-custom-${this.customElement.tagName}`,
+                    `bespeak-custom-${this.customElement.tagName}-${this._node.id}-${this.customElementVersion}`,
                     this.customElement
                 );
 
-                this.customNode = ReteNode.deserialize(
-                    this._node.ide,
-                    this._node.editor,
-                    {
-                        Component: this.customElement,
-                        id: this._node.id,
+                try {
+                    ReteNode.registerComponent(this.customElement);
+                    this.attach();
+                } catch (e) {
+                    if (e.message.startsWith("You cannot")) {
+                        if (!this.isFromCache) {
+                            Swal.fire({
+                                title: "Cannot Overwrite Built-In Node",
+                                text: e.message,
+                                icon: "warning",
+                                showConfirmButton: true,
+                                confirmButtonText: "OK",
+                            }).then(() => {
+                                this.toggleIcon?.();
+                            });
+                        } else {
+                            this.attach();
+                        }
+                    } else if (this.overwrite_input?.overwrite) {
+                        try {
+                            ReteNode.registerComponent(
+                                this.customElement,
+                                true
+                            );
+                            this.attach();
+                        } catch (e) {
+                            Swal.fire({
+                                title: "Cannot Overwrite Built-In Node",
+                                text: e.message,
+                                icon: "warning",
+                                showConfirmButton: true,
+                                confirmButtonText: "OK",
+                            }).then(() => {
+                                this.toggleIcon?.();
+                            });
+                        }
+                    } else {
+                        if (!this.isFromCache) {
+                            Swal.fire({
+                                title: "A node with this name already exists",
+                                text: e.message,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Yes, overwrite it!",
+                                cancelButtonText: "No, keep it",
+                                input: "checkbox",
+                                inputValue: this.overwrite_input?.overwrite,
+                                inputPlaceholder:
+                                    "Don't ask me again for this node",
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    this.overwrite_input = {
+                                        overwrite: !!result.value,
+                                    };
+                                    ReteNode.registerComponent(
+                                        this.customElement,
+                                        true
+                                    );
+                                    this.attach();
+                                } else {
+                                    this.toggleIcon?.();
+                                }
+                            });
+                        } else {
+                            this.attach();
+                        }
                     }
-                );
-                this._node.inputs$.subscribe(this.customNode.inputs$);
-                this.customNode.outputs$.subscribe(this._node.outputs$);
-                this.customNode.parameters$.subscribe(this._node.parameters$);
-                this.replaceChildren(this.customNode.component);
+                }
             });
+        }
+
+        attach() {
+            this.customNode = ReteNode.deserialize(
+                this._node.ide,
+                this._node.editor,
+                {
+                    Component: this.customElement,
+                    id: this._node.id,
+                }
+            );
+            this._node.inputs$.subscribe(this.customNode.inputs$);
+            this.customNode.outputs$.subscribe(this._node.outputs$);
+            this.customNode.parameters$.subscribe(this._node.parameters$);
+            this.replaceChildren(this.customNode.component);
         }
 
         render() {
             return html`
-                <div id="editor"></div>
-                <button
-                    @click="${() =>
-                        (this.component = {
-                            source: this.editor.getValue(),
-                        })}">
-                    Deploy
-                </button>
-                <slot></slot>
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <slot></slot>
+                        </div>
+                        <div class="flip-card-back">
+                            <div id="editor"></div>
+                            <button
+                                @click="${() => {
+                                    this.component_input = {
+                                        source: this.editor.getValue(),
+                                    };
+                                    this.toggleIcon?.();
+                                }}">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
             `;
         }
 
@@ -169,7 +287,42 @@ export const Custom = ComponentMixin(
             button {
                 margin-top: 10px;
             }
+            /* Add these styles for the flip card effect */
+            .flip-card {
+                perspective: 1000px;
+            }
+            .flip-card-inner {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: 100%;
+                transform-style: preserve-3d;
+            }
+            :host([iconvisible]) .flip-card-front {
+                height: 0;
+                overflow: hidden;
+                transition: none;
+            }
+            :host([iconvisible]) .flip-card-back {
+                height: 100%;
+                transition: height 0.8s;
+            }
 
+            .flip-card-front {
+                height: 100%;
+                transition: height 0.8s;
+            }
+
+            .flip-card-front,
+            .flip-card-back {
+                width: 100%;
+                overflow: hidden;
+            }
+            .flip-card-back {
+                height: 0;
+                transform: rotateY(180deg);
+                /* Style for the back of the node goes here */
+            }
             ${monacoStyles}
         `;
     }

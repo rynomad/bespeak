@@ -83,6 +83,16 @@ class BespeakNodeList extends LitElement {
             (component) =>
                 ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(component)
         );
+
+        ReteNode.onComponentsChanged = (components) => {
+            this.components = Array.from(components.values()).filter(
+                (component) =>
+                    ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(
+                        component
+                    )
+            );
+            this.requestUpdate();
+        };
     }
 
     render() {

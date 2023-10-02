@@ -12,7 +12,7 @@ import {
     AutoArrangePlugin,
     ArrangeAppliers,
 } from "https://esm.sh/rete-auto-arrange-plugin";
-import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin";
+import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin@2.0.0";
 import { ChatFlowInput, Node, ChatFlowOutput } from "./node.js";
 import { BetterDomSocketPosition } from "./socket-position.js";
 import { Connection } from "./connection.js";
@@ -42,6 +42,7 @@ import { Stream } from "./stream.js";
 
 import { ReteNode, InputNode, OutputNode } from "./node.js";
 import { CONFIG } from "./types/gpt.js";
+import { Custom } from "./custom.js";
 
 export class Editor extends LitElement {
     static get properties() {
@@ -650,7 +651,9 @@ export class Editor extends LitElement {
         const componentName = event.dataTransfer.getData("text/plain");
         const component = ReteNode.components.get(componentName);
         if (component) {
-            this.addNode(new ReteNode(this.ide, this, component), null, true);
+            const node = new ReteNode(this.ide, this, Custom);
+            node.component.customElement = component;
+            this.addNode(node, null, true);
         }
     }
 

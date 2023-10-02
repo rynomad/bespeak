@@ -14,6 +14,7 @@ import debounce from "https://esm.sh/lodash/debounce";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import isPojo from "https://esm.sh/is-pojo";
 import Ajv from "https://esm.sh/ajv";
+import { Types } from "./types.js";
 
 function typeToPrimitive(jsonSchema) {
     switch (jsonSchema.type) {
@@ -37,6 +38,7 @@ function propertiesTransformer(props) {
         if (props.hasOwnProperty(key)) {
             const prop = props[key];
             if (prop.type && prop.type.schema) {
+                Types.set(prop.type.type, prop.type);
                 prop.type = typeToPrimitive(prop.type.schema);
             }
 
@@ -52,6 +54,9 @@ function propertiesTransformer(props) {
     return {
         ...props,
         _node: { type: Object },
+        iconvisible: { type: Boolean, reflect: true }, // Add this line
+        toggleIcon: { type: Function },
+        customElement: { type: Object },
     };
 }
 
@@ -98,7 +103,9 @@ function generateSchemaFromValue(value) {
 
 export const ComponentMixin = (
     Base,
-    events = ["pointerdown", "wheel", "dblclick", "contextmenu"]
+    events = ["pointerdown", "wheel", "dblclick", "contextmenu"],
+    quine,
+    hardCoded = false
 ) => {
     return class extends Base {
         static get properties() {
@@ -134,6 +141,13 @@ export const ComponentMixin = (
             return this.name.toLowerCase().replace(/ /g, "-");
         }
 
+        static async quine() {
+            return quine ? quine() : Base.toString();
+        }
+
+        static get hardCoded() {
+            return hardCoded;
+        }
         constructor() {
             super();
             this.errors$ = new BehaviorSubject(null);

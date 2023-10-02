@@ -3,6 +3,7 @@ import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
 import { v4 as uuid } from "https://esm.sh/uuid";
 import { BehaviorSubject } from "https://esm.sh/rxjs";
 
+import "./stream-renderer.js";
 import "./chat.js";
 import "./db.js";
 import "./workspace.js";

@@ -85,3 +85,4 @@ const StreamRenderer = class extends PropagationStopper(LitElement) {
 };
 
 customElements.define("bespeak-stream-renderer", StreamRenderer);
+export default 42;

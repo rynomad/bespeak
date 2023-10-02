@@ -112,7 +112,7 @@ export const CONFIG = {
 
 export const API_KEY = {
     label: "api_key",
-    type: "api_key",
+    type: "api-key",
     name: "OpenAI API Key",
     global: true,
     schema: {

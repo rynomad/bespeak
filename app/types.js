@@ -1,6 +1,7 @@
 export * from "./types/index.js";
+import * as _types from "./types/index.js";
+export const Types = new Map();
 
-export default class Types {
-    types = new Map();
-    register(name, definition) {}
-}
+Object.keys(_types).forEach((key) => {
+    Types.set(_types[key].type, _types[key]);
+});

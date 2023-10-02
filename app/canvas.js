@@ -1,8 +1,4 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
-import { Editor } from "./editor.js";
-import { structures } from "https://esm.sh/rete-structures";
-import { ChatFlowInput, ReteNode } from "./node.js";
-import { GPT } from "./gpt.js";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
 import {

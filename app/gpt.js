@@ -1,17 +1,15 @@
 import { LitElement, html, css } from "https://esm.sh/lit";
 import OpenAI from "https://esm.sh/openai";
-import "./stream-renderer.js";
-import { PROMPT, CONFIG, API_KEY, CHAT } from "./types/gpt.js";
-import { ComponentMixin } from "./component.js";
-export class ChatGPT extends LitElement {
+import { Types } from "./types.js";
+export default class ChatGPT extends LitElement {
     static get properties() {
         return {
-            chat_input: { type: CHAT },
-            prompt: { type: PROMPT },
-            config: { type: CONFIG },
-            api_key: { type: API_KEY },
+            chat_input: { type: Types.get("chat") },
+            prompt_input: { type: Types.get("prompt") },
+            config: { type: Types.get("config") },
+            api_key: { type: Types.get("api-key") },
             response_output: { type: Object },
-            chat_output: { type: CHAT },
+            chat_output: { type: Types.get("chat") },
         };
     }
 
@@ -36,7 +34,7 @@ export class ChatGPT extends LitElement {
 
     async callOpenAI() {
         this.callInProgress = true;
-        const { config, prompt, api_key, chat_input } = this;
+        const { config, prompt_input, api_key, chat_input } = this;
         const openai = new OpenAI({
             apiKey: api_key.api_key,
             dangerouslyAllowBrowser: true,
@@ -50,8 +48,8 @@ export class ChatGPT extends LitElement {
             )
             .concat([
                 {
-                    ...prompt,
-                    role: prompt.role || "user",
+                    ...prompt_input,
+                    role: prompt_input.role || "user",
                 },
             ])
             .flat();
@@ -130,7 +128,7 @@ export class ChatGPT extends LitElement {
     `;
 
     handleMessage({ content }) {
-        this.prompt = {
+        this.prompt_input = {
             role: this.config.role,
             content,
         };
@@ -140,13 +138,17 @@ export class ChatGPT extends LitElement {
         return html`
             <bespeak-chat
                 .handleMessage=${this.handleMessage.bind(this)}
-                .value=${this.prompt?.content}>
+                .value=${this.prompt_input?.content}>
             </bespeak-chat>
             <bespeak-stream-renderer .content=${this.response_output?.content}>
             </bespeak-stream-renderer>
         `;
     }
 }
-export const GPT = ComponentMixin(ChatGPT);
 
-customElements.define("bespeak-gpt-node", GPT);
+// leave this here for now
+export async function quine() {
+    const response = await fetch(import.meta.url);
+    const source = await response.text();
+    return source;
+}

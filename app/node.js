@@ -16,18 +16,60 @@ import {
     tap,
     skip,
 } from "https://esm.sh/rxjs";
-import { GPT } from "./gpt.js";
+import { GPT } from "./gpt.wrapped.js";
 import { debug } from "./operators.js";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
 import { DevDefault } from "./dev-default.js";
 import { CodeFrequencyTable, FrequencyTable } from "./frequency.js";
 import { Custom } from "./custom.js";
+// import { Puppeteer } from "./puppeteer.js";
+import { classMap } from "https://esm.sh/lit/directives/class-map.js";
+import { PropagationStopper } from "./mixins.js";
 
+class WrenchIcon extends PropagationStopper(LitElement) {
+    static get properties() {
+        return {
+            data: { type: Object },
+            emit: { type: Function },
+            iconVisible: { type: Boolean, reflect: true }, // Add reflect: true
+        };
+    }
+
+    constructor() {
+        super();
+        this.clickHandler = this.clickHandler.bind(this);
+    }
+
+    clickHandler() {
+        this.toggleIcon();
+    }
+    render() {
+        return html`<button class="icon" @click=${this.clickHandler}>
+            ${this.iconVisible ? "🔍" : "🔎"}
+        </button>`;
+    }
+
+    static get styles() {
+        return css`
+            .button {
+                width: 1rem;
+                height: 1rem;
+                transition: opacity 0.5s;
+            }
+            .icon:hover {
+                opacity: 1;
+            }
+        `;
+    }
+}
+
+customElements.define("wrench-icon", WrenchIcon);
 export class Node extends LitPresets.classic.Node {
     static get properties() {
         return {
             data: { type: Object },
             emit: { type: Function },
+            iconVisible: { type: Boolean, reflect: true }, // Add reflect: true
         };
     }
 
@@ -39,6 +81,8 @@ export class Node extends LitPresets.classic.Node {
         super();
         this.test = Math.random();
         this.constructedAt = Date.now();
+        this.iconVisible = false;
+        this.toggleIcon = this.toggleIcon.bind(this);
 
         // Add initialization code here
         this.initComponent();
@@ -73,7 +117,12 @@ export class Node extends LitPresets.classic.Node {
         const observer = new MutationObserver(callback);
         observer.observe(targetNode, config);
     }
-
+    // Add this method to your class
+    toggleIcon() {
+        this.iconVisible = !this.iconVisible;
+        this.data.component.iconvisible = this.iconVisible;
+        this.requestUpdate();
+    }
     setAttribute(name, value) {
         if (name === "style") {
             return;
@@ -95,6 +144,8 @@ export class Node extends LitPresets.classic.Node {
         this.data.editorNode = this;
 
         if (this.data.component) {
+            this.data.component.iconvisible = this.iconVisible;
+            this.data.component.toggleIcon = this.toggleIcon.bind(this);
             this.appendChild(this.data.component);
         }
     }
@@ -127,6 +178,22 @@ export class Node extends LitPresets.classic.Node {
             css`
                 :host {
                     display: block;
+                    transition: transform 1s;
+                }
+                :host([iconvisible]) {
+                    transform: rotateY(180deg);
+                }
+                wrench-icon {
+                    align-self: flex-end;
+                    cursor: pointer;
+                    transition: opacity 0.5s;
+                }
+
+                wrench-icon.rotated {
+                    align-self: flex-start;
+                }
+                wrench-icon:hover {
+                    opacity: 1;
                 }
                 .name-heading {
                     font-size: 2em; /* Adjust size as you like */
@@ -219,13 +286,16 @@ export class Node extends LitPresets.classic.Node {
     }
 
     render() {
+        const classes = {
+            node: true,
+            selected: this.data?.selected,
+            rotate: this.iconVisible,
+        };
         const input = this.data?.inputs?.input || {};
         const output = this.data?.outputs?.output || {};
         // consol   e.log("rerender Transf  ormNode");
         return html`
-            <div
-                class="node ${this.data?.selected ? "selected" : ""}"
-                data-testid="node">
+            <div class=${classMap(classes)} data-testid="node">
                 <div class="flex-column">
                     <div class="flex-row input-sockets">
                         <!-- Inputs -->
@@ -246,6 +316,12 @@ export class Node extends LitPresets.classic.Node {
                         </div>
                     </div>
 
+                    <wrench-icon
+                        .toggleIcon=${this.toggleIcon}
+                        .iconVisible=${this.iconVisible}
+                        class=${this.iconVisible
+                            ? "rotated"
+                            : ""}></wrench-icon>
                     <slot></slot>
 
                     <div class="flex-row output-sockets">
@@ -580,8 +656,21 @@ export class ReteNode extends Classic.Node {
 
     static components = new Map();
 
-    static registerComponent(Component) {
+    static registerComponent(Component, force = false) {
+        const isExisting = this.components.get(Component.name);
+        if (isExisting && !force) {
+            if (["Chat GPT", "Custom"].includes(Component.name)) {
+                throw new Error(
+                    "You cannot overwrite a hard-coded node, you must change the name of the class"
+                );
+            } else {
+                throw new Error(
+                    "A node with this name already exists, do you want to overwrite it? You can change the name of the class to create a new node type."
+                );
+            }
+        }
         this.components.set(Component.name, Component);
+        this.onComponentsChanged?.(this.components);
     }
 
     static deserialize(ide, editor, definition) {
@@ -822,3 +911,4 @@ ReteNode.registerComponent(DevDefault);
 ReteNode.registerComponent(FrequencyTable);
 ReteNode.registerComponent(CodeFrequencyTable);
 ReteNode.registerComponent(Custom);
+// ReteNode.registerComponent(Puppeteer);
