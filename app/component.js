@@ -33,12 +33,27 @@ function typeToPrimitive(jsonSchema) {
     }
 }
 
-function propertiesTransformer(props) {
+function propertiesTransformer(props, owner) {
     for (const key in props) {
         if (props.hasOwnProperty(key)) {
             const prop = props[key];
             if (prop.type && prop.type.schema) {
+                if (Types.has(prop.type.type)) {
+                    if (
+                        !deepEqual(
+                            Types.get(prop.type.type).schema,
+                            prop.type.schema
+                        ) &&
+                        Types.get(prop.type.type).owner !== owner
+                    ) {
+                        throw new Error(
+                            `Type \`${prop.type.type}\` already exists with a different schema, you must use a different \`type\` keyword`
+                        );
+                    }
+                }
+                prop.type.owner = owner;
                 Types.set(prop.type.type, prop.type);
+                Types.onChange?.();
                 prop.type = typeToPrimitive(prop.type.schema);
             }
 
@@ -105,11 +120,13 @@ export const ComponentMixin = (
     Base,
     events = ["pointerdown", "wheel", "dblclick", "contextmenu"],
     quine,
-    hardCoded = false
+    hardCoded = false,
+    owner = "default"
 ) => {
+    const transformedProperties = propertiesTransformer(Base.properties, owner);
     return class extends Base {
         static get properties() {
-            return propertiesTransformer(Base.properties);
+            return transformedProperties;
         }
 
         __locals = new Set();

@@ -15,6 +15,7 @@ import "./tabs.js";
 import "./yaml.js";
 import "./form.js";
 import { debug } from "./operators.js";
+import { Types } from "./types.js";
 
 import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
@@ -106,12 +107,15 @@ class MySidebar extends LitElement {
         this.parameters$ = new Subject();
         this.inputs$ = new Subject();
         this.outputs$ = new Subject();
+        this.types = Types;
         this.hide();
     }
 
     async connectedCallback() {
         super.connectedCallback();
-
+        Types.onChange = () => {
+            this.types = new Map(Types);
+        };
         this.addEventListener("mouseover", () => (this.mouseInSidebar = true));
         this.addEventListener("mouseout", () => (this.mouseInSidebar = false));
 
@@ -226,23 +230,11 @@ class MySidebar extends LitElement {
     //             .pipe(
 
     get tabs() {
-        return ["Config", "Global"];
+        return ["Config", "Global", "Types"];
     }
 
     get openTab() {
         return this.tabs[this.activeTabIndex] || "Global";
-    }
-
-    get configOpen() {
-        return this.activeTabIndex === 0;
-    }
-
-    get globalOpen() {
-        return this.activeTabIndex === 1;
-    }
-
-    get debugOpen() {
-        return this.activeTabIndex === 2;
     }
 
     render() {
@@ -289,6 +281,17 @@ class MySidebar extends LitElement {
                                 html`<bespeak-form
                                     nodeId=${entry.node.id}
                                     .props=${entry}></bespeak-form>`
+                        )}
+                    </div>
+
+                    <div name="Types">
+                        ${Array.from(this.types.entries()).map(
+                            ([type, schema]) =>
+                                html`<yaml-renderer
+                                    .data=${schema}
+                                    .preamble=${`# ${type}\n\n${
+                                        schema.description || ""
+                                    }`}></yaml-renderer>`
                         )}
                     </div>
                 </dile-pages>

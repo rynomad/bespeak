@@ -5,6 +5,7 @@ import Prism from "https://esm.sh/prismjs@1.24.1/components/prism-core.js";
 import "https://esm.sh/prismjs@1.24.1/components/prism-json.js";
 import { unsafeHTML } from "https://esm.sh/lit/directives/unsafe-html.js";
 import marked from "https://esm.sh/marked@2.0.7";
+import { sanitizeAndRenderYaml } from "./util.js";
 
 class YamlRenderer extends LitElement {
     static get properties() {
@@ -30,20 +31,6 @@ class YamlRenderer extends LitElement {
         // this.data.contextYaml$ = new Subject();
     }
 
-    updated(changedProperties) {
-        super.updated(changedProperties);
-        if (changedProperties.has("data")) {
-            if (this.subscription) {
-                this.subscription.unsubscribe();
-            }
-            // Subscribe to the subject to update the `data` property whenever new data is emitted.
-            this.subscription = this.data.contextYaml$?.subscribe((yaml) => {
-                this.yaml = yaml;
-                this.requestUpdate(); // Trigger a re-render.
-            });
-        }
-    }
-
     disconnectedCallback() {
         super.disconnectedCallback();
         // Clean up the subscription when the component is removed
@@ -54,15 +41,7 @@ class YamlRenderer extends LitElement {
 
     render() {
         // Highlight the YAML using Prism.js
-        let highlightedYaml = "";
-        if (this.yaml) {
-            highlightedYaml = this.yaml;
-            // Prism.highlight(
-            //     this.yaml,
-            //     Prism.languages.yaml,
-            //     "yaml"
-            // );
-        }
+        let highlightedYaml = sanitizeAndRenderYaml(this.data || {});
 
         // Render preamble as markdown if it exists
         let preambleHtml = "";

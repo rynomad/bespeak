@@ -4,6 +4,7 @@ import * as monaco from "https://esm.sh/monaco-editor";
 import { monacoStyles } from "./monaco-styles.js";
 import { ReteNode } from "./node.js";
 import Swal from "https://esm.sh/sweetalert2";
+import { Types } from "./types.js";
 
 export const COMPONENT = {
     label: "Component",
@@ -154,85 +155,98 @@ export const Custom = ComponentMixin(
                     sub.unsubscribe();
                 }
 
-                this.customElement = ComponentMixin(
-                    module.default,
-                    undefined,
-                    module.quine
-                );
-                this.customElementVersion++;
-
-                customElements.define(
-                    `bespeak-custom-${this.customElement.tagName}-${this._node.id}-${this.customElementVersion}`,
-                    this.customElement
-                );
-
                 try {
-                    ReteNode.registerComponent(this.customElement);
-                    this.attach();
-                } catch (e) {
-                    if (e.message.startsWith("You cannot")) {
-                        if (!this.isFromCache) {
-                            Swal.fire({
-                                title: "Cannot Overwrite Built-In Node",
-                                text: e.message,
-                                icon: "warning",
-                                showConfirmButton: true,
-                                confirmButtonText: "OK",
-                            }).then(() => {
-                                this.toggleIcon?.();
-                            });
-                        } else {
-                            this.attach();
-                        }
-                    } else if (this.overwrite_input?.overwrite) {
-                        try {
-                            ReteNode.registerComponent(
-                                this.customElement,
-                                true
-                            );
-                            this.attach();
-                        } catch (e) {
-                            Swal.fire({
-                                title: "Cannot Overwrite Built-In Node",
-                                text: e.message,
-                                icon: "warning",
-                                showConfirmButton: true,
-                                confirmButtonText: "OK",
-                            }).then(() => {
-                                this.toggleIcon?.();
-                            });
-                        }
-                    } else {
-                        if (!this.isFromCache) {
-                            Swal.fire({
-                                title: "A node with this name already exists",
-                                text: e.message,
-                                icon: "warning",
-                                showCancelButton: true,
-                                confirmButtonText: "Yes, overwrite it!",
-                                cancelButtonText: "No, keep it",
-                                input: "checkbox",
-                                inputValue: this.overwrite_input?.overwrite,
-                                inputPlaceholder:
-                                    "Don't ask me again for this node",
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    this.overwrite_input = {
-                                        overwrite: !!result.value,
-                                    };
-                                    ReteNode.registerComponent(
-                                        this.customElement,
-                                        true
-                                    );
-                                    this.attach();
-                                } else {
+                    this.customElement = ComponentMixin(
+                        module.default,
+                        undefined,
+                        module.quine,
+                        false,
+                        this._node.id
+                    );
+                    this.customElementVersion++;
+                    customElements.define(
+                        `bespeak-custom-${this.customElement.tagName}-${this._node.id}-${this.customElementVersion}`,
+                        this.customElement
+                    );
+
+                    try {
+                        ReteNode.registerComponent(this.customElement);
+                        this.attach();
+                    } catch (e) {
+                        if (e.message.startsWith("You cannot")) {
+                            if (!this.isFromCache) {
+                                Swal.fire({
+                                    title: "Cannot Overwrite Built-In Node",
+                                    text: e.message,
+                                    icon: "warning",
+                                    showConfirmButton: true,
+                                    confirmButtonText: "OK",
+                                }).then(() => {
                                     this.toggleIcon?.();
-                                }
-                            });
+                                });
+                            } else {
+                                this.attach();
+                            }
+                        } else if (this.overwrite_input?.overwrite) {
+                            try {
+                                ReteNode.registerComponent(
+                                    this.customElement,
+                                    true
+                                );
+                                this.attach();
+                            } catch (e) {
+                                Swal.fire({
+                                    title: "Cannot Overwrite Built-In Node",
+                                    text: e.message,
+                                    icon: "warning",
+                                    showConfirmButton: true,
+                                    confirmButtonText: "OK",
+                                }).then(() => {
+                                    this.toggleIcon?.();
+                                });
+                            }
                         } else {
-                            this.attach();
+                            if (!this.isFromCache) {
+                                Swal.fire({
+                                    title: "A node with this name already exists",
+                                    text: e.message,
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, overwrite it!",
+                                    cancelButtonText: "No, keep it",
+                                    input: "checkbox",
+                                    inputValue: this.overwrite_input?.overwrite,
+                                    inputPlaceholder:
+                                        "Don't ask me again for this node",
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        this.overwrite_input = {
+                                            overwrite: !!result.value,
+                                        };
+                                        ReteNode.registerComponent(
+                                            this.customElement,
+                                            true
+                                        );
+                                        this.attach();
+                                    } else {
+                                        this.toggleIcon?.();
+                                    }
+                                });
+                            } else {
+                                this.attach();
+                            }
                         }
                     }
+                } catch (e) {
+                    Swal.fire({
+                        title: "Error",
+                        text: e.message,
+                        icon: "warning",
+                        showConfirmButton: true,
+                        confirmButtonText: "OK",
+                    }).then(() => {
+                        this.toggleIcon?.();
+                    });
                 }
             });
         }
