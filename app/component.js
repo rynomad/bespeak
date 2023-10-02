@@ -53,6 +53,7 @@ function propertiesTransformer(props, owner) {
                 }
                 prop.type.owner = owner;
                 Types.set(prop.type.type, prop.type);
+
                 Types.onChange?.();
                 prop.type = typeToPrimitive(prop.type.schema);
             }
@@ -164,6 +165,12 @@ export const ComponentMixin = (
 
         static get hardCoded() {
             return hardCoded;
+        }
+
+        toggleSrc() {
+            setTimeout(() => {
+                this.toggleIcon?.();
+            }, 100);
         }
         constructor() {
             super();
@@ -288,6 +295,21 @@ export const ComponentMixin = (
                 event.clientY >= adjustedTop &&
                 event.clientY <= adjustedBottom
             ) {
+                if (this.__propagationException) {
+                    // __propagationException is a dom element. if we're inside it, don't cancel the event
+                    // have to use bounding rectance and event clientX/Y because the event target is the shadow root
+                    const rect =
+                        this.__propagationException.getBoundingClientRect();
+                    if (
+                        event.clientX >= rect.left &&
+                        event.clientX <= rect.right &&
+                        event.clientY >= rect.top &&
+                        event.clientY <= rect.bottom &&
+                        event.type === "wheel"
+                    ) {
+                        return;
+                    }
+                }
                 // Prevent other handlers from stopping the default behavior
                 event.stopPropagation();
             }

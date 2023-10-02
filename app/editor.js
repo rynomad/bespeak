@@ -43,6 +43,7 @@ import { Stream } from "./stream.js";
 import { ReteNode, InputNode, OutputNode } from "./node.js";
 import { CONFIG } from "./types/gpt.js";
 import { Custom } from "./custom.js";
+import { Example } from "./example.wrapped.js";
 
 export class Editor extends LitElement {
     static get properties() {
@@ -652,7 +653,8 @@ export class Editor extends LitElement {
         const component = ReteNode.components.get(componentName);
         if (component) {
             const node = new ReteNode(this.ide, this, Custom);
-            node.component.customElement = component;
+            node.component.customElement =
+                component === Custom ? Example : component;
             this.addNode(node, null, true);
         }
     }

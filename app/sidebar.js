@@ -114,7 +114,7 @@ class MySidebar extends LitElement {
     async connectedCallback() {
         super.connectedCallback();
         Types.onChange = () => {
-            this.types = new Map(Types);
+            this.requestUpdate();
         };
         this.addEventListener("mouseover", () => (this.mouseInSidebar = true));
         this.addEventListener("mouseout", () => (this.mouseInSidebar = false));
