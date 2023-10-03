@@ -5,7 +5,7 @@ import { monacoStyles } from "./monaco-styles.js";
 import { ReteNode } from "./node.js";
 import Swal from "https://esm.sh/sweetalert2";
 import { Types } from "./types.js";
-
+import { withLatestFrom, map } from "https://esm.sh/rxjs";
 export const COMPONENT = {
     label: "Component",
     type: "component",
@@ -261,7 +261,17 @@ class Custom extends LitElement {
         this.customNode.component.toggleIcon = this.toggleIcon.bind(this);
         this._node.inputs$.subscribe(this.customNode.inputs$);
         this.customNode.outputs$.subscribe(this._node.outputs$);
-        this.customNode.parameters$.subscribe(this._node.parameters$);
+        this.customNode.parameters$
+            .pipe(
+                withLatestFrom(this._node.parameters$),
+                map(([customNodeParams, existsParams]) => {
+                    return [
+                        ...existsParams.filter((p) => p.node === this._node),
+                        ...customNodeParams,
+                    ];
+                })
+            )
+            .subscribe(this._node.parameters$);
         this.replaceChildren(this.customNode.component);
     }
 

@@ -175,6 +175,7 @@ export const ComponentMixin = (
         constructor() {
             super();
             this.errors$ = new BehaviorSubject(null);
+            this.__pre = {};
         }
 
         __accumulatedProperties = new Map();
@@ -432,7 +433,7 @@ export const ComponentMixin = (
         static getPropertyDescriptor(name, key, options) {
             const prop = Base.properties[name];
 
-            if (!prop) {
+            if (!prop || !prop.type?.type) {
                 return super.getPropertyDescriptor(name, key, options);
             }
 
@@ -440,52 +441,67 @@ export const ComponentMixin = (
 
             return {
                 get() {
+                    this.__pre ||= {};
                     this.__streams ||= new Map();
-                    if (!this.__streams.has(name)) {
-                        this.__createStream(name, prop.type);
+                    if (this._node) {
+                        if (!this.__streams.has(name)) {
+                            this.__createStream(name, prop.type);
+                        }
+                        if (
+                            !this.__parameters.has(this.__streams.get(name)) &&
+                            !name.endsWith("_output")
+                        ) {
+                            this.__parameters.add(this.__streams.get(name));
+                            this._node.parameters$.next(
+                                Array.from(this.__parameters).map(
+                                    ({ stream }) => stream
+                                )
+                            );
+                        }
                     }
-                    if (
-                        !this.__parameters.has(this.__streams.get(name)) &&
-                        !name.endsWith("_output")
-                    ) {
-                        this.__parameters.add(this.__streams.get(name));
-                        this._node.parameters$.next(
-                            Array.from(this.__parameters).map(
-                                ({ stream }) => stream
-                            )
-                        );
-                    }
-                    return this.__streams.get(name).data;
+                    return this.__streams.get(name)?.data || this.__pre[name];
                 },
                 set(value) {
+                    this.__pre ||= {};
                     this.__streams ||= new Map();
-                    if (!this.__streams.has(name)) {
-                        this.__createStream(name, prop.type);
+                    if (this._node) {
+                        if (!this.__streams.has(name)) {
+                            this.__createStream(name, prop.type);
+                        }
+                        const stream = this.__streams.get(name);
+
+                        const oldValue = stream
+                            ? this.__streams.get(name).data
+                            : this.__pre[name];
+
+                        if (stream) {
+                            stream.data = value;
+                        } else {
+                            this.__pre[name] = value;
+                        }
+
+                        if (!this.__setLock && stream) {
+                            this.__locals.add(value);
+
+                            this.__streams.get(key).stream.subject.next(value);
+                        }
+
+                        if (
+                            stream &&
+                            !this.__outputs.has(this.__streams.get(key)) &&
+                            !name.endsWith("_input")
+                        ) {
+                            this.__outputs.add(this.__streams.get(key));
+                            this._node.outputs$.next(
+                                Array.from(this.__outputs).map(
+                                    ({ stream }) => stream
+                                )
+                            );
+                        }
+                        this.requestUpdate(name, oldValue, options);
+                    } else {
+                        this.requestUpdate(name, null, options);
                     }
-                    const oldValue = this.__streams.get(name).data;
-                    this.__streams.get(name).data = value;
-
-                    this.__streams.get(key).stream.schema ||=
-                        generateSchemaFromValue(value);
-
-                    if (!this.__setLock) {
-                        this.__locals.add(value);
-
-                        this.__streams.get(key).stream.subject.next(value);
-                    }
-
-                    if (
-                        !this.__outputs.has(this.__streams.get(key)) &&
-                        !name.endsWith("_input")
-                    ) {
-                        this.__outputs.add(this.__streams.get(key));
-                        this._node.outputs$.next(
-                            Array.from(this.__outputs).map(
-                                ({ stream }) => stream
-                            )
-                        );
-                    }
-                    this.requestUpdate(name, oldValue, options);
                 },
                 configurable: true,
                 enumerable: true,
