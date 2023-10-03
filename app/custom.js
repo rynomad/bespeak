@@ -69,10 +69,6 @@ class Custom extends LitElement {
         };
     }
 
-    firstUpdated() {
-        this.initEditor();
-    }
-
     constructor() {
         super();
         this.customElementVersion = 0;
@@ -80,6 +76,10 @@ class Custom extends LitElement {
 
     async connectedCallback() {
         super.connectedCallback();
+        await this.updateComplete;
+        if (!this.editor) {
+            await this.initEditor();
+        }
         if (this.customElement && !this.customNode) {
             this.attach();
             if (this.customElement?.quine) {
@@ -87,7 +87,6 @@ class Custom extends LitElement {
             }
         }
 
-        await this.updateComplete;
         this.__propagationException = this.shadowRoot.querySelector("#editor");
     }
 
