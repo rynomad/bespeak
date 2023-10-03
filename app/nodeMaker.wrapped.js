@@ -1,4 +1,4 @@
-import NodeMaker, { quine } from "./gpt.js";
+import NodeMaker, { quine } from "./nodeMaker.js";
 import { ComponentMixin } from "./component.js";
 
 export const NodeMakerGPT = ComponentMixin(NodeMaker, undefined, quine, true);
