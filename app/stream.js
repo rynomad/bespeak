@@ -88,7 +88,6 @@ export class Stream {
         this.dataFromStorage = this.formData = initialValue;
         try {
             Stream.storage.add(initialValue);
-            this.node.component.__locals.add(initialValue);
         } catch (error) {
             console.warn("error adding fromStorage to initialValue", error);
         }
@@ -96,13 +95,15 @@ export class Stream {
             const defaultValue = this.getDefaultValue();
             initialValue = defaultValue;
             Stream.storage.add(initialValue);
+        } else {
+            this.node.component.__locals.set(this.id, initialValue);
         }
 
         this.subject
             .pipe(
                 filter((value) =>
                     this.node?.component?.__locals
-                        ? this.node?.component?.__locals.has(value)
+                        ? this.node?.component?.__locals.has(this.id)
                         : true
                 ),
                 filter((value) => !Stream.storage.has(value))

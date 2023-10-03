@@ -729,7 +729,7 @@ export class ReteNode extends Classic.Node {
 
         this.setupInputs();
         this.setupGlobals();
-        this.setupParameters();
+        // this.setupParameters();
         this.setupCleanup();
         this.setupComponent();
     }

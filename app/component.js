@@ -124,13 +124,14 @@ export const ComponentMixin = (
     hardCoded = false,
     owner = "default"
 ) => {
+    Base.properties ||= {};
     const transformedProperties = propertiesTransformer(Base.properties, owner);
     return class extends Base {
         static get properties() {
             return transformedProperties;
         }
 
-        __locals = new Set();
+        __locals = new Map();
         __storage = new Set();
 
         __streams = new Map();
@@ -431,7 +432,8 @@ export const ComponentMixin = (
         }
 
         static getPropertyDescriptor(name, key, options) {
-            const prop = Base.properties[name];
+            const properties = Base.properties || {};
+            const prop = properties[name];
 
             if (!prop || !prop.type?.type) {
                 return super.getPropertyDescriptor(name, key, options);
@@ -481,9 +483,9 @@ export const ComponentMixin = (
                         }
 
                         if (!this.__setLock && stream) {
-                            this.__locals.add(value);
+                            this.__locals.set(stream.stream.id, value);
 
-                            this.__streams.get(key).stream.subject.next(value);
+                            stream.stream.subject.next(value);
                         }
 
                         if (
@@ -532,12 +534,11 @@ export const ComponentMixin = (
                                     input.subject
                                         .pipe(
                                             withLatestFrom(parameter.subject),
-                                            filter(
-                                                ([_, parameter]) =>
-                                                    !this.__locals.has(
-                                                        parameter
-                                                    )
-                                            ),
+                                            filter(() => {
+                                                return !this.__locals.has(
+                                                    parameter.id
+                                                );
+                                            }),
                                             map(([input]) => input)
                                         )
                                         .subscribe(parameter.subject)

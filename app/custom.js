@@ -83,10 +83,7 @@ class Custom extends LitElement {
         if (this.customElement && !this.customNode) {
             this.attach();
             if (this.customElement?.quine) {
-                this.component_input = {
-                    source: await this.customElement?.quine(),
-                };
-                this.editor.setValue(this.component_input?.source || "");
+                this.editor.setValue((await this.customElement?.quine()) || "");
             }
         }
 
@@ -238,7 +235,7 @@ class Custom extends LitElement {
             } catch (e) {
                 Swal.fire({
                     title: "Error",
-                    text: e.message,
+                    text: e.message + e.stack,
                     icon: "warning",
                     showConfirmButton: true,
                     confirmButtonText: "OK",
