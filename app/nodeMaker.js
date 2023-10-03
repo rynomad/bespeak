@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit";
 import OpenAI from "https://esm.sh/openai";
-import { Types } from "http://localhost:3000/app/types.js";
-import { quine as example } from "http://localhost:3000/app/example.js";
+import { Types } from "./types.js";
+import { quine as example } from "./example.js";
 
 async function generateInstructions(currentNode) {
     const exampleCode = await example();
