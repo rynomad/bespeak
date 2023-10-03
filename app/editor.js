@@ -561,7 +561,7 @@ export class Editor extends LitElement {
                         if (nodes.length > 0) {
                             return this.doLayout([event.data]);
                         } else {
-                            return this.layoutLeaves();
+                            return this.doLayout();
                         }
                     },
                     { cancel: () => {} }
@@ -620,7 +620,7 @@ export class Editor extends LitElement {
             duration: 200,
             timingFunction: (t) => t,
             onTick: () => {
-                this.zoom(nodes);
+                // this.zoom(nodes);
             },
         });
 

@@ -25,6 +25,7 @@ import { Custom } from "./custom.js";
 // import { Puppeteer } from "./puppeteer.js";
 import { classMap } from "https://esm.sh/lit/directives/class-map.js";
 import { PropagationStopper } from "./mixins.js";
+import { NodeMakerGPT } from "./nodeMaker.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -908,7 +909,8 @@ ReteNode.registerComponent(GPT);
 ReteNode.registerComponent(ChatFlowInput);
 ReteNode.registerComponent(ChatFlowOutput);
 ReteNode.registerComponent(DevDefault);
-ReteNode.registerComponent(FrequencyTable);
-ReteNode.registerComponent(CodeFrequencyTable);
+// ReteNode.registerComponent(FrequencyTable);
+// ReteNode.registerComponent(CodeFrequencyTable);
 ReteNode.registerComponent(Custom);
+ReteNode.registerComponent(NodeMakerGPT);
 // ReteNode.registerComponent(Puppeteer);
