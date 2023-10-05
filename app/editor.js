@@ -40,7 +40,13 @@ import { DevDefault } from "./dev-default.js";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
 
-import { ReteNode, InputNode, OutputNode } from "./node.js";
+import {
+    ReteNode,
+    InputNode,
+    OutputNode,
+    NextReteNode,
+    NextLitNode,
+} from "./node.js";
 import { CONFIG } from "./types/gpt.js";
 import { Custom } from "./custom.js";
 import { Example } from "./example.wrapped.js";
@@ -168,6 +174,8 @@ export class Editor extends LitElement {
                             return InputNode;
                         } else if (node.Component === ChatFlowOutput) {
                             return OutputNode;
+                        } else if (node instanceof NextReteNode) {
+                            return NextLitNode;
                         }
 
                         return Node;
@@ -548,26 +556,26 @@ export class Editor extends LitElement {
         }));
         this.area.use(this.arrange);
 
-        this.events$
-            .pipe(
-                filter((event) => event.type === "custom-node-resize"),
-                debounceTime(100),
-                scan(
-                    (applier, event) => {
-                        applier?.cancel();
-                        const nodes = this.editor
-                            .getNodes()
-                            .filter((node) => node.selected);
-                        if (nodes.length > 0) {
-                            return this.doLayout([event.data]);
-                        } else {
-                            return this.doLayout();
-                        }
-                    },
-                    { cancel: () => {} }
-                )
-            )
-            .subscribe();
+        // this.events$
+        //     .pipe(
+        //         filter((event) => event.type === "custom-node-resize"),
+        //         debounceTime(100),
+        //         scan(
+        //             (applier, event) => {
+        //                 applier?.cancel();
+        //                 const nodes = this.editor
+        //                     .getNodes()
+        //                     .filter((node) => node.selected);
+        //                 if (nodes.length > 0) {
+        //                     return this.doLayout([event.data]);
+        //                 } else {
+        //                     return this.doLayout();
+        //                 }
+        //             },
+        //             { cancel: () => {} }
+        //         )
+        //     )
+        //     .subscribe();
 
         this.events$
             .pipe(
@@ -649,14 +657,16 @@ export class Editor extends LitElement {
 
     handleDrop(event) {
         event.preventDefault();
-        const componentName = event.dataTransfer.getData("text/plain");
-        const component = ReteNode.components.get(componentName);
-        if (component) {
-            const node = new ReteNode(this.ide, this, Custom);
-            node.component.customElement =
-                component === Custom ? Example : component;
-            this.addNode(node, null, true);
-        }
+        // const componentName = event.dataTransfer.getData("text/plain");
+        // const component = NextReteNode.components.get(componentName);
+        // if (component) {
+        //     const node = new ReteNode(this.ide, this, Custom);
+        //     node.component.customElement =
+        //         component === Custom ? Example : component;
+        //     this.addNode(node, null, true);
+        // }
+        const next = new NextReteNode(this.ide, this, Custom);
+        this.addNode(next); //, null, true);
     }
 
     render() {

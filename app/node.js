@@ -26,7 +26,9 @@ import { Custom } from "./custom.js";
 import { classMap } from "https://esm.sh/lit/directives/class-map.js";
 import { PropagationStopper } from "./mixins.js";
 import { NodeMakerGPT } from "./nodeMaker.wrapped.js";
-
+import "./flipper.js";
+import "./compass.js";
+import "./monaco.js";
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
         return {
@@ -904,6 +906,193 @@ export class ReteNode extends Classic.Node {
 
     data() {}
 }
+
+export class NextReteNode extends ReteNode {
+    constructor(ide, editor, Component = GPT, id = uuidv4()) {
+        super(ide, editor, Component, id);
+        this.addInput("parent", new Classic.Input(this.socket, "parent"));
+        this.addOutput("child", new Classic.Output(this.socket, "child"));
+    }
+}
+
+export class NextLitNode extends Node {
+    static get styles() {
+        return css`
+            :host {
+            }
+            .tracker {
+                position: relative;
+            }
+            bespeak-compass {
+                position: absolute;
+            }
+        `;
+    }
+    async firstUpdated() {
+        await this.updateComplete;
+
+        this.data.editorNode = this;
+    }
+
+    // ...
+
+    async connectedCallback() {
+        super.connectedCallback();
+        await this.updateComplete;
+        // Create a ResizeObserver instance
+        this.resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                // Get the previous width and height
+                console.log(
+                    entry,
+                    entry.contentRect.width,
+                    entry.contentRect.height
+                );
+                const prevWidth = this.parentElement.clientWidth;
+                const prevHeight = this.parentElement.clientHeight;
+                // this.shadowRoot.querySelector(".tracker").style.width =
+                //     entry.contentRect.width + "px";
+                // this.shadowRoot.querySelector(".tracker").style.height =
+                //     entry.contentRect.height + "px";
+                this.data.editor.area.resize(
+                    this.data.id,
+                    entry.contentRect.width,
+                    entry.contentRect.height
+                );
+
+                // Set the parent element's width and height to match the observed element
+                this.parentElement.style.width = `${entry.contentRect.width}px`;
+                this.parentElement.style.height = `${entry.contentRect.height}px`;
+
+                // Calculate the difference in width and height
+                const diffWidth = entry.contentRect.width - prevWidth;
+                const diffHeight = entry.contentRect.height - prevHeight;
+
+                // Get the current transform values
+                const transform = window.getComputedStyle(
+                    this.parentElement
+                ).transform;
+
+                // Extract the translate values from the matrix
+                const matrix = transform.match(/matrix\((.+)\)/);
+                if (matrix) {
+                    const values = matrix[1].split(", ");
+                    let translateX = parseFloat(values[4]);
+                    let translateY = parseFloat(values[5]);
+
+                    // Adjust the translate values based on the resize difference
+                    translateX -= diffWidth / 2;
+                    translateY -= diffHeight / 2;
+
+                    this.data.editor.area.translate(this.data.id, {
+                        x: translateX,
+                        y: translateY,
+                    });
+                    // Update the transform style
+                    this.parentElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
+                }
+            }
+        });
+
+        // Start observing the current element
+        this.resizeObserver.observe(
+            this.shadowRoot.querySelector("bespeak-compass")
+        );
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+
+        // Stop observing when the element is disconnected
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+    }
+
+    nodeStyles() {
+        return "";
+    }
+
+    render() {
+        const parents = this.data?.inputs?.parent || {};
+        const children = this.data?.outputs?.child || {};
+        const input = this.data?.inputs?.input || {};
+        const output = this.data?.outputs?.output || {};
+
+        return html`
+            <div class="tracker">
+                <bespeak-compass>
+                    <div slot="north">
+                        ${html`<ref-element
+                            class="input-socket"
+                            .data=${{
+                                type: "socket",
+                                side: "input",
+                                key: input.label,
+                                nodeId: this.data?.id,
+                                payload: input.socket,
+                            }}
+                            .emit=${this.emit}
+                            data-testid="input-socket"></ref-element>`}
+                    </div>
+                    <div slot="south">
+                        ${html`<ref-element
+                            class="output-socket"
+                            .data=${{
+                                type: "socket",
+                                side: "output",
+                                key: output.label,
+                                nodeId: this.data?.id,
+                                payload: output.socket,
+                            }}
+                            .emit=${this.emit}
+                            data-testid="output-socket"></ref-element>`}
+                    </div>
+                    <div slot="east">
+                        ${html`<ref-element
+                            class="output-socket"
+                            .data=${{
+                                type: "socket",
+                                side: "output",
+                                key: children.label,
+                                nodeId: this.data?.id,
+                                payload: children.socket,
+                            }}
+                            .emit=${this.emit}
+                            data-testid="output-socket"></ref-element>`}
+                    </div>
+                    <div slot="west">
+                        ${html`<ref-element
+                            class="input-socket"
+                            .data=${{
+                                type: "socket",
+                                side: "input",
+                                key: parents.label,
+                                nodeId: this.data?.id,
+                                payload: parents.socket,
+                            }}
+                            .emit=${this.emit}
+                            data-testid="output-socket"></ref-element>`}
+                    </div>
+                    <div>
+                        <bespeak-flipper class="front">
+                            <div
+                                slot="front"
+                                style="width: 300px; height: 600px; background-color: green; padding: 1rem;">
+                                Front
+                            </div>
+                            <div slot="back" style="padding: 1rem">
+                                <bespeak-monaco-editor></bespeak-monaco-editor>
+                            </div>
+                        </bespeak-flipper>
+                    </div>
+                </bespeak-compass>
+            </div>
+        `;
+    }
+}
+
+customElements.define("bespeak-next-node", NextLitNode);
 
 ReteNode.registerComponent(GPT);
 ReteNode.registerComponent(ChatFlowInput);

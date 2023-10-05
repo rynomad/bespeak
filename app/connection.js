@@ -35,23 +35,50 @@ export class Connection extends LitElement {
     classicConnectionPath(points, curvature) {
         let [{ x: x1, y: y1 }, { x: x2, y: y2 }] = [this.start, this.end];
 
-        x1 -= 12;
-        x2 += 12;
-        y1 += 12;
-        y2 -= 12;
+        if (
+            this.data.sourceOutput === "child" ||
+            this.data.targetInput === "parent"
+        ) {
+            // x1 += 12;
+            // x2 -= 12;
+            // y1 -= 12;
+            // y2 += 12;
 
-        const horizontal = Math.abs(x1 - x2);
+            const vertical = Math.abs(y1 - y2);
 
-        if (y1 === y2) {
-            return `M ${x1} ${y1} L ${x2} ${y2}`;
+            if (x1 === x2) {
+                return `M ${x1} ${y1} L ${x2} ${y2}`;
+            }
+
+            const vx1 =
+                x1 + Math.max(vertical / 2, Math.abs(x2 - x1)) * this.curvature;
+            const vx2 =
+                x2 - Math.max(vertical / 2, Math.abs(x2 - x1)) * this.curvature;
+
+            return `M ${x1} ${y1} C ${vx1} ${y1} ${vx2} ${y2} ${x2} ${y2}`;
+        } else {
+            x1 -= 12;
+            x2 += 12;
+            y1 += 12;
+            y2 -= 12;
+
+            const horizontal = Math.abs(x1 - x2);
+
+            if (y1 === y2) {
+                return `M ${x1} ${y1} L ${x2} ${y2}`;
+            }
+
+            const hy1 =
+                y1 +
+                Math.max(horizontal / 2, Math.abs(y2 - y1)) * this.curvature;
+            const hy2 =
+                y2 -
+                Math.max(horizontal / 2, Math.abs(y2 - y1)) * this.curvature;
+
+            return `M ${x1} ${y1} C ${x1} ${hy1} ${x2} ${hy2} ${x2} ${y2}`;
         }
 
-        const hy1 =
-            y1 + Math.max(horizontal / 2, Math.abs(y2 - y1)) * this.curvature;
-        const hy2 =
-            y2 - Math.max(horizontal / 2, Math.abs(y2 - y1)) * this.curvature;
-
-        return `M ${x1} ${y1} C ${x1} ${hy1} ${x2} ${hy2} ${x2} ${y2}`;
+        console.log(this.data);
     }
 
     render() {
