@@ -30,6 +30,7 @@ export const RJSFComponent = CardStyleMixin(
             static properties = {
                 props: { type: Object },
                 nodeId: { type: String },
+                onChange: { type: Function },
             };
 
             // Create a new Subject to receive change events
@@ -60,31 +61,27 @@ export const RJSFComponent = CardStyleMixin(
             }
 
             updated(changedProperties) {
-                if (this.reactWrapper && changedProperties.has("props")) {
-                    this.subscription?.unsubscribe();
-                    this.subscription = this.props.subject
-                        .pipe(filter((v) => Object.keys(v).length > 0))
-                        .subscribe((value) => {
-                            console.log(
-                                this.props.node.id,
-                                value,
-                                this.props.subject
-                            );
-                            this.reactWrapper.props = {
-                                ...this.reactWrapper.props,
-                                formData: value,
-                            };
-                        });
-                }
-
-                if (changedProperties.has("nodeId")) {
-                    console.log("changed node id");
+                if (this.reactWrapper && this.props && this.onChange) {
+                    this.schema = this.props.schema?.userSchema
+                        ? this.props.schema.schema
+                        : this.props.schema;
+                    this.uiSchema = this.props.schema?.uiSchema;
+                    this.formData = this.props.formData;
+                    this.reactWrapper.props = {
+                        ...this.reactWrapper.props,
+                        ...this.props,
+                        schema: this.schema,
+                        uiSchema: this.uiSchema,
+                        formData: this.formData,
+                        onChange: this.onChange,
+                    };
                 }
             }
 
-            firstUpdated() {
+            async firstUpdated() {
                 const reactWrapper = (this.reactWrapper =
                     document.createElement("bespeak-react"));
+                await this.updateComplete;
                 reactWrapper.reactComponent = Form;
                 reactWrapper.props = {
                     ...this._props,
@@ -92,19 +89,11 @@ export const RJSFComponent = CardStyleMixin(
                     uiSchema: setSubmitButtonOptions(
                         this.props.uiSchema || {},
                         {
-                            submitText: "Save",
+                            submitText: "REMOVE THIS BUTTON IT DOES NOTHING",
                         }
                     ),
+                    onChange: this.onChange,
                 };
-                this.subscription = reactWrapper.props.subject?.subscribe(
-                    (e) => {
-                        console.log("form", e);
-                        reactWrapper.props = {
-                            ...reactWrapper.props,
-                            formData: e,
-                        };
-                    }
-                );
                 console.log(reactWrapper.props);
                 this.appendChild(reactWrapper);
             }

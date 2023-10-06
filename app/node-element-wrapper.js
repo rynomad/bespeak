@@ -8,11 +8,14 @@ export const NextNodeElementWrapper = (
     return class extends Base {
         static get properties() {
             return {
+                ...Base.properties,
                 input: { type: Object },
                 output: { type: Object },
                 owners: { type: Array },
                 assets: { type: Array },
                 error: { type: Error },
+                config: { type: Object },
+                keys: { type: Array },
             };
         }
 

@@ -10,7 +10,9 @@ import {
     distinctUntilChanged,
     withLatestFrom,
     merge,
+    take,
 } from "https://esm.sh/rxjs@7.3.0";
+import { deepEqual } from "https://esm.sh/fast-equals";
 import "./tabs.js";
 import "./yaml.js";
 import "./form.js";
@@ -24,6 +26,12 @@ class MySidebar extends LitElement {
         return {
             ide: { type: Object },
             id: { type: String },
+            config: { type: Object, hasChanged: (n, o) => !deepEqual(o, n) },
+            configSchema: {
+                type: Object,
+                hasChanged: (n, o) => !deepEqual(o, n),
+            },
+            target: { type: Object },
         };
     }
     static styles = css`
@@ -104,11 +112,18 @@ class MySidebar extends LitElement {
     constructor() {
         super();
         this.editor$ = new Subject();
-        this.parameters$ = new Subject();
+        this.configSchema$ = new Subject();
+        this.config$ = new Subject();
         this.inputs$ = new Subject();
         this.outputs$ = new Subject();
         this.types = Types;
         this.hide();
+    }
+
+    updated(changedProperties) {
+        if (changedProperties.has("config")) {
+            this.config$.next(this.config);
+        }
     }
 
     async connectedCallback() {
@@ -137,6 +152,7 @@ class MySidebar extends LitElement {
                 withLatestFrom(this.editor$),
 
                 switchScan(async (acc, [event, { editor, devEditor }]) => {
+                    acc.forEach((sub) => sub.unsubscribe());
                     let target = null;
                     let hide = true;
                     if (event.type === "chat-focus") {
@@ -147,12 +163,18 @@ class MySidebar extends LitElement {
                         target = event.data;
                     }
 
-                    if (target) {
-                        acc.forEach((sub) => sub.unsubscribe());
+                    this.target = target;
+                    if (target && target.editorNode.configSchema$) {
                         acc = [
-                            target.parameters$.subscribe(this.parameters$),
-                            target.inputs$.subscribe(this.inputs$),
-                            target.outputs$.subscribe(this.outputs$),
+                            target.editorNode.configSchema$.subscribe(
+                                this.configSchema$
+                            ),
+                            target.editorNode.config$
+                                .pipe(take(1))
+                                .subscribe(this.config$),
+                            this.config$.subscribe((config) =>
+                                target.editorNode.config$.next(config)
+                            ),
                         ];
                         this.show();
                         this.requestUpdate();
@@ -165,69 +187,24 @@ class MySidebar extends LitElement {
             )
             .subscribe();
 
-        this.parameters$
+        this.configSchema$
             .pipe(
                 debug(this, "sidebar parameters spy"),
-                tap((streams) => {
-                    this.globals = streams.filter(({ global }) => global);
-                    this.config = streams.filter(
-                        ({ type }) => type === "config"
-                    );
+                tap((schema) => {
+                    this.configSchema = schema;
                 })
             )
             .subscribe();
 
-        // combineLatest(this.inputs$, this.outputs$)
-        //     .pipe(
-        //         debug(this, "sidebar io spy"),
-        //         switchMap(([inputs, outputs]) => {
-        //             const inputValues = inputs.map((stream) =>
-        //                 stream.subject.pipe((data) => {
-        //                     stream.data = data;
-        //                     return stream;
-        //                 })
-        //             );
-
-        //             const outputValues = outputs.map((stream) =>
-        //                 stream.subject.pipe((data) => {
-        //                     stream.data = data;
-        //                     return stream;
-        //                 })
-        //             );
-        //             return combineLatest(
-        //                 combineLatest(...inputValues),
-        //                 combineLatest(...outputValues)
-        //             );
-        //         }),
-        //         tap(([inputs, outputs]) => {
-        //             this.data = {
-        //                 inputs: inputs.reduce((acc, [stream]) => {
-        //                     acc[stream.label || stream.name] = {
-        //                         description: stream.description,
-        //                         data: stream.data,
-        //                     };
-        //                     return acc;
-        //                 }, {}),
-        //                 outputs: outputs.reduce((acc, [stream]) => {
-        //                     acc[stream.label || stream.name] = {
-        //                         description: stream.description,
-        //                         data: stream.data,
-        //                     };
-        //                     return acc;
-        //                 }, {}),
-        //             };
-
-        //             this.requestUpdate();
-        //         })
-        //     )
-        //     .subscribe();
+        this.config$
+            .pipe(
+                debug(this, "sidebar config spy"),
+                tap((config) => {
+                    this.config = config;
+                })
+            )
+            .subscribe();
     }
-
-    // updated(changedProperties) {
-    //     if (changedProperties.has("ide")) {
-    //         this.ideSubscription?.unsubscribe();
-    //         this.ideSubscription = this.ide
-    //             .pipe(
 
     get tabs() {
         return ["Config", "Global", "Types"];
@@ -267,13 +244,17 @@ class MySidebar extends LitElement {
                     selectorId="selector"
                     selected="${this.openTab}">
                     <div name="Config">
-                        ${this.config?.map(
-                            (entry) =>
-                                html`<div>${entry.node.id}</div>
-                                    <bespeak-form
-                                        nodeId=${entry.node.id}
-                                        .props=${entry}></bespeak-form>`
-                        )}
+                        <div>${this.target?.id}</div>
+                        <bespeak-form
+                            nodeId=${this.target?.id}
+                            .onChange=${(event) => {
+                                this.config = event.formData;
+                            }}
+                            .props=${{
+                                name: this.target?.editorNode?.name,
+                                schema: this.configSchema || {},
+                                formData: this.config || {},
+                            }}></bespeak-form>
                     </div>
                     <div name="Global">
                         ${this.globals?.map(

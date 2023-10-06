@@ -1059,6 +1059,7 @@ export class NextLitNode extends Node {
     }
 
     static get properties() {
+        const hasChanged = (newV, oldV) => !deepEqual(newV, oldV);
         return {
             ...super.properties,
             source: { type: String },
@@ -1071,7 +1072,23 @@ export class NextLitNode extends Node {
             connectedNodes: { type: Array },
             inputSchema: {
                 type: Object,
-                hasChanged: (newV, oldV) => !deepEqual(newV, oldV),
+                hasChanged,
+            },
+            configSchema: {
+                type: Object,
+                hasChanged,
+            },
+            keysSchema: {
+                type: Object,
+                hasChanged,
+            },
+            config: {
+                type: Object,
+                hasChanged,
+            },
+            keys: {
+                type: Object,
+                hasChanged,
             },
         };
     }
@@ -1090,7 +1107,7 @@ export class NextLitNode extends Node {
                 filter((value) => value && value.source),
                 take(1),
                 tap((value) => {
-                    const { source, output, inputSchema } = value;
+                    const { source, output, inputSchema, config, keys } = value;
                     if (source) {
                         this.source = source;
                     }
@@ -1100,17 +1117,40 @@ export class NextLitNode extends Node {
                     if (inputSchema) {
                         this.inputSchema = inputSchema;
                     }
+                    if (config) {
+                        this.config = config;
+                    }
+                    if (keys) {
+                        this.keys = keys;
+                    }
                 })
             )
             .subscribe();
 
-        merge(this.output$, this.inputSchema$, this.source$)
+        merge(
+            this.output$,
+            this.inputSchema$,
+            this.source$,
+            this.config$,
+            this.keys$
+        )
             .pipe(
                 distinctUntilChanged(deepEqual),
-                takeUntil(this.data.removed$),
-                map(() => this.serialize())
+                map(() => this.serialize()),
+                takeUntil(this.data.removed$)
             )
             .subscribe(this.data.hydrate$.subject);
+
+        this.config$
+            .pipe(
+                debug(this, this.config$, "config spy"),
+                distinctUntilChanged(deepEqual),
+                takeUntil(this.data.removed$),
+                tap((config) => {
+                    this.config = config;
+                })
+            )
+            .subscribe();
     }
 
     constructor() {
@@ -1119,7 +1159,11 @@ export class NextLitNode extends Node {
         this.error$ = new ReplaySubject(1);
         this.owners$ = new ReplaySubject(1);
         this.source$ = new ReplaySubject(1);
+        this.keys$ = new ReplaySubject(1);
+        this.config$ = new ReplaySubject(1);
         this.inputSchema$ = new ReplaySubject(1);
+        this.configSchema$ = new ReplaySubject(1);
+        this.keysSchema$ = new ReplaySubject(1);
     }
 
     serialize() {
@@ -1128,6 +1172,8 @@ export class NextLitNode extends Node {
             source: this.source,
             output: this.output,
             inputSchema: this.inputSchema,
+            config: this.config,
+            keys: this.keys,
         };
     }
 
@@ -1138,6 +1184,8 @@ export class NextLitNode extends Node {
             this.element.inputSchema = this.inputSchema;
             this.element.owners = this.owners;
             this.element.assets = this.assets;
+            this.element.config = this.config;
+            this.element.keys = this.keys;
         }
 
         if (changedProperties.has("error")) {
@@ -1196,6 +1244,14 @@ export class NextLitNode extends Node {
 
                 this.requestUpdate();
             }
+        }
+
+        if (changedProperties.has("configSchema") && this.configSchema) {
+            this.configSchema$.next(this.configSchema);
+        }
+
+        if (changedProperties.has("keysSchema") && this.keysSchema) {
+            this.keysSchema$.next(this.keysSchema);
         }
     }
 
@@ -1283,6 +1339,10 @@ export class NextLitNode extends Node {
         // Get the source code from the editor
         const sourceCode = this.source;
 
+        if (sourceCode === (await this.element?.quine?.())) {
+            return;
+        }
+
         // Transform the source code to handle relative imports
         const transformedSource = transformSource(sourceCode);
 
@@ -1305,6 +1365,9 @@ export class NextLitNode extends Node {
             module.default,
             getSource(blobUrl)
         );
+
+        this.keysSchema = this.customElement.keys;
+        this.configSchema = this.customElement.config;
         // Define the custom element
         customElements.define(
             `bespeak-custom-${this.customElement.tagName}-${this.data.id}-${nonce}`,
@@ -1336,7 +1399,7 @@ export class NextLitNode extends Node {
         const output = this.data?.outputs?.output || {};
 
         return html`
-            <div class="tracker">
+            <div class="tracker" @click=${() => console.log("tracker click")}>
                 <bespeak-compass>
                     <div slot="north">
                         ${html`<ref-element
@@ -1392,6 +1455,7 @@ export class NextLitNode extends Node {
                     </div>
                     <div>
                         <bespeak-flipper
+                            @click=${() => console.log("click node flipper")}
                             class="front"
                             .onToggle=${this.onToggle.bind(this)}>
                             <div
