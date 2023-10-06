@@ -11,6 +11,7 @@ import {
     switchMap,
     switchScan,
     take,
+    debounceTime,
     combineLatest,
     distinctUntilChanged,
     tap,
@@ -1119,10 +1120,22 @@ export class NextLitNode extends Node {
                     }
                     if (config) {
                         this.config = config;
+                        this.config$.next(config);
                     }
                     if (keys) {
                         this.keys = keys;
+                        this.keys$.next(keys);
                     }
+                })
+            )
+            .subscribe();
+        this.config$
+            .pipe(
+                debug(this, "config spy"),
+                distinctUntilChanged(deepEqual),
+                takeUntil(this.data.removed$),
+                tap((config) => {
+                    this.config = config;
                 })
             )
             .subscribe();
@@ -1135,22 +1148,11 @@ export class NextLitNode extends Node {
             this.keys$
         )
             .pipe(
-                distinctUntilChanged(deepEqual),
+                debounceTime(100),
                 map(() => this.serialize()),
                 takeUntil(this.data.removed$)
             )
             .subscribe(this.data.hydrate$.subject);
-
-        this.config$
-            .pipe(
-                debug(this, "config spy"),
-                distinctUntilChanged(deepEqual),
-                takeUntil(this.data.removed$),
-                tap((config) => {
-                    this.config = config;
-                })
-            )
-            .subscribe();
     }
 
     constructor() {
