@@ -195,3 +195,44 @@ export function getSource(url) {
         return source;
     };
 }
+
+export function generateSchemaFromValue(value) {
+    let schema;
+
+    switch (typeof value) {
+        case "string":
+            schema = { type: "string" };
+            break;
+        case "number":
+            schema = { type: "number" };
+            break;
+        case "boolean":
+            schema = { type: "boolean" };
+            break;
+        case "object":
+            if (Array.isArray(value)) {
+                schema = {
+                    type: "array",
+                    items:
+                        value.length > 0
+                            ? generateSchemaFromValue(value[0])
+                            : {},
+                };
+            } else {
+                schema = {
+                    type: "object",
+                    properties: Object.fromEntries(
+                        Object.entries(value).map(([key, val]) => [
+                            key,
+                            generateSchemaFromValue(val),
+                        ])
+                    ),
+                };
+            }
+            break;
+        default:
+            throw new Error(`Unsupported value type: ${typeof value}`);
+    }
+
+    return schema;
+}

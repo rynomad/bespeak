@@ -100,14 +100,7 @@ export class Stream {
         }
 
         this.subject
-            .pipe(
-                filter((value) =>
-                    this.node?.component?.__locals
-                        ? this.node?.component?.__locals.has(this.id)
-                        : true
-                ),
-                filter((value) => !Stream.storage.has(value))
-            )
+            .pipe(filter((value) => !Stream.storage.has(value)))
             .subscribe((value) => {
                 // console.log(this.id, "saving to db", value);
                 this.db

@@ -165,7 +165,7 @@ export class Editor extends LitElement {
 
         area.use(litRender);
         area.use(contextMenu);
-        area.use(minimap);
+        // area.use(minimap);
         area.use(connection);
         // litRender.use(reroutePlugin);
         litRender.addPreset(
@@ -259,7 +259,11 @@ export class Editor extends LitElement {
             this.name = snapshot.name;
             for (const node of snapshot.nodes) {
                 await this.addNode(
-                    ReteNode.deserialize(this.ide, this, node),
+                    (this.isDev ? ReteNode : NextReteNode).deserialize(
+                        this.ide,
+                        this,
+                        node
+                    ),
                     null,
                     false
                 );

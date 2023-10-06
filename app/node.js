@@ -14,7 +14,8 @@ import {
     combineLatest,
     distinctUntilChanged,
     tap,
-    skip,
+    takeUntil,
+    merge,
 } from "https://esm.sh/rxjs";
 import { GPT } from "./gpt.wrapped.js";
 import { debug } from "./operators.js";
@@ -27,7 +28,10 @@ import { classMap } from "https://esm.sh/lit/directives/class-map.js";
 import { PropagationStopper } from "./mixins.js";
 import { NodeMakerGPT } from "./nodeMaker.wrapped.js";
 import { NextNodeElementWrapper } from "./node-element-wrapper.js";
-import { getSource } from "./util.js";
+import { getSource, generateSchemaFromValue } from "./util.js";
+import { deepEqual } from "https://esm.sh/fast-equals";
+import _ from "https://esm.sh/lodash";
+import { Stream } from "./stream.js";
 import "./flipper.js";
 import "./compass.js";
 import "./monaco.js";
@@ -911,10 +915,30 @@ export class ReteNode extends Classic.Node {
 }
 
 export class NextReteNode extends ReteNode {
+    static deserialize(ide, editor, definition) {
+        const node = new this(ide, editor, undefined, definition.id);
+
+        return node;
+    }
+
+    serialize() {
+        return {
+            id: this.id,
+        };
+    }
+
     constructor(ide, editor, Component = GPT, id = uuidv4()) {
         super(ide, editor, Component, id);
         this.addInput("parent", new Classic.Input(this.socket, "parent", true));
         this.addOutput("child", new Classic.Output(this.socket, "child"));
+        this.hydrate$ = new Stream(this, Object, "node-meta");
+        this.removed$ = this.editor.events$.pipe(
+            filter(
+                (event) =>
+                    event.type === "noderemoved" && event.data.id === this.id
+            ),
+            shareReplay(1)
+        );
     }
 
     get _width() {
@@ -955,6 +979,46 @@ export class NextReteNode extends ReteNode {
 
             return translateY + this.height / 2;
         }
+    }
+
+    setupInputs() {
+        this.inputsSubscription = this.editor.events$
+            .pipe(
+                filter(
+                    (event) =>
+                        event.type === "connectioncreated" ||
+                        event.type === "connectionremoved"
+                ),
+                filter(
+                    (event) =>
+                        event.data?.target === this.id ||
+                        event.data?.source === this.id
+                ),
+                // scan to accumulate present state of nodes connected to
+                // this node's inputs
+                scan((acc, value) => {
+                    if (value.type === "connectioncreated") {
+                        acc.push(value.data);
+                    } else if (value.type === "connectionremoved") {
+                        acc = acc.filter((c) => c.id !== value.data.id);
+                    }
+                    return acc;
+                }, []),
+                map((connections) => {
+                    return connections.map((connection) => {
+                        const node = this.editor.editor.getNode(
+                            connection.source !== this.id
+                                ? connection.source
+                                : connection.target
+                        );
+
+                        return { node, connection };
+                    });
+                })
+            )
+            .subscribe((nodes) => {
+                this.editorNode.connectedNodes = nodes;
+            });
     }
 }
 function transformSource(source) {
@@ -997,32 +1061,155 @@ export class NextLitNode extends Node {
     static get properties() {
         return {
             ...super.properties,
+            source: { type: String },
             element: { type: Object },
             input: { type: Object },
             output: { type: Object },
             owners: { type: Array },
             assets: { type: Array },
             error: { type: Error },
+            connectedNodes: { type: Array },
+            inputSchema: {
+                type: Object,
+                hasChanged: (newV, oldV) => !deepEqual(newV, oldV),
+            },
         };
+    }
+
+    get id() {
+        return this.data.id;
     }
 
     async firstUpdated() {
         await this.updateComplete;
 
         this.data.editorNode = this;
+
+        this.data.hydrate$.subject
+            .pipe(
+                filter((value) => value && value.source),
+                take(1),
+                tap((value) => {
+                    const { source, output, inputSchema } = value;
+                    if (source) {
+                        this.source = source;
+                    }
+                    if (output) {
+                        this.output = output;
+                    }
+                    if (inputSchema) {
+                        this.inputSchema = inputSchema;
+                    }
+                })
+            )
+            .subscribe();
+
+        merge(this.output$, this.inputSchema$, this.source$)
+            .pipe(
+                distinctUntilChanged(deepEqual),
+                takeUntil(this.data.removed$),
+                map(() => this.serialize())
+            )
+            .subscribe(this.data.hydrate$.subject);
+    }
+
+    constructor() {
+        super();
+        this.output$ = new ReplaySubject(1);
+        this.error$ = new ReplaySubject(1);
+        this.owners$ = new ReplaySubject(1);
+        this.source$ = new ReplaySubject(1);
+        this.inputSchema$ = new ReplaySubject(1);
+    }
+
+    serialize() {
+        return {
+            node: this.id,
+            source: this.source,
+            output: this.output,
+            inputSchema: this.inputSchema,
+        };
     }
 
     updated(changedProperties) {
         super.updated(changedProperties);
         if (this.element) {
             this.element.input = this.input;
+            this.element.inputSchema = this.inputSchema;
             this.element.owners = this.owners;
             this.element.assets = this.assets;
         }
 
         if (changedProperties.has("error")) {
             console.error(this.error);
+            this.error$.next(this.error);
         }
+
+        if (changedProperties.has("output")) {
+            this.output$.next(this.output || {});
+        }
+
+        if (changedProperties.has("source")) {
+            this.source$.next(this.source);
+            this.updateElement();
+        }
+
+        if (changedProperties.has("inputSchema")) {
+            this.inputSchema$.next(this.inputSchema);
+        }
+
+        if (changedProperties.has("connectedNodes")) {
+            if (this.connectedNodes) {
+                this.assets = this.connectedNodes
+                    .filter(
+                        ({ connection: { source, sourceOutput } }) =>
+                            source === this.id && sourceOutput === "assets"
+                    )
+                    .map(({ node }) => node.editorNode.element);
+
+                this.owners = this.connectedNodes
+                    .filter(
+                        ({ connection: { target, targetInput } }) =>
+                            target === this.id && targetInput === "owners"
+                    )
+                    .map(({ node }) => node.editorNode.element);
+
+                if (this.inputSubscription) {
+                    this.inputSubscription.unsubscribe();
+                }
+
+                // TODO this may lock if an upstream node never provides output
+                this.inputSubscription = combineLatest(
+                    this.connectedNodes
+                        .filter(
+                            ({ connection: { target, targetInput } }) =>
+                                target === this.id && targetInput === "input"
+                        )
+                        .sort((a, b) => a.node.id.localeCompare(b.node.id))
+                        .map(({ node }) => node.editorNode.output$)
+                )
+                    .pipe(map(this.deepMerge))
+                    .subscribe((data) => {
+                        this.input = data;
+                        this.inputSchema = generateSchemaFromValue(data);
+                    });
+
+                this.requestUpdate();
+            }
+        }
+    }
+
+    deepMerge(objects) {
+        return _.mergeWith({}, ...objects, (objValue, srcValue) => {
+            if (!objValue) {
+                return srcValue;
+            }
+            if (_.isArray(objValue)) {
+                return objValue.concat([srcValue]);
+            } else {
+                return [objValue, srcValue];
+            }
+        });
     }
 
     async connectedCallback() {
@@ -1077,18 +1264,6 @@ export class NextLitNode extends Node {
         this.resizeObserver.observe(
             this.shadowRoot.querySelector("bespeak-compass")
         );
-
-        if (!this.eventsInit) {
-            this.eventsInit = true;
-
-            ["pointerdown", "wheel", "dblclick", "contextmenu"].forEach((e) => {
-                this.addEventListener(e, (e) => {
-                    if (e.target === this) {
-                        // this.stopPropagation(e);
-                    }
-                });
-            });
-        }
     }
 
     disconnectedCallback() {
@@ -1100,96 +1275,55 @@ export class NextLitNode extends Node {
         }
     }
 
-    stopPropagation(event) {
-        const rect = this.getBoundingClientRect();
-        const containerStyle = window.getComputedStyle(
-            this.shadowRoot.querySelector(".container")
-        );
-
-        // Fetch and parse the padding
-        const paddingLeft = parseFloat(containerStyle.paddingLeft);
-        const paddingTop = parseFloat(containerStyle.paddingTop);
-        const paddingRight = parseFloat(containerStyle.paddingRight);
-        const paddingBottom = parseFloat(containerStyle.paddingBottom);
-
-        const adjustedLeft = rect.left + paddingLeft;
-        const adjustedRight = rect.right - paddingRight;
-        const adjustedTop = rect.top + paddingTop;
-        const adjustedBottom = rect.bottom - paddingBottom;
-        // Check if the event's coordinates are within the adjusted rectangle
-        if (
-            event.clientX >= adjustedLeft &&
-            event.clientX <= adjustedRight &&
-            event.clientY >= adjustedTop &&
-            event.clientY <= adjustedBottom
-        ) {
-            // Prevent other handlers from stopping the default behavior
-            event.stopPropagation();
-        }
-    }
-
     nodeStyles() {
         return "";
     }
 
-    renderSocket(type, side, data, testId) {
-        return html`
-            <ref-element
-                class="${type}-socket"
-                .data=${{
-                    type: "socket",
-                    side: side,
-                    key: data.label,
-                    nodeId: this.data?.id,
-                    payload: data.socket,
-                }}
-                .emit=${this.emit}
-                data-testid="${testId}">
-            </ref-element>
-        `;
+    async updateElement() {
+        // Get the source code from the editor
+        const sourceCode = this.source;
+
+        // Transform the source code to handle relative imports
+        const transformedSource = transformSource(sourceCode);
+
+        // Create a blob from the transformed source code
+        const blob = new Blob([transformedSource], {
+            type: "text/javascript",
+        });
+
+        // Create a URL for the blob
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Generate a random hex nonce
+        const nonce = Math.floor(Math.random() * 0xfffff).toString(16);
+
+        // Import the module from the blob URL
+        const module = await import(blobUrl);
+        // Create the custom element
+        this.customElement = NextNodeElementWrapper(
+            this,
+            module.default,
+            getSource(blobUrl)
+        );
+        // Define the custom element
+        customElements.define(
+            `bespeak-custom-${this.customElement.tagName}-${this.data.id}-${nonce}`,
+            this.customElement
+        );
+
+        // Attach the custom element
+        this.element = new this.customElement();
+        this.shadowRoot
+            .querySelector(".container")
+            .replaceChildren(this.element);
     }
 
     async onToggle(face) {
         const editor = this.shadowRoot.querySelector("bespeak-monaco-editor");
         if (face === "front") {
-            // Get the source code from the editor
+            this.source = editor.getValue();
+            await this.updateElement();
             editor.visible = false;
-            const sourceCode = editor.getValue();
-
-            // Transform the source code to handle relative imports
-            const transformedSource = transformSource(sourceCode);
-
-            // Create a blob from the transformed source code
-            const blob = new Blob([transformedSource], {
-                type: "text/javascript",
-            });
-
-            // Create a URL for the blob
-            const blobUrl = URL.createObjectURL(blob);
-
-            // Generate a random hex nonce
-            const nonce = Math.floor(Math.random() * 0xfffff).toString(16);
-
-            // Import the module from the blob URL
-            const module = await import(blobUrl);
-            // Create the custom element
-            this.customElement = NextNodeElementWrapper(
-                this,
-                module.default,
-                getSource(blobUrl)
-            );
-            this.source = await getSource(blobUrl)();
-            // Define the custom element
-            customElements.define(
-                `bespeak-custom-${this.customElement.tagName}-${this.data.id}-${nonce}`,
-                this.customElement
-            );
-
-            // Attach the custom element
-            this.element = new this.customElement();
-            this.shadowRoot
-                .querySelector(".container")
-                .replaceChildren(this.element);
         } else {
             editor.visible = true;
         }
@@ -1265,7 +1399,9 @@ export class NextLitNode extends Node {
                                 slot="front"
                                 style="min-width: 300px; min-height: 300px; padding: 1rem;"></div>
                             <div slot="back" style="padding: 1rem">
-                                <bespeak-monaco-editor></bespeak-monaco-editor>
+                                <bespeak-monaco-editor
+                                    .value=${this
+                                        .source}></bespeak-monaco-editor>
                             </div>
                         </bespeak-flipper>
                     </div>

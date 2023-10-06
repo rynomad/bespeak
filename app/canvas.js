@@ -83,6 +83,7 @@ class BespeakCanvas extends LitElement {
                     editor.open = true;
 
                     const devEditor = document.createElement("bespeak-editor");
+                    devEditor.isDev = true;
                     devEditor.id = id + "-dev";
                     devEditor.ide = this.ide;
                     devEditor.canvas = this;
