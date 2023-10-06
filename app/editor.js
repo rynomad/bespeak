@@ -47,9 +47,12 @@ import {
     NextReteNode,
     NextLitNode,
 } from "./node.js";
+import { DoubleApplier } from "./layout-applier.js";
 import { CONFIG } from "./types/gpt.js";
 import { Custom } from "./custom.js";
 import { Example } from "./example.wrapped.js";
+import { layout } from "./layout.js";
+import "./icons/nodes.js";
 
 export class Editor extends LitElement {
     static get properties() {
@@ -333,7 +336,7 @@ export class Editor extends LitElement {
                     const create = operations.create;
                     const remove = operations.delete;
                     for (const serialized of create.nodes || []) {
-                        const node = ReteNode.deserialize(
+                        const node = NextReteNode.deserialize(
                             this.ide,
                             this,
                             serialized
@@ -536,13 +539,49 @@ export class Editor extends LitElement {
                     spacing: data.width / (data.ports * 2),
                 };
 
-                if (data.side === "output") {
+                // if (data.side === "output") {
+                //     return {
+                //         x: 0,
+                //         y: top + data.index * spacing,
+                //         width: 15,
+                //         height: 15,
+                //         side: "EAST",
+                //     };
+                // }
+                // return {
+                //     x: 0,
+                //     y:
+                //         data.height -
+                //         bottom -
+                //         data.ports * spacing +
+                //         data.index * spacing,
+                //     width: 15,
+                //     height: 15,
+                //     side: "WEST",
+                // };
+                if (data.side === "output" && data.key === "output") {
                     return {
                         x: data.width / 2,
-                        y: 0,
+                        y: data.height,
                         width: 15,
                         height: 15,
                         side: "SOUTH",
+                    };
+                } else if (data.side === "output" && data.key === "child") {
+                    return {
+                        x: data.width,
+                        y: 0,
+                        width: 15,
+                        height: 15,
+                        side: "EAST",
+                    };
+                } else if (data.side === "input" && data.key === "parent") {
+                    return {
+                        x: 0,
+                        y: 0,
+                        width: 15,
+                        height: 15,
+                        side: "WEST",
                     };
                 }
                 return {
@@ -623,8 +662,8 @@ export class Editor extends LitElement {
         }
     }
 
-    doLayout(nodes) {
-        const applier = new ArrangeAppliers.TransitionApplier({
+    doLayout() {
+        const applier = new DoubleApplier({
             duration: 200,
             timingFunction: (t) => t,
             onTick: () => {
@@ -632,10 +671,12 @@ export class Editor extends LitElement {
             },
         });
 
-        this.arrange.layout({
-            applier,
-            options: { "elk.direction": "DOWN" },
-        });
+        const nodes = this.editor.getNodes();
+        const connections = this.editor.getConnections();
+        const arrangedNodes = layout(nodes, connections);
+        applier.setEditor(this.editor);
+        applier.setArea(this.area);
+        applier.apply(arrangedNodes);
 
         return applier;
     }
@@ -672,6 +713,18 @@ export class Editor extends LitElement {
     render() {
         return html`
             <div class="column">
+                <bespeak-nodes-icon
+                    style="position: absolute; top: 0; right: 0; cursor: pointer; z-index: 9999;"
+                    @click="${() =>
+                        this.doLayout(
+                            this.editor.getNodes()
+                        )}"></bespeak-nodes-icon>
+                <bespeak-nodes-icon
+                    style="position: absolute; top: 0; right: 30px; cursor: pointer; transform: rotate(90deg); z-index: 9999;"
+                    @click="${() =>
+                        this.doLayout(this.editor.getNodes(), {
+                            "elk.direction": "RIGHT",
+                        })}"></bespeak-nodes-icon>
                 ${this.collapsable
                     ? html`
                           <div class="status">

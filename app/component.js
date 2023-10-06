@@ -143,6 +143,10 @@ export const ComponentMixin = (
             // Get the name of the base class
             const baseName = Base.toString().match(/\w+/g)[1];
 
+            if (baseName === "extends") {
+                return "anonymous";
+            }
+
             // Split the camel case string into separate words, respecting acronyms
             const words = baseName.split(
                 /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/

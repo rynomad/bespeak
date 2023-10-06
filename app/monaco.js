@@ -6,6 +6,7 @@ class MonacoEditor extends LitElement {
     static get properties() {
         return {
             value: { type: String },
+            visible: { type: Boolean },
         };
     }
 
@@ -20,6 +21,18 @@ class MonacoEditor extends LitElement {
         if (!this.editor) {
             await this.initEditor();
         }
+    }
+
+    updated(changedProperties) {
+        if (this.visible) {
+            this.shadowRoot.getElementById("editor").classList.remove("hidden");
+        } else {
+            this.shadowRoot.getElementById("editor").classList.add("hidden");
+        }
+    }
+
+    getValue() {
+        return this.editor.getValue();
     }
 
     async initEditor() {
@@ -50,6 +63,13 @@ class MonacoEditor extends LitElement {
             wrappingStrategy: "advanced",
             cursorSmoothCaretAnimation: "on",
         });
+
+        // prevent rete from handling pointerdown events
+        container.addEventListener("pointerdown", (e) => {
+            if (this.visible) {
+                e.stopPropagation();
+            }
+        });
     }
 
     render() {
@@ -59,12 +79,17 @@ class MonacoEditor extends LitElement {
     static styles = css`
         :host {
             display: block;
+            min-height: 500px;
+            min-width: 800px;
         }
         #editor {
             min-height: 500px;
-            min-width: 500px;
-            max-height: 100%;
+            min-width: 800px;
             border: 1px solid black;
+        }
+
+        #editor.hidden {
+            display: none;
         }
         ${monacoStyles}
     `;

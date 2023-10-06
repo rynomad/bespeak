@@ -187,3 +187,11 @@ export function addDefaultValuesToSchema(schema) {
 
     return schema;
 }
+
+export function getSource(url) {
+    return async () => {
+        const response = await fetch(url);
+        const source = await response.text();
+        return source;
+    };
+}

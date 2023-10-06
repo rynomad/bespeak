@@ -7,7 +7,6 @@ class FlipperComponent extends LitElement {
             display: block;
             position: relative;
             border: 2px solid black;
-            background: black;
             transition: transform 1s 0s; // Added 0s delay
         }
 
@@ -53,6 +52,10 @@ class FlipperComponent extends LitElement {
             transform: rotateY(0deg);
         }
 
+        .beneath {
+            z-index: -1;
+        }
+
         .front-element {
             transform: rotateY(0deg);
         }
@@ -79,15 +82,30 @@ class FlipperComponent extends LitElement {
         this.frontMirror = null;
         this.backMirror = null;
     }
+    static get properties() {
+        return {
+            onToggle: { type: Function },
+        };
+    }
+
     toggle() {
+        let targetSide;
         if (this.classList.contains("front")) {
             this.classList.remove("front");
             this.classList.add("back");
+            targetSide = "back";
         } else {
             this.classList.remove("back");
             this.classList.add("front");
+            targetSide = "front";
+        }
+
+        // Call the onToggle function if it's defined
+        if (this.onToggle) {
+            this.onToggle(targetSide);
         }
     }
+
     firstUpdated() {
         this.frontMirror = this.shadowRoot.querySelector(".front-mirror");
         this.backMirror = this.shadowRoot.querySelector(".back-mirror");
@@ -140,6 +158,11 @@ class FlipperComponent extends LitElement {
                 .querySelector(".back-element")
                 .classList.add("transparent");
 
+            this.shadowRoot.querySelector(".back-box").classList.add("beneath");
+            this.shadowRoot
+                .querySelector(".front-box")
+                .classList.remove("beneath");
+
             this.shadowRoot.querySelector(".flip-icon").classList.add("front");
 
             this.shadowRoot
@@ -160,6 +183,13 @@ class FlipperComponent extends LitElement {
             this.shadowRoot
                 .querySelector(".flip-icon")
                 .classList.remove("front");
+
+            this.shadowRoot
+                .querySelector(".front-box")
+                .classList.add("beneath");
+            this.shadowRoot
+                .querySelector(".back-box")
+                .classList.remove("beneath");
         }
     }
 

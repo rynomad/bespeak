@@ -26,9 +26,12 @@ import { Custom } from "./custom.js";
 import { classMap } from "https://esm.sh/lit/directives/class-map.js";
 import { PropagationStopper } from "./mixins.js";
 import { NodeMakerGPT } from "./nodeMaker.wrapped.js";
+import { NextNodeElementWrapper } from "./node-element-wrapper.js";
+import { getSource } from "./util.js";
 import "./flipper.js";
 import "./compass.js";
 import "./monaco.js";
+import "./mixins.js";
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
         return {
@@ -723,7 +726,7 @@ export class ReteNode extends Classic.Node {
         this.workspaceId = editor.id;
         this.Component = Component;
 
-        this.addInput("input", new Classic.Input(this.socket, "input"));
+        this.addInput("input", new Classic.Input(this.socket, "input", true));
         this.addOutput("output", new Classic.Output(this.socket, "output"));
 
         this.inputs$ = new ReplaySubject(1);
@@ -910,11 +913,73 @@ export class ReteNode extends Classic.Node {
 export class NextReteNode extends ReteNode {
     constructor(ide, editor, Component = GPT, id = uuidv4()) {
         super(ide, editor, Component, id);
-        this.addInput("parent", new Classic.Input(this.socket, "parent"));
+        this.addInput("parent", new Classic.Input(this.socket, "parent", true));
         this.addOutput("child", new Classic.Output(this.socket, "child"));
     }
-}
 
+    get _width() {
+        return this.editorNode.width;
+    }
+
+    get _height() {
+        return this.editorNode.height;
+    }
+
+    get x() {
+        // center of parentElement
+        const transform = window.getComputedStyle(
+            this.editorNode.parentElement
+        ).transform;
+
+        // Extract the translate values from the matrix
+        const matrix = transform.match(/matrix\((.+)\)/);
+        if (matrix) {
+            const values = matrix[1].split(", ");
+            let translateX = parseFloat(values[4]);
+
+            return translateX + this.width / 2;
+        }
+    }
+
+    get y() {
+        // center of parentElement
+        const transform = window.getComputedStyle(
+            this.editorNode.parentElement
+        ).transform;
+
+        // Extract the translate values from the matrix
+        const matrix = transform.match(/matrix\((.+)\)/);
+        if (matrix) {
+            const values = matrix[1].split(", ");
+            let translateY = parseFloat(values[5]);
+
+            return translateY + this.height / 2;
+        }
+    }
+}
+function transformSource(source) {
+    const baseUrl = new URL(".", import.meta.url).href;
+    source = `import { PropagationStopper } from "./mixins.js"\n` + source;
+    return source
+        .replace(
+            /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
+            (match, importList, importPath) => {
+                if (importPath.startsWith(".")) {
+                    const absoluteUrl = new URL(importPath, baseUrl).href;
+                    if (importList) {
+                        return `import ${importList} from "${absoluteUrl}"`;
+                    } else {
+                        return `import "${absoluteUrl}"`;
+                    }
+                }
+                return match;
+            }
+        )
+        .replace(
+            "extends LitElement",
+            "extends PropagationStopper(LitElement)"
+        );
+}
 export class NextLitNode extends Node {
     static get styles() {
         return css`
@@ -928,13 +993,37 @@ export class NextLitNode extends Node {
             }
         `;
     }
+
+    static get properties() {
+        return {
+            ...super.properties,
+            element: { type: Object },
+            input: { type: Object },
+            output: { type: Object },
+            owners: { type: Array },
+            assets: { type: Array },
+            error: { type: Error },
+        };
+    }
+
     async firstUpdated() {
         await this.updateComplete;
 
         this.data.editorNode = this;
     }
 
-    // ...
+    updated(changedProperties) {
+        super.updated(changedProperties);
+        if (this.element) {
+            this.element.input = this.input;
+            this.element.owners = this.owners;
+            this.element.assets = this.assets;
+        }
+
+        if (changedProperties.has("error")) {
+            console.error(this.error);
+        }
+    }
 
     async connectedCallback() {
         super.connectedCallback();
@@ -942,27 +1031,19 @@ export class NextLitNode extends Node {
         // Create a ResizeObserver instance
         this.resizeObserver = new ResizeObserver((entries) => {
             for (let entry of entries) {
-                // Get the previous width and height
-                console.log(
-                    entry,
-                    entry.contentRect.width,
-                    entry.contentRect.height
-                );
+                this.width = entry.contentRect.width;
+                this.height = entry.contentRect.height;
                 const prevWidth = this.parentElement.clientWidth;
                 const prevHeight = this.parentElement.clientHeight;
-                // this.shadowRoot.querySelector(".tracker").style.width =
-                //     entry.contentRect.width + "px";
-                // this.shadowRoot.querySelector(".tracker").style.height =
-                //     entry.contentRect.height + "px";
+                this.shadowRoot.querySelector(".tracker").style.width =
+                    entry.contentRect.width + "px";
+                this.shadowRoot.querySelector(".tracker").style.height =
+                    entry.contentRect.height + "px";
                 this.data.editor.area.resize(
                     this.data.id,
                     entry.contentRect.width,
                     entry.contentRect.height
                 );
-
-                // Set the parent element's width and height to match the observed element
-                this.parentElement.style.width = `${entry.contentRect.width}px`;
-                this.parentElement.style.height = `${entry.contentRect.height}px`;
 
                 // Calculate the difference in width and height
                 const diffWidth = entry.contentRect.width - prevWidth;
@@ -988,8 +1069,6 @@ export class NextLitNode extends Node {
                         x: translateX,
                         y: translateY,
                     });
-                    // Update the transform style
-                    this.parentElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
                 }
             }
         });
@@ -998,6 +1077,18 @@ export class NextLitNode extends Node {
         this.resizeObserver.observe(
             this.shadowRoot.querySelector("bespeak-compass")
         );
+
+        if (!this.eventsInit) {
+            this.eventsInit = true;
+
+            ["pointerdown", "wheel", "dblclick", "contextmenu"].forEach((e) => {
+                this.addEventListener(e, (e) => {
+                    if (e.target === this) {
+                        // this.stopPropagation(e);
+                    }
+                });
+            });
+        }
     }
 
     disconnectedCallback() {
@@ -1009,8 +1100,99 @@ export class NextLitNode extends Node {
         }
     }
 
+    stopPropagation(event) {
+        const rect = this.getBoundingClientRect();
+        const containerStyle = window.getComputedStyle(
+            this.shadowRoot.querySelector(".container")
+        );
+
+        // Fetch and parse the padding
+        const paddingLeft = parseFloat(containerStyle.paddingLeft);
+        const paddingTop = parseFloat(containerStyle.paddingTop);
+        const paddingRight = parseFloat(containerStyle.paddingRight);
+        const paddingBottom = parseFloat(containerStyle.paddingBottom);
+
+        const adjustedLeft = rect.left + paddingLeft;
+        const adjustedRight = rect.right - paddingRight;
+        const adjustedTop = rect.top + paddingTop;
+        const adjustedBottom = rect.bottom - paddingBottom;
+        // Check if the event's coordinates are within the adjusted rectangle
+        if (
+            event.clientX >= adjustedLeft &&
+            event.clientX <= adjustedRight &&
+            event.clientY >= adjustedTop &&
+            event.clientY <= adjustedBottom
+        ) {
+            // Prevent other handlers from stopping the default behavior
+            event.stopPropagation();
+        }
+    }
+
     nodeStyles() {
         return "";
+    }
+
+    renderSocket(type, side, data, testId) {
+        return html`
+            <ref-element
+                class="${type}-socket"
+                .data=${{
+                    type: "socket",
+                    side: side,
+                    key: data.label,
+                    nodeId: this.data?.id,
+                    payload: data.socket,
+                }}
+                .emit=${this.emit}
+                data-testid="${testId}">
+            </ref-element>
+        `;
+    }
+
+    async onToggle(face) {
+        const editor = this.shadowRoot.querySelector("bespeak-monaco-editor");
+        if (face === "front") {
+            // Get the source code from the editor
+            editor.visible = false;
+            const sourceCode = editor.getValue();
+
+            // Transform the source code to handle relative imports
+            const transformedSource = transformSource(sourceCode);
+
+            // Create a blob from the transformed source code
+            const blob = new Blob([transformedSource], {
+                type: "text/javascript",
+            });
+
+            // Create a URL for the blob
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Generate a random hex nonce
+            const nonce = Math.floor(Math.random() * 0xfffff).toString(16);
+
+            // Import the module from the blob URL
+            const module = await import(blobUrl);
+            // Create the custom element
+            this.customElement = NextNodeElementWrapper(
+                this,
+                module.default,
+                getSource(blobUrl)
+            );
+            this.source = await getSource(blobUrl)();
+            // Define the custom element
+            customElements.define(
+                `bespeak-custom-${this.customElement.tagName}-${this.data.id}-${nonce}`,
+                this.customElement
+            );
+
+            // Attach the custom element
+            this.element = new this.customElement();
+            this.shadowRoot
+                .querySelector(".container")
+                .replaceChildren(this.element);
+        } else {
+            editor.visible = true;
+        }
     }
 
     render() {
@@ -1075,12 +1257,13 @@ export class NextLitNode extends Node {
                             data-testid="output-socket"></ref-element>`}
                     </div>
                     <div>
-                        <bespeak-flipper class="front">
+                        <bespeak-flipper
+                            class="front"
+                            .onToggle=${this.onToggle.bind(this)}>
                             <div
+                                class="container"
                                 slot="front"
-                                style="width: 300px; height: 600px; background-color: green; padding: 1rem;">
-                                Front
-                            </div>
+                                style="min-width: 300px; min-height: 300px; padding: 1rem;"></div>
                             <div slot="back" style="padding: 1rem">
                                 <bespeak-monaco-editor></bespeak-monaco-editor>
                             </div>

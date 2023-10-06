@@ -4,15 +4,7 @@ import { css, LitElement, html } from "https://esm.sh/lit";
 export const PropagationStopper = dedupeMixin(
     (Base, events = ["pointerdown", "wheel", "dblclick", "contextmenu"]) =>
         class extends Base {
-            static styles = [
-                css`
-                    :host {
-                        user-select: text;
-                    }
-                `,
-
-                ...[Base.styles].flat(),
-            ];
+            static styles = [...[Base.styles].flat()];
             connectedCallback() {
                 super.connectedCallback();
 
@@ -47,6 +39,21 @@ export const PropagationStopper = dedupeMixin(
                     event.clientY >= adjustedTop &&
                     event.clientY <= adjustedBottom
                 ) {
+                    if (this.__propagationException) {
+                        // __propagationException is a dom element. if we're inside it, don't cancel the event
+                        // have to use bounding rectance and event clientX/Y because the event target is the shadow root
+                        const rect =
+                            this.__propagationException.getBoundingClientRect();
+                        if (
+                            event.clientX >= rect.left &&
+                            event.clientX <= rect.right &&
+                            event.clientY >= rect.top &&
+                            event.clientY <= rect.bottom &&
+                            event.type === "wheel"
+                        ) {
+                            return;
+                        }
+                    }
                     // Prevent other handlers from stopping the default behavior
                     event.stopPropagation();
                 }
@@ -64,15 +71,14 @@ export const PropagationStopper = dedupeMixin(
         }
 );
 
-const PropStopper = PropagationStopper(
-    class extends LitElement {
-        render() {
-            return html`<slot></slot>`;
-        }
+class PropStopper extends PropagationStopper(LitElement) {
+    static styles = css``;
+    render() {
+        return html`<slot></slot>`;
     }
-);
+}
 
-customElements.define(`propaagation-stopper`, PropStopper);
+customElements.define(`propagation-stopper`, PropStopper);
 
 export const CardStyleMixin = dedupeMixin(
     (Base) =>
