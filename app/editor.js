@@ -572,7 +572,7 @@ export class Editor extends LitElement {
                         height: 15,
                         side: "SOUTH",
                     };
-                } else if (data.side === "output" && data.key === "child") {
+                } else if (data.side === "output" && data.key === "assets") {
                     return {
                         x: data.width,
                         y: 0,
@@ -580,7 +580,7 @@ export class Editor extends LitElement {
                         height: 15,
                         side: "EAST",
                     };
-                } else if (data.side === "input" && data.key === "parent") {
+                } else if (data.side === "input" && data.key === "owners") {
                     return {
                         x: 0,
                         y: 0,

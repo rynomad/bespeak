@@ -930,8 +930,8 @@ export class NextReteNode extends ReteNode {
 
     constructor(ide, editor, Component = GPT, id = uuidv4()) {
         super(ide, editor, Component, id);
-        this.addInput("parent", new Classic.Input(this.socket, "parent", true));
-        this.addOutput("child", new Classic.Output(this.socket, "child"));
+        this.addInput("owners", new Classic.Input(this.socket, "owners", true));
+        this.addOutput("assets", new Classic.Output(this.socket, "assets"));
         this.hydrate$ = new Stream(this, Object, "node-meta");
         this.removed$ = this.editor.events$.pipe(
             filter(
@@ -1015,7 +1015,16 @@ export class NextReteNode extends ReteNode {
 
                         return { node, connection };
                     });
-                })
+                }),
+                switchMap((nodes) =>
+                    combineLatest(
+                        nodes.map(({ node, connection }) =>
+                            node.editorNode.customElement$.pipe(
+                                map(() => ({ node, connection }))
+                            )
+                        )
+                    )
+                )
             )
             .subscribe((nodes) => {
                 this.editorNode.connectedNodes = nodes;
@@ -1049,6 +1058,8 @@ export class NextLitNode extends Node {
     static get styles() {
         return css`
             :host {
+                max-width: 50vw;
+                max-height: 50vh;
             }
             .tracker {
                 position: relative;
@@ -1169,6 +1180,7 @@ export class NextLitNode extends Node {
 
     constructor() {
         super();
+        this.connectedNodes = [];
         this.output$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
         this.owners$ = new ReplaySubject(1);
@@ -1236,8 +1248,9 @@ export class NextLitNode extends Node {
 
                 this.owners = this.connectedNodes
                     .filter(
-                        ({ connection: { target, targetInput } }) =>
-                            target === this.id && targetInput === "owners"
+                        ({
+                            connection: { target, targetInput, sourceOutput },
+                        }) => target === this.id && sourceOutput === "assets"
                     )
                     .map(({ node }) => node.editorNode.element);
 
@@ -1412,8 +1425,8 @@ export class NextLitNode extends Node {
     }
 
     render() {
-        const parents = this.data?.inputs?.parent || {};
-        const children = this.data?.outputs?.child || {};
+        const owners = this.data?.inputs?.parents || {};
+        const assets = this.data?.outputs?.assets || {};
         const input = this.data?.inputs?.input || {};
         const output = this.data?.outputs?.output || {};
 
@@ -1452,9 +1465,9 @@ export class NextLitNode extends Node {
                             .data=${{
                                 type: "socket",
                                 side: "output",
-                                key: children.label,
+                                key: assets.label,
                                 nodeId: this.data?.id,
-                                payload: children.socket,
+                                payload: assets.socket,
                             }}
                             .emit=${this.emit}
                             data-testid="output-socket"></ref-element>`}
@@ -1465,9 +1478,9 @@ export class NextLitNode extends Node {
                             .data=${{
                                 type: "socket",
                                 side: "input",
-                                key: parents.label,
+                                key: owners.label,
                                 nodeId: this.data?.id,
-                                payload: parents.socket,
+                                payload: owners.socket,
                             }}
                             .emit=${this.emit}
                             data-testid="output-socket"></ref-element>`}

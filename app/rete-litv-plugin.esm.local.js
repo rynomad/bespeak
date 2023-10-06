@@ -3431,7 +3431,7 @@ function setup$3(props) {
         update: function update(context, plugin) {
             var payload = context.data.payload;
             var parent = plugin.parentScope();
-            if (!parent) throw new Error("parent");
+            if (!parent) throw new Error("owners");
             var emit = parent.emit.bind(parent);
             if (context.data.type === "node") {
                 return {

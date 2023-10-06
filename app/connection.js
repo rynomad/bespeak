@@ -36,8 +36,8 @@ export class Connection extends LitElement {
         let [{ x: x1, y: y1 }, { x: x2, y: y2 }] = [this.start, this.end];
 
         if (
-            this.data.sourceOutput === "child" ||
-            this.data.targetInput === "parent"
+            this.data.sourceOutput === "assets" ||
+            this.data.targetInput === "owners"
         ) {
             // x1 += 12;
             // x2 -= 12;

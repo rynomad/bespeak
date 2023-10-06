@@ -22,8 +22,8 @@ export function layout(nodes, connections) {
     // Create parents and inputs maps
     connections.forEach((connection) => {
         if (
-            connection.sourceOutput === "child" &&
-            connection.targetInput === "parent"
+            connection.sourceOutput === "assets" &&
+            connection.targetInput === "owners"
         ) {
             const children = parentsMap.get(connection.source) || new Set();
             children.add(connection.target);

@@ -52,6 +52,10 @@ export const NextNodeElementWrapper = (
             return hardCoded;
         }
 
+        get name() {
+            return this.constructor.name;
+        }
+
         constructor() {
             super();
             this.__wrapMethods();

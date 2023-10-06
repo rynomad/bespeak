@@ -332,7 +332,9 @@ class MySidebar extends LitElement {
                     </div>
                     <div name="Keys">
                         ${repeat(
-                            this.keyNodes,
+                            this.keyNodes.filter(
+                                ({ schema }) => schema?.properties
+                            ),
                             ({ stream }) => stream.node.id,
                             ({
                                 node,
@@ -346,10 +348,10 @@ class MySidebar extends LitElement {
                                     stream.subject.next(event.formData);
                                 }}
                                 .props=${{
-                                    name: this.target?.editorNode?.name,
+                                    name: node.editorNode?.name,
                                     schema,
                                     uiSchema: Object.keys(
-                                        schema.properties
+                                        schema.properties || {}
                                     ).reduce((uiSchema, key) => {
                                         uiSchema[key] = {
                                             "ui:widget": "password",
