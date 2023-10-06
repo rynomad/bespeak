@@ -1143,7 +1143,7 @@ export class NextLitNode extends Node {
 
         this.config$
             .pipe(
-                debug(this, this.config$, "config spy"),
+                debug(this, "config spy"),
                 distinctUntilChanged(deepEqual),
                 takeUntil(this.data.removed$),
                 tap((config) => {

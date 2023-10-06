@@ -151,8 +151,7 @@ class MySidebar extends LitElement {
                 filter(() => !this.mouseInSidebar),
                 withLatestFrom(this.editor$),
 
-                switchScan(async (acc, [event, { editor, devEditor }]) => {
-                    acc.forEach((sub) => sub.unsubscribe());
+                scan((acc, [event, { editor, devEditor }]) => {
                     let target = null;
                     let hide = true;
                     if (event.type === "chat-focus") {
@@ -165,16 +164,21 @@ class MySidebar extends LitElement {
 
                     this.target = target;
                     if (target && target.editorNode.configSchema$) {
+                        acc.forEach((sub) => sub.unsubscribe());
                         acc = [
                             target.editorNode.configSchema$.subscribe(
                                 this.configSchema$
                             ),
                             target.editorNode.config$
                                 .pipe(take(1))
-                                .subscribe(this.config$),
-                            this.config$.subscribe((config) =>
-                                target.editorNode.config$.next(config)
-                            ),
+                                .subscribe((config) =>
+                                    this.config$.next(config)
+                                ),
+                            this.config$
+                                .pipe(distinctUntilChanged())
+                                .subscribe((config) =>
+                                    target.editorNode.config$.next(config)
+                                ),
                         ];
                         this.show();
                         this.requestUpdate();
@@ -189,6 +193,7 @@ class MySidebar extends LitElement {
 
         this.configSchema$
             .pipe(
+                distinctUntilChanged(),
                 debug(this, "sidebar parameters spy"),
                 tap((schema) => {
                     this.configSchema = schema;
@@ -198,6 +203,7 @@ class MySidebar extends LitElement {
 
         this.config$
             .pipe(
+                distinctUntilChanged(),
                 debug(this, "sidebar config spy"),
                 tap((config) => {
                     this.config = config;
