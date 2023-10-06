@@ -9,6 +9,7 @@ import "./react.js";
 export function setSubmitButtonOptions(uiSchema, options) {
     const newUiSchema = uiSchema || {};
     newUiSchema["ui:submitButtonOptions"] = {
+        showSubmitButton: false, // Set default behavior to not show the submit button
         ...newUiSchema["ui:submitButtonOptions"], // Preserve existing options if they exist
         ...options, // Merge with new options
     };
@@ -71,9 +72,13 @@ export const RJSFComponent = CardStyleMixin(
                         ...this.reactWrapper.props,
                         ...this.props,
                         schema: this.schema,
-                        uiSchema: this.uiSchema,
+                        uiSchema: setSubmitButtonOptions(
+                            this.uiSchema || {},
+                            {}
+                        ),
                         formData: this.formData,
                         onChange: this.onChange,
+                        children: true,
                     };
                 }
             }
@@ -92,6 +97,7 @@ export const RJSFComponent = CardStyleMixin(
                             submitText: "REMOVE THIS BUTTON IT DOES NOTHING",
                         }
                     ),
+                    children: true,
                     onChange: this.onChange,
                 };
                 console.log(reactWrapper.props);
