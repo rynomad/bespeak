@@ -1070,6 +1070,7 @@ export class NextLitNode extends Node {
             owners: { type: Array },
             assets: { type: Array },
             error: { type: Error },
+            customElement: { type: Object },
             connectedNodes: { type: Array },
             inputSchema: {
                 type: Object,
@@ -1095,7 +1096,7 @@ export class NextLitNode extends Node {
     }
 
     get name() {
-        return this.element?.name;
+        return this.customElement?.name;
     }
 
     get id() {
@@ -1104,7 +1105,8 @@ export class NextLitNode extends Node {
 
     async firstUpdated() {
         await this.updateComplete;
-
+        this.keysSchema$.next({});
+        this.keys$.next({});
         this.data.editorNode = this;
 
         this.data.hydrate$.subject
@@ -1112,7 +1114,8 @@ export class NextLitNode extends Node {
                 filter((value) => value && value.source),
                 take(1),
                 tap((value) => {
-                    const { source, output, inputSchema, config, keys } = value;
+                    const { source, output, inputSchema, config, keysSchema } =
+                        value;
                     if (source) {
                         this.source = source;
                     }
@@ -1126,9 +1129,9 @@ export class NextLitNode extends Node {
                         this.config = config;
                         this.config$.next(config);
                     }
-                    if (keys) {
-                        this.keys = keys;
-                        this.keys$.next(keys);
+                    if (keysSchema) {
+                        this.keysSchema = keysSchema;
+                        this.keysSchema$.next(keysSchema);
                     }
                 })
             )
@@ -1144,13 +1147,18 @@ export class NextLitNode extends Node {
             )
             .subscribe();
 
-        merge(
-            this.output$,
-            this.inputSchema$,
-            this.source$,
-            this.config$,
-            this.keys$
-        )
+        this.keys$
+            .pipe(
+                debug(this, "keys spy"),
+                distinctUntilChanged(deepEqual),
+                takeUntil(this.data.removed$),
+                tap((keys) => {
+                    this.keys = keys;
+                })
+            )
+            .subscribe();
+
+        merge(this.output$, this.inputSchema$, this.source$, this.config$)
             .pipe(
                 debounceTime(100),
                 map(() => this.serialize()),
@@ -1170,6 +1178,7 @@ export class NextLitNode extends Node {
         this.inputSchema$ = new ReplaySubject(1);
         this.configSchema$ = new ReplaySubject(1);
         this.keysSchema$ = new ReplaySubject(1);
+        this.customElement$ = new ReplaySubject(1);
     }
 
     serialize() {
@@ -1179,7 +1188,7 @@ export class NextLitNode extends Node {
             output: this.output,
             inputSchema: this.inputSchema,
             config: this.config,
-            keys: this.keys,
+            keysSchema: this.keysSchema,
         };
     }
 
@@ -1210,6 +1219,10 @@ export class NextLitNode extends Node {
 
         if (changedProperties.has("inputSchema")) {
             this.inputSchema$.next(this.inputSchema);
+        }
+
+        if (changedProperties.has("customElement")) {
+            this.customElement$.next(this.customElement);
         }
 
         if (changedProperties.has("connectedNodes")) {

@@ -6,7 +6,7 @@ import {
     filter,
     scan,
     tap,
-    switchScan,
+    debounceTime,
     combineLatest,
     distinctUntilChanged,
     withLatestFrom,
@@ -14,6 +14,7 @@ import {
     map,
     take,
 } from "https://esm.sh/rxjs@7.3.0";
+import { Stream } from "./stream.js";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import "./tabs.js";
 import "./yaml.js";
@@ -23,6 +24,7 @@ import { Types } from "./types.js";
 
 import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
+import { NextReteNode } from "./node.js";
 class MySidebar extends LitElement {
     static get properties() {
         return {
@@ -148,13 +150,25 @@ class MySidebar extends LitElement {
                         event.type === "saved" || event.type === "hydrated"
                 ),
                 withLatestFrom(this.editor$),
+                debounceTime(200),
                 switchMap(([_, { editor }]) => {
-                    const nodes = editor.editor.getNodes();
+                    const nodes = editor.editor
+                        .getNodes()
+                        .filter((n) => n instanceof NextReteNode);
 
+                    return combineLatest(
+                        nodes.map((n) =>
+                            n.editorNode.customElement$.pipe(map((data) => n))
+                        )
+                    );
+                }),
+                switchMap((nodes) => {
                     const unique = new Map();
-                    nodes.forEach((node) => {
-                        unique.set(node.editorNode.name, node);
-                    });
+                    nodes
+                        .filter((node) => node.editorNode.name)
+                        .forEach((node) => {
+                            unique.set(node.editorNode.name, node);
+                        });
 
                     this.keySchemaNodes = Array.from(unique.values());
                     return combineLatest(
@@ -167,10 +181,11 @@ class MySidebar extends LitElement {
                                     keys,
                                     stream: new Stream(
                                         {
-                                            ...node,
-                                            id: "keys-" + node.editorNode.name,
+                                            ...n,
+                                            db: n.db,
+                                            id: "keys-",
                                         },
-                                        { schema, name: node.editorNode.name }
+                                        { schema, name: n.editorNode.name }
                                     ),
                                 }))
                             )
@@ -179,7 +194,12 @@ class MySidebar extends LitElement {
                 }),
                 tap((nodes) => {
                     this.keyNodes = nodes;
-                })
+                }),
+                scan((acc, nodes) => {
+                    acc.forEach((sub) => sub.unsubscribe());
+                    acc = nodes.map(({ stream }) => stream.subject.subscribe());
+                    return acc;
+                }, [])
             )
             .subscribe();
 
@@ -261,11 +281,11 @@ class MySidebar extends LitElement {
     }
 
     get tabs() {
-        return ["Config", "Global", "Types"];
+        return ["Config", "Keys", "Types"];
     }
 
     get openTab() {
-        return this.tabs[this.activeTabIndex] || "Global";
+        return this.tabs[this.activeTabIndex] || "Keys";
     }
 
     render() {

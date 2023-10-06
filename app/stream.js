@@ -108,6 +108,9 @@ export class Stream {
                         id: this.id,
                         data: value,
                     })
+                    .then(() => {
+                        console.log(this.id, "saved to db", value);
+                    })
                     .catch((error) => {
                         console.warn("error saving stream to db", error);
                     });
