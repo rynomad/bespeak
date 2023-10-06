@@ -1147,6 +1147,7 @@ export class NextLitNode extends Node {
                 })
             )
             .subscribe();
+
         this.config$
             .pipe(
                 debug(this, "config spy"),
@@ -1173,6 +1174,7 @@ export class NextLitNode extends Node {
             .pipe(
                 debounceTime(100),
                 map(() => this.serialize()),
+                filter(() => this.source),
                 takeUntil(this.data.removed$)
             )
             .subscribe(this.data.hydrate$.subject);
@@ -1181,6 +1183,8 @@ export class NextLitNode extends Node {
     constructor() {
         super();
         this.connectedNodes = [];
+        this.owners = [];
+        this.assets = [];
         this.output$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
         this.owners$ = new ReplaySubject(1);
@@ -1213,6 +1217,20 @@ export class NextLitNode extends Node {
             this.element.assets = this.assets;
             this.element.config = this.config;
             this.element.keys = this.keys;
+            this.element.output = this.output;
+        }
+
+        if (
+            !changedProperties.has("owners") &&
+            !changedProperties.has("assets")
+        ) {
+            this.owners.forEach((owner) => {
+                owner.assets = Array.from(owner.assets);
+            });
+
+            this.assets.forEach((asset) => {
+                asset.owners = Array.from(asset.owners);
+            });
         }
 
         if (changedProperties.has("error")) {
@@ -1257,23 +1275,30 @@ export class NextLitNode extends Node {
                 if (this.inputSubscription) {
                     this.inputSubscription.unsubscribe();
                 }
+                const inputs = this.connectedNodes.filter(
+                    ({ connection: { target, targetInput } }) =>
+                        target === this.id && targetInput === "input"
+                );
 
-                // TODO this may lock if an upstream node never provides output
-                this.inputSubscription = combineLatest(
-                    this.connectedNodes
-                        .filter(
-                            ({ connection: { target, targetInput } }) =>
-                                target === this.id && targetInput === "input"
-                        )
-                        .sort((a, b) => a.node.id.localeCompare(b.node.id))
-                        .map(({ node }) => node.editorNode.output$)
-                )
-                    .pipe(map(this.deepMerge))
-                    .subscribe((data) => {
-                        this.input = data;
-                        this.inputSchema = generateSchemaFromValue(data);
-                    });
-
+                if (inputs.length) {
+                    // TODO this may lock if an upstream node never provides output
+                    this.inputSubscription = combineLatest(
+                        inputs
+                            .sort((a, b) => a.node.id.localeCompare(b.node.id))
+                            .map(({ node }) => node.editorNode.output$)
+                    )
+                        .pipe(map(this.deepMerge))
+                        .subscribe((data) => {
+                            this.input = data;
+                            this.inputSchema = generateSchemaFromValue(data);
+                        });
+                } else {
+                    this.input = {};
+                    this.inputSchema = {
+                        type: "object",
+                        additionalProperties: true,
+                    };
+                }
                 this.requestUpdate();
             }
         }
