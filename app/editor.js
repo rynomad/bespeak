@@ -467,6 +467,7 @@ export class Editor extends LitElement {
         };
 
         await this.ide.db.put("workspaces", snapshot);
+        this.events$.next({ type: "saved" });
     }
 
     disconnectedCallback() {

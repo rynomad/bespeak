@@ -1094,6 +1094,10 @@ export class NextLitNode extends Node {
         };
     }
 
+    get name() {
+        return this.element?.name;
+    }
+
     get id() {
         return this.data.id;
     }

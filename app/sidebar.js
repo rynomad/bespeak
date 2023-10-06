@@ -1,4 +1,5 @@
 import { html, css, LitElement } from "https://esm.sh/lit@2.0.2";
+import { repeat } from "https://esm.sh/lit/directives/repeat.js";
 import {
     Subject,
     switchMap,
@@ -10,6 +11,7 @@ import {
     distinctUntilChanged,
     withLatestFrom,
     merge,
+    map,
     take,
 } from "https://esm.sh/rxjs@7.3.0";
 import { deepEqual } from "https://esm.sh/fast-equals";
@@ -31,6 +33,7 @@ class MySidebar extends LitElement {
                 type: Object,
                 hasChanged: (n, o) => !deepEqual(o, n),
             },
+            keyNodes: { type: Array },
             target: { type: Object },
         };
     }
@@ -117,6 +120,7 @@ class MySidebar extends LitElement {
         this.inputs$ = new Subject();
         this.outputs$ = new Subject();
         this.types = Types;
+        this.keyNodes = [];
         this.hide();
     }
 
@@ -135,6 +139,50 @@ class MySidebar extends LitElement {
         this.addEventListener("mouseout", () => (this.mouseInSidebar = false));
 
         await this.updateComplete;
+
+        this.editor$
+            .pipe(
+                switchMap(({ editor, devEditor }) => editor.events$),
+                filter(
+                    (event) =>
+                        event.type === "saved" || event.type === "hydrated"
+                ),
+                withLatestFrom(this.editor$),
+                switchMap(([_, { editor }]) => {
+                    const nodes = editor.editor.getNodes();
+
+                    const unique = new Map();
+                    nodes.forEach((node) => {
+                        unique.set(node.editorNode.name, node);
+                    });
+
+                    this.keySchemaNodes = Array.from(unique.values());
+                    return combineLatest(
+                        this.keySchemaNodes.map((n) =>
+                            n.editorNode.keysSchema$.pipe(
+                                withLatestFrom(n.editorNode.keys$),
+                                map(([schema, keys]) => ({
+                                    node: n,
+                                    schema,
+                                    keys,
+                                    stream: new Stream(
+                                        {
+                                            ...node,
+                                            id: "keys-" + node.editorNode.name,
+                                        },
+                                        { schema, name: node.editorNode.name }
+                                    ),
+                                }))
+                            )
+                        )
+                    );
+                }),
+                tap((nodes) => {
+                    this.keyNodes = nodes;
+                })
+            )
+            .subscribe();
+
         this.editor$
             .pipe(
                 switchMap(({ editor, devEditor }) =>
@@ -262,12 +310,34 @@ class MySidebar extends LitElement {
                                 formData: this.config || {},
                             }}></bespeak-form>
                     </div>
-                    <div name="Global">
-                        ${this.globals?.map(
-                            (entry) =>
-                                html`<bespeak-form
-                                    nodeId=${entry.node.id}
-                                    .props=${entry}></bespeak-form>`
+                    <div name="Keys">
+                        ${repeat(
+                            this.keyNodes,
+                            ({ stream }) => stream.node.id,
+                            ({
+                                node,
+                                schema,
+                                keys,
+                                stream,
+                            }) => html`<bespeak-form
+                                nodeId=${this.target?.id}
+                                .onChange=${(event) => {
+                                    node.editorNode.keys$.next(event.formData);
+                                    stream.subject.next(event.formData);
+                                }}
+                                .props=${{
+                                    name: this.target?.editorNode?.name,
+                                    schema,
+                                    uiSchema: Object.keys(
+                                        schema.properties
+                                    ).reduce((uiSchema, key) => {
+                                        uiSchema[key] = {
+                                            "ui:widget": "password",
+                                        };
+                                        return uiSchema;
+                                    }, {}),
+                                    formData: keys,
+                                }}></bespeak-form>`
                         )}
                     </div>
 
