@@ -8,6 +8,7 @@ export class Connection extends LitElement {
             pointer-events: none;
             width: 9999px;
             height: 9999px;
+            z-index: -1;
         }
         path {
             fill: none;

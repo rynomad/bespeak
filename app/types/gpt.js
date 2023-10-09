@@ -119,7 +119,7 @@ export const API_KEY = {
         $schema: "http://json-schema.org/draft-07/schema#",
         type: "object",
         properties: {
-            api_key: {
+            apiKey: {
                 type: "string",
                 title: "Key",
                 minLength: 51,
@@ -127,7 +127,7 @@ export const API_KEY = {
                 description: "https://platform.openai.com/account/api-keys",
             },
         },
-        required: ["api_key"],
+        required: ["apiKey"],
     },
     uiSchema: {
         api_key: {

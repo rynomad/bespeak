@@ -628,13 +628,13 @@ export class ReteNode extends Classic.Node {
     }
 
     get width() {
-        return this.component.parentElement
+        return this.component?.parentElement
             ? this.component.parentElement.clientWidth
             : 0;
     }
 
     get height() {
-        return this.component.parentElement
+        return this.component?.parentElement
             ? this.component.parentElement.clientHeight
             : 0;
     }
@@ -723,7 +723,7 @@ export class ReteNode extends Classic.Node {
         };
     }
 
-    constructor(ide, editor, Component = GPT, id = uuidv4()) {
+    constructor(ide, editor, Component, id = uuidv4()) {
         super();
         this.id = id;
         this.ide = ide;
@@ -739,10 +739,10 @@ export class ReteNode extends Classic.Node {
         this.parameters$ = new ReplaySubject(1);
 
         this.setupInputs();
-        this.setupGlobals();
+        // this.setupGlobals();
         // this.setupParameters();
-        this.setupCleanup();
-        this.setupComponent();
+        // this.setupCleanup();
+        // this.setupComponent();
     }
 
     setupComponent() {
@@ -928,8 +928,8 @@ export class NextReteNode extends ReteNode {
         };
     }
 
-    constructor(ide, editor, Component = GPT, id = uuidv4()) {
-        super(ide, editor, Component, id);
+    constructor(ide, editor, source, id = uuidv4()) {
+        super(ide, editor, source, id);
         this.addInput("owners", new Classic.Input(this.socket, "owners", true));
         this.addOutput("assets", new Classic.Output(this.socket, "assets"));
         this.hydrate$ = new Stream(this, Object, "node-meta");
@@ -940,6 +940,10 @@ export class NextReteNode extends ReteNode {
             ),
             shareReplay(1)
         );
+
+        if (source) {
+            this.source = source;
+        }
     }
 
     get _width() {
@@ -1031,6 +1035,7 @@ export class NextReteNode extends ReteNode {
             });
     }
 }
+
 function transformSource(source) {
     const baseUrl = new URL(".", import.meta.url).href;
     source = `import { PropagationStopper } from "./mixins.js"\n` + source;
@@ -1119,6 +1124,9 @@ export class NextLitNode extends Node {
         this.keysSchema$.next({});
         this.keys$.next({});
         this.data.editorNode = this;
+        if (this.data.source) {
+            this.source = this.data.source;
+        }
 
         this.data.hydrate$.subject
             .pipe(
@@ -1175,9 +1183,14 @@ export class NextLitNode extends Node {
                 debounceTime(100),
                 map(() => this.serialize()),
                 filter(() => this.source),
+                tap(this.propagateOwnersAndAssets.bind(this)),
                 takeUntil(this.data.removed$)
             )
             .subscribe(this.data.hydrate$.subject);
+    }
+
+    get selected() {
+        return this.data?.selected;
     }
 
     constructor() {
@@ -1224,13 +1237,7 @@ export class NextLitNode extends Node {
             !changedProperties.has("owners") &&
             !changedProperties.has("assets")
         ) {
-            this.owners.forEach((owner) => {
-                owner.assets = Array.from(owner.assets);
-            });
-
-            this.assets.forEach((asset) => {
-                asset.owners = Array.from(asset.owners);
-            });
+            this.propagateOwnersAndAssets();
         }
 
         if (changedProperties.has("error")) {
@@ -1272,6 +1279,8 @@ export class NextLitNode extends Node {
                     )
                     .map(({ node }) => node.editorNode.element);
 
+                setTimeout(this.propagateOwnersAndAssets.bind(this), 100);
+
                 if (this.inputSubscription) {
                     this.inputSubscription.unsubscribe();
                 }
@@ -1310,6 +1319,16 @@ export class NextLitNode extends Node {
         if (changedProperties.has("keysSchema") && this.keysSchema) {
             this.keysSchema$.next(this.keysSchema);
         }
+    }
+
+    propagateOwnersAndAssets() {
+        this.owners.forEach((owner) => {
+            owner.assets = Array.from(owner.assets);
+        });
+
+        this.assets.forEach((asset) => {
+            asset.owners = Array.from(asset.owners);
+        });
     }
 
     deepMerge(objects) {
@@ -1518,8 +1537,8 @@ export class NextLitNode extends Node {
                             <div
                                 class="container"
                                 slot="front"
-                                style="min-width: 300px; min-height: 300px; padding: 1rem;"></div>
-                            <div slot="back" style="padding: 1rem">
+                                style="min-width: 300px; min-height: 300px; padding: 1.5rem;"></div>
+                            <div slot="back" style="padding: 1.5rem">
                                 <bespeak-monaco-editor
                                     .value=${this
                                         .source}></bespeak-monaco-editor>
@@ -1534,12 +1553,4 @@ export class NextLitNode extends Node {
 
 customElements.define("bespeak-next-node", NextLitNode);
 
-ReteNode.registerComponent(GPT);
-ReteNode.registerComponent(ChatFlowInput);
-ReteNode.registerComponent(ChatFlowOutput);
-ReteNode.registerComponent(DevDefault);
-// ReteNode.registerComponent(FrequencyTable);
-// ReteNode.registerComponent(CodeFrequencyTable);
-ReteNode.registerComponent(Custom);
-ReteNode.registerComponent(NodeMakerGPT);
-// ReteNode.registerComponent(Puppeteer);
+NextReteNode.registerComponent(GPT);

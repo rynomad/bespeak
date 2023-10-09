@@ -223,7 +223,7 @@ class MySidebar extends LitElement {
                     let target = null;
                     let hide = true;
                     if (event.type === "chat-focus") {
-                        target = devEditor.findConfigurable();
+                        target = devEditor.selected();
                     } else if (event.type === "chat-blur") {
                         target = editor.selected();
                     } else {

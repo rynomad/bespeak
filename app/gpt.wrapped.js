@@ -1,6 +1,6 @@
 import ChatGPT, { quine } from "./gpt.js";
-import { ComponentMixin } from "./component.js";
+import { NextNodeElementWrapper } from "./node-element-wrapper.js";
 
-export const GPT = ComponentMixin(ChatGPT, undefined, quine, true);
+export const GPT = NextNodeElementWrapper(undefined, ChatGPT, quine, true);
 
 customElements.define("bespeak-gpt-node", GPT);

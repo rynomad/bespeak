@@ -11,20 +11,20 @@ import {
 import {
     AutoArrangePlugin,
     ArrangeAppliers,
-} from "https://esm.sh/rete-auto-arrange-plugin";
-import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin@2.0.0";
+} from "https://esm.sh/rete-auto-arrange-plugin?deps=rete-area-plugin@2.0.0";
+import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin@2.0.0?deps=rete-area-plugin@2.0.0";
 import { ChatFlowInput, Node, ChatFlowOutput } from "./node.js";
 import { BetterDomSocketPosition } from "./socket-position.js";
 import { Connection } from "./connection.js";
-import { structures } from "https://esm.sh/rete-structures";
+import { structures } from "https://esm.sh/rete-structures?deps=rete-area-plugin@2.0.0";
 import {
     ContextMenuPlugin,
     Presets as ContextMenuPresets,
-} from "https://esm.sh/rete-context-menu-plugin";
+} from "https://esm.sh/rete-context-menu-plugin?deps=rete-area-plugin@2.0.0";
 import {
     ConnectionPlugin,
     Presets as ConnectionPresets,
-} from "https://esm.sh/rete-connection-plugin";
+} from "https://esm.sh/rete-connection-plugin?deps=rete-area-plugin@2.0.0";
 
 import {
     Subject,
@@ -422,27 +422,27 @@ export class Editor extends LitElement {
         }
     }
 
-    findConfigurable(nodes) {
-        nodes ||= this.structures.roots().nodes();
+    // findConfigurable(nodes) {
+    //     nodes ||= this.structures.roots().nodes();
 
-        if (nodes.length === 0) {
-            return null;
-        }
+    //     if (nodes.length === 0) {
+    //         return null;
+    //     }
 
-        for (const node of nodes) {
-            for (const param of node.Component.parameters || []) {
-                if (param.type === CONFIG.type) {
-                    return node;
-                }
-            }
-        }
+    //     for (const node of nodes) {
+    //         for (const param of node.Component.parameters || []) {
+    //             if (param.type === CONFIG.type) {
+    //                 return node;
+    //             }
+    //         }
+    //     }
 
-        const next = nodes
-            .map((node) => this.structures.outgoers(node.id).nodes())
-            .flat();
+    //     const next = nodes
+    //         .map((node) => this.structures.outgoers(node.id).nodes())
+    //         .flat();
 
-        return this.findConfigurable(next);
-    }
+    //     return this.findConfigurable(next);
+    // }
 
     selected() {
         return this.editor.getNodes().find((node) => node.selected);
@@ -701,17 +701,20 @@ export class Editor extends LitElement {
         event.preventDefault();
     }
 
-    handleDrop(event) {
+    async handleDrop(event) {
         event.preventDefault();
-        // const componentName = event.dataTransfer.getData("text/plain");
-        // const component = NextReteNode.components.get(componentName);
-        // if (component) {
-        //     const node = new ReteNode(this.ide, this, Custom);
-        //     node.component.customElement =
-        //         component === Custom ? Example : component;
-        //     this.addNode(node, null, true);
-        // }
-        const next = new NextReteNode(this.ide, this, Custom);
+        const componentName = event.dataTransfer.getData("text/plain");
+        const component = NextReteNode.components.get(componentName);
+        if (component) {
+            const node = new NextReteNode(
+                this.ide,
+                this,
+                await component.quine()
+            );
+            this.addNode(node, null, true);
+            return;
+        }
+        const next = new NextReteNode(this.ide, this);
         this.addNode(next); //, null, true);
     }
 

@@ -57,7 +57,24 @@ export const adaptiveDebounce = (minTime, maxTime, increment) => {
         });
     };
 };
+export function extractCodeBlocks(text) {
+    // The '^' character asserts start of a line due to the 'm' flag
+    const regex = /^```(\w*\n)?([\s\S]*?)```/gm;
+    let match;
+    const codeBlocks = [];
 
+    while ((match = regex.exec(text)) !== null) {
+        let language = match[1]?.trim() || "plaintext";
+        let codeBlock = match[2];
+
+        // Check if the code block is valid, e.g. not an empty string
+        if (codeBlock.trim().length > 0) {
+            codeBlocks.push(codeBlock);
+        }
+    }
+
+    return codeBlocks;
+}
 const switchMapToLatest = (asyncTask) => (source) => {
     let pending = false;
     let latestValue = null;
@@ -194,6 +211,14 @@ export function getSource(url) {
         const source = await response.text();
         return source;
     };
+}
+
+export async function importFromString(source) {
+    const blob = new Blob([source], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    const module = await import(url);
+    URL.revokeObjectURL(url);
+    return module;
 }
 
 export function generateSchemaFromValue(value) {

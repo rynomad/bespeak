@@ -1,3 +1,8 @@
+import jscodeshift from "https://esm.sh/jscodeshift";
+import { importFromString } from "./util.js";
+import { LitElement } from "https://esm.sh/lit";
+import OpenAI from "https://esm.sh/openai";
+
 export const NextNodeElementWrapper = (
     node,
     Base,
@@ -16,6 +21,7 @@ export const NextNodeElementWrapper = (
                 error: { type: Error },
                 config: { type: Object },
                 keys: { type: Array },
+                source: { type: String },
             };
         }
 
@@ -56,21 +62,138 @@ export const NextNodeElementWrapper = (
             return this.constructor.name;
         }
 
+        get id() {
+            return node.id;
+        }
+
         constructor() {
             super();
-            this.__wrapMethods();
+            // this.__wrapMethods();
         }
 
         updated(changedProperties) {
             if (
                 changedProperties.has("error") ||
-                changedProperties.has("output")
+                changedProperties.has("output") ||
+                changedProperties.has("source")
             ) {
                 node.error = this.error;
                 node.output = this.output;
+                node.source = this.source;
             }
 
             super.updated(changedProperties);
+        }
+
+        async codeShift({ transformString }) {
+            const { default: transform } = await importFromString(
+                transformString
+            );
+            const source = this.source;
+            this.source = await transform(jscodeshift, source);
+        }
+
+        get api() {
+            const litElementMethods = Object.getOwnPropertyNames(
+                LitElement.prototype
+            );
+            let proto = Object.getPrototypeOf(this);
+            const api = [];
+
+            // while (proto && proto.constructor.name !== "LitElement") {
+            //     const methods = Object.getOwnPropertyNames(proto).filter(
+            //         (name) =>
+            //             !name.startsWith("__") &&
+            //             typeof proto[name] === "function" &&
+            //             !litElementMethods.includes(name)
+            //     );
+
+            //     for (const method of methods) {
+            //         api.push({
+            //             description: proto[method].toString(),
+            //             name: method,
+            //             parameters: {
+            //                 type: "object",
+            //                 properties: {
+            //                     arguments: { type: "object" },
+            //                 },
+            //             },
+            //         });
+            //     }
+
+            //     proto = Object.getPrototypeOf(proto);
+            // }
+
+            return api;
+        }
+
+        async gpt(
+            apiKey,
+            { model = "gpt-4", temperature = 0.4, n = 1, messages = [] } = {},
+            cb = () => {}
+        ) {
+            const options = {
+                model,
+                temperature,
+                n,
+                // functions,
+                // function_call,
+                messages,
+            };
+            const openai = new OpenAI({
+                apiKey,
+                dangerouslyAllowBrowser: true,
+            });
+            const remainder = n - 1;
+
+            const streamOptions = {
+                ...options,
+                stream: true,
+                n: 1,
+            };
+
+            const stream = await openai.chat.completions.create(streamOptions);
+
+            let streamContent = "";
+
+            const remainderResponses = [];
+            for (let i = 0; i < remainder; i += 10) {
+                const batchSize = Math.min(remainder - i, 10);
+                const remainderOptions = {
+                    ...options,
+                    n: batchSize,
+                };
+                remainderResponses.push(
+                    openai.chat.completions.create(remainderOptions)
+                );
+            }
+
+            const allResponses = (
+                await Promise.all([
+                    (async () => {
+                        for await (const part of stream) {
+                            const delta = part.choices[0]?.delta?.content || "";
+                            streamContent += delta;
+                            cb(streamContent);
+                        }
+                        return streamContent;
+                    })(),
+                    Promise.all(remainderResponses).then((responses) => {
+                        return responses.flatMap((e) =>
+                            e.choices.map((e) => e.message.content)
+                        );
+                    }),
+                ])
+            )
+                .flat()
+                .map((content) => ({
+                    role: "assistant",
+                    content,
+                }));
+
+            this.chat_output = {
+                messages: [...messages, allResponses],
+            };
         }
 
         __wrapMethods() {

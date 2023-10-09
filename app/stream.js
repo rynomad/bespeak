@@ -96,7 +96,7 @@ export class Stream {
             initialValue = defaultValue;
             Stream.storage.add(initialValue);
         } else {
-            this.node.component.__locals.set(this.id, initialValue);
+            // this.node.component.__locals.set(this.id, initialValue);
         }
 
         this.subject
