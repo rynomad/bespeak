@@ -29,8 +29,8 @@ export default class ChatGPT extends LitElement {
 
     shouldCallOpenAI(changedProperties) {
         if (
-            changedProperties.has("prompt") &&
-            this.prompt?.content &&
+            this.output?.prompt &&
+            !this.output?.messages &&
             this.keys.apiKey &&
             Date.now() - this.start > 1000
         ) {
@@ -47,7 +47,6 @@ export default class ChatGPT extends LitElement {
             config,
             keys: { apiKey },
             input,
-            prompt,
         } = this;
         const messages = (input.messages || [])
             .map((message) =>
@@ -55,20 +54,24 @@ export default class ChatGPT extends LitElement {
                     ? message
                     : message[0]
             )
-            .concat([prompt])
+            .concat([this.output.prompt])
             .flat();
-
+        const _messages = await this.gpt(
+            apiKey,
+            {
+                ...config,
+                messages,
+            },
+            (response) => {
+                this.output = {
+                    ...this.output,
+                    response,
+                };
+            }
+        );
         this.output = {
-            messages: await this.gpt(
-                apiKey,
-                {
-                    ...config,
-                    messages,
-                },
-                (response) => {
-                    this.response = response;
-                }
-            ),
+            ...this.output,
+            messages: _messages,
         };
 
         this.callInProgress = false;
@@ -85,9 +88,11 @@ export default class ChatGPT extends LitElement {
     `;
 
     handleMessage({ content }) {
-        this.prompt = {
-            role: this.config.role || "user",
-            content,
+        this.output = {
+            prompt: {
+                role: this.config.role || "user",
+                content,
+            },
         };
     }
 
@@ -95,9 +100,9 @@ export default class ChatGPT extends LitElement {
         return html`
             <bespeak-chat
                 .handleMessage=${this.handleMessage.bind(this)}
-                .value=${this.prompt?.content}>
+                .value=${this.output?.prompt?.content}>
             </bespeak-chat>
-            <bespeak-stream-renderer .content=${this.response}>
+            <bespeak-stream-renderer .content=${this.output?.response}>
             </bespeak-stream-renderer>
         `;
     }
