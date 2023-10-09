@@ -197,7 +197,13 @@ class MySidebar extends LitElement {
                 }),
                 scan((acc, nodes) => {
                     acc.forEach((sub) => sub.unsubscribe());
-                    acc = nodes.map(({ stream }) => stream.subject.subscribe());
+                    acc = nodes.map((node) =>
+                        node.stream.subject.subscribe((keys) => {
+                            node.keys = keys;
+                            node.node.editorNode.keys = keys;
+                            this.keyNodes = [...this.keyNodes];
+                        })
+                    );
                     return acc;
                 }, [])
             )
@@ -358,7 +364,7 @@ class MySidebar extends LitElement {
                                         };
                                         return uiSchema;
                                     }, {}),
-                                    formData: keys,
+                                    formData: stream.formData || keys,
                                 }}></bespeak-form>`
                         )}
                     </div>

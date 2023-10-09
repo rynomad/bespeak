@@ -2,6 +2,7 @@ import jscodeshift from "https://esm.sh/jscodeshift";
 import { importFromString } from "./util.js";
 import { LitElement } from "https://esm.sh/lit";
 import OpenAI from "https://esm.sh/openai";
+import debounce from "https://esm.sh/lodash/debounce";
 
 export const NextNodeElementWrapper = (
     node,
@@ -70,7 +71,7 @@ export const NextNodeElementWrapper = (
             super();
             // this.__wrapMethods();
         }
-
+        __accumulatedProperties = new Map();
         updated(changedProperties) {
             if (
                 changedProperties.has("error") ||
@@ -82,8 +83,20 @@ export const NextNodeElementWrapper = (
                 node.source = this.source;
             }
 
-            super.updated(changedProperties);
+            for (const [key, value] of changedProperties) {
+                if (!this.__accumulatedProperties.has(key)) {
+                    this.__accumulatedProperties.set(key, value);
+                }
+            }
+            this.__debouncedSuperUpdate();
         }
+
+        __debouncedSuperUpdate = debounce(() => {
+            this.__lastChangedProperties = this.__accumulatedProperties;
+            super.updated(this.__accumulatedProperties);
+            this.__accumulatedProperties = new Map();
+            // Clear the accumulated properties after they've been used
+        }, 500); // Adjust the debounce time as needed
 
         async codeShift({ transformString }) {
             const { default: transform } = await importFromString(
