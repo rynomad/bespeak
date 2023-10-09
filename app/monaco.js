@@ -30,7 +30,7 @@ class MonacoEditor extends LitElement {
             this.shadowRoot.getElementById("editor").classList.add("hidden");
         }
 
-        if (changedProperties.has("value")) {
+        if (changedProperties.has("value") && this.value) {
             this.editor?.setValue(this.value);
         }
     }

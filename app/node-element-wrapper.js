@@ -78,9 +78,9 @@ export const NextNodeElementWrapper = (
                 changedProperties.has("output") ||
                 changedProperties.has("source")
             ) {
-                node.error = this.error;
-                node.output = this.output;
-                node.source = this.source;
+                node.error = this.error || node.error;
+                node.output = this.output || node.output;
+                node.source = this.source || node.source;
             }
 
             for (const [key, value] of changedProperties) {
@@ -204,9 +204,7 @@ export const NextNodeElementWrapper = (
                     content,
                 }));
 
-            this.chat_output = {
-                messages: [...messages, allResponses],
-            };
+            return [...messages, allResponses];
         }
 
         __wrapMethods() {
