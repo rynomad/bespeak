@@ -142,17 +142,25 @@ export const NextNodeElementWrapper = (
 
         async gpt(
             apiKey,
-            { model = "gpt-4", temperature = 0.4, n = 1, messages = [] } = {},
+            {
+                model = "gpt-4",
+                temperature = 0.4,
+                n = 1,
+                messages = [],
+                functions,
+                function_call,
+            } = {},
             cb = () => {}
         ) {
             const options = {
                 model,
                 temperature,
                 n,
-                // functions,
-                // function_call,
+                functions,
+                function_call,
                 messages,
             };
+
             const openai = new OpenAI({
                 apiKey,
                 dangerouslyAllowBrowser: true,

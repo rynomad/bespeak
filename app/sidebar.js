@@ -142,6 +142,8 @@ class MySidebar extends LitElement {
 
         await this.updateComplete;
 
+        let nodesList = [];
+
         this.editor$
             .pipe(
                 switchMap(({ editor, devEditor }) => editor.events$),
@@ -163,6 +165,7 @@ class MySidebar extends LitElement {
                     );
                 }),
                 switchMap((nodes) => {
+                    nodesList = nodes;
                     const unique = new Map();
                     nodes
                         .filter((node) => node.editorNode.name)
@@ -199,8 +202,14 @@ class MySidebar extends LitElement {
                     acc.forEach((sub) => sub.unsubscribe());
                     acc = nodes.map((node) =>
                         node.stream.subject.subscribe((keys) => {
+                            nodesList
+                                .filter(
+                                    (n) =>
+                                        n.editorNode.name ===
+                                        node.node.editorNode.name
+                                )
+                                .forEach((n) => n.editorNode.keys$.next(keys));
                             node.keys = keys;
-                            node.node.editorNode.keys = keys;
                             this.keyNodes = [...this.keyNodes];
                         })
                     );
