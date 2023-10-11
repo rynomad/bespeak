@@ -1,40 +1,5 @@
 import { LitElement, html, css } from "https://esm.sh/lit";
-import OpenAI from "https://esm.sh/openai";
-import { Types } from "./types.js";
-import { quine as example } from "./example.js";
-
-async function generateInstructions(currentNode) {
-    const exampleCode = await example();
-
-    let instructions = `# Instructions for Making a Node\n\n`;
-    instructions += `the user will present a desire, and you will respond with an es6 module with a default export that extends a LitElement conforming to the goal.\n\n`;
-    instructions += `use available types where possible. and if a type is not defined, define one and use it.  your schema must always be an object.\n\n`;
-    instructions += `types are not available via Types.get() until they are used. When defining your own types, always pass the whole type object into the property declaration instead of using Types.get().\n\n`;
-    instructions += `for text input fields, always provide a save button rather than updating reactive properties on change. multiple choice options and toggles may update on change.\n\n`;
-    instructions += `Always endeavor to provide elegant and aesthetically pleasing styling. Your output will stretch to fill its container.\n\n`;
-    instructions += `Always initialize variables in the constructor and use nullish operators when referencing nested values to minimize errors.\n\n`;
-    instructions += `Always use flexbox layouts to ensure that everything you render is displayed in a nice layout.\n\n`;
-    instructions += `Here is an example of how to make a node:\n\n`;
-    instructions += "```javascript\n" + exampleCode + "\n```\n\n";
-
-    instructions += `# Available Types\n\n`;
-    for (const [key, type] of Types.entries()) {
-        instructions += `## ${type.type}\n\n`;
-        instructions += `${type.description}\n\n`;
-        instructions +=
-            "```javascript\n" +
-            JSON.stringify(type.schema, null, 2) +
-            "\n```\n\n";
-    }
-
-    if (currentNode) {
-        instructions += `#Current Node\n\n`;
-        instructions += `this is the node you are working on. unless the users request seems completely incongruent or they tell you to start over, you should iterate on this code.`;
-        instructions += "```javascript\n" + currentNode + "\n```\n\n";
-    }
-
-    return instructions;
-}
+import { CONFIG, API_KEY } from "./types/gpt.js";
 
 function extractCodeBlocks(text) {
     // The '^' character asserts start of a line due to the 'm' flag
@@ -56,132 +21,191 @@ function extractCodeBlocks(text) {
 }
 
 export default class NodeMakerGPT extends LitElement {
+    static config = CONFIG.schema;
+    static keys = API_KEY.schema;
     static get properties() {
         return {
-            chat_input: { type: Types.get("chat") },
-            prompt_input: { type: Types.get("prompt") },
-            config: { type: Types.get("config") },
-            api_key: { type: Types.get("api-key") },
-            response_output: { type: Object },
-            chat_output: { type: Types.get("chat") },
-            component_output: { type: Types.get("component") },
+            assets: { type: Array },
+            chat: { type: Array },
         };
+    }
+
+    static get styles() {
+        return css`
+            .chat-log {
+                display: flex;
+                flex-direction: column;
+                max-height: 80vh;
+                overflow-y: auto;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+            .message {
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .system {
+                background-color: #f0f0f0;
+                color: #333;
+            }
+            .user {
+                background-color: #d9eefa;
+                color: #333;
+                align-self: flex-end;
+            }
+            .assistant {
+                background-color: #fff3cd;
+                color: #333;
+            }
+            .loading-spinner {
+                display: flex;
+                justify-content: center;
+                padding: 10px;
+            }
+        `;
+    }
+
+    constructor() {
+        super();
+        this.chat = [];
     }
 
     updated(changedProperties) {
         super.updated(changedProperties);
-        if (this.shouldCallOpenAI(changedProperties)) {
-            if (this.callInProgress) {
-                this.callPending = true;
-            } else {
-                this.callOpenAI();
+        if (changedProperties.has("assets")) {
+            if (this.assets[0]?.prompt?.content) {
+                this.start(this.assets[0]?.prompt);
+            }
+            if (this.assets[0]?.error) {
+                this.handleError(this.assets[0]?.error);
             }
         }
-    }
 
-    shouldCallOpenAI(changedProperties) {
-        if (this.hasAllInputs && this.didInputsChange && !this.isFromCache) {
-            return true;
+        if (
+            changedProperties.has("chat") &&
+            this.chat.length &&
+            this.output?.chat !== this.chat &&
+            this.keys.apiKey
+        ) {
+            this.doChat();
         }
-
-        return false;
     }
 
-    async callOpenAI() {
-        this.callInProgress = true;
-        const { config, prompt_input, api_key, chat_input } = this;
+    async doChat() {
+        this.chatInProgress = true;
+        this.output = {
+            chat: (
+                await this.gpt(this.keys.apiKey, {
+                    ...this.config,
+                    messages: this.chat,
+                })
+            ).flat(),
+        };
+        this.chat = this.output.chat;
+        this.chatInProgress = false;
+    }
 
-        const openai = new OpenAI({
-            apiKey: api_key.api_key,
-            dangerouslyAllowBrowser: true,
-        });
+    /**
+     * @param {Object} parameters - The parameters for the function.
+     * @description {"name": "stop", "description": "A no-op function.", "parameters": {}}
+     */
+    stop({}) {}
 
-        const messages = (chat_input?.messages || [])
-            .map((message) =>
-                !Array.isArray(message) || config.chooser === "all"
-                    ? message
-                    : message[0]
-            )
-            .concat([
+    /**
+     * @param {Object} parameters - The parameters for the function.
+     * @description {"name": "build", "description": "Builds a plan based on the provided prompt.", "parameters": {"type": "object", "properties": {"prompt": {"type": "object", "properties": {"role": {"type": "string", "default": "assistant"}, "content": {"type": "string", "default": ""}}}}}}
+     */
+    build({ role = "assistant", content = "" } = {}) {
+        this.setChat({ role, content });
+    }
+
+    /**
+     * @param {Object} parameters - The parameters for the function.
+     * @description {"name": "fix", "description": "Analyzes the cause of an error and plans a fix based on the provided prompt.", "parameters": {"type": "object", "properties": {"prompt": {"type": "object", "properties": {"role": {"type": "string", "default": "assistant"}, "content": {"type": "string", "default": ""}}}}}}
+     */
+    fix({ role = "assistant", content = "" } = {}) {
+        this.setChat({ role, content });
+    }
+
+    /**
+     * @param {Object} parameters - The parameters for the function.
+     * @description {"name": "change", "description": "Analyzes how the code may be changed to fulfill the user's modified intent and plans the changes based on the provided prompt.", "parameters": {"type": "object", "properties": {"prompt": {"type": "object", "properties": {"role": {"type": "string", "default": "assistant"}, "content": {"type": "string", "default": ""}}}}}}
+     */
+    change({ role = "assistant", content = "" } = {}) {
+        this.setChat({ role, content });
+    }
+
+    start(prompt) {
+        if (
+            this.prompt.content &&
+            this.workingPrompt?.content !== prompt?.content
+        ) {
+            this.chat = [
+                this.prompt,
                 {
-                    ...prompt_input,
-                    role: prompt_input.role || "user",
+                    role: "user",
+                    content: `# Current Code:\n\n\`\`\`javascript\n${this.assets[0]?.source}\n\`\`\``,
                 },
-            ])
-            .flat();
-
-        messages.unshift({
-            role: "system",
-            content: await generateInstructions(this.component_output?.source),
-        });
-
-        const options = {
-            model: config.model,
-            temperature: config.temperature,
-            messages,
-        };
-
-        const streamOptions = {
-            ...options,
-            stream: true,
-            n: 1,
-        };
-
-        const stream = await openai.chat.completions.create(streamOptions);
-
-        let streamContent = "";
-
-        for await (const part of stream) {
-            const delta = part.choices[0]?.delta?.content || "";
-            streamContent += delta;
-            this.response_output = {
-                content: streamContent,
-            };
-        }
-
-        const codeBlock = extractCodeBlocks(streamContent).pop();
-        if (codeBlock) {
-            this.component_output = {
-                source: codeBlock,
-            };
-        }
-
-        this.chat_output = {
-            messages: [
-                ...messages,
-                { role: "assistant", content: streamContent },
-            ],
-        };
-
-        this.callInProgress = false;
-        if (this.callPending) {
-            this.callPending = false;
-            this.callOpenAI();
+                prompt,
+            ];
+        } else {
+            console.warn("ignoring duplicate prompt");
         }
     }
 
-    static styles = css`
-        :host {
-            display: block;
-        }
-    `;
+    handleError(error) {}
 
-    handleMessage({ content }) {
-        debugger;
-        this.prompt_input = {
-            role: this.config.role,
-            content,
-        };
+    setChat(prompt) {
+        this.output.chat = [];
+        this.chat = [...this.chat, prompt];
     }
 
     render() {
         return html`
-            <bespeak-chat
-                .handleMessage=${this.handleMessage.bind(this)}
-                .value=${this.prompt_input?.content}>
-            </bespeak-chat>
-            <bespeak-stream-renderer .content=${this.response_output?.content}>
-            </bespeak-stream-renderer>
+            <bespeak-form
+                .props=${{
+                    schema: {
+                        type: "object",
+                        properties: {
+                            role: {
+                                type: "string",
+                                enum: ["user", "assistant", "system"],
+                                default: "system",
+                            },
+                            content: { type: "string" },
+                        },
+                    },
+                    uiSchema: {
+                        content: {
+                            "ui:widget": "textarea",
+                            rows: 10,
+                        },
+                    },
+                    formData: this.prompt,
+                }}
+                .onChange=${((e) =>
+                    (this.prompt = e.formData.content
+                        ? e.formData
+                        : this.prompt)).bind(this)}>
+            </bespeak-form>
+            <div class="chat-log">
+                ${this.chat.map(
+                    (message) => html`
+                        <div class="message ${message.role}">
+                            <strong>${message.role}</strong>: ${message.content}
+                        </div>
+                    `
+                )}
+                ${this.chatInProgress
+                    ? html`
+                          <div class="loading-spinner">
+                              <div class="spinner"></div>
+                          </div>
+                      `
+                    : ""}
+            </div>
         `;
     }
 }

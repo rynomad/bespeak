@@ -6,7 +6,6 @@ export default class ChatGPT extends LitElement {
 
     static get properties() {
         return {
-            prompt: { type: Object },
             response: { type: String },
         };
     }
@@ -38,6 +37,26 @@ export default class ChatGPT extends LitElement {
         }
 
         return false;
+    }
+
+    parseJSDocComments() {
+        const classAsString = this.toString();
+        const jsDocComments =
+            classAsString.match(
+                /\/\*\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\//g
+            ) || [];
+        const parsedComments = jsDocComments.map((comment) => {
+            const jsonStart = comment.indexOf("{");
+            const jsonEnd = comment.lastIndexOf("}") + 1;
+            const jsonString = comment.slice(jsonStart, jsonEnd);
+            try {
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.warn("Failed to parse JSDoc comment as JSON:", comment);
+                return null;
+            }
+        });
+        return parsedComments.filter((comment) => comment !== null);
     }
 
     async callOpenAI() {

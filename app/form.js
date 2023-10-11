@@ -73,7 +73,7 @@ export const RJSFComponent = CardStyleMixin(
                         ...this.props,
                         schema: this.schema,
                         uiSchema: setSubmitButtonOptions(
-                            this.uiSchema || {},
+                            this.props.uiSchema || {},
                             {}
                         ),
                         formData: this.formData,

@@ -1,7 +1,7 @@
 import jscodeshift from "https://esm.sh/jscodeshift";
 import { importFromString } from "./util.js";
 import { LitElement } from "https://esm.sh/lit";
-import OpenAI from "https://esm.sh/openai";
+import OpenAI from "https://esm.sh/openai@4.11.0";
 import debounce from "https://esm.sh/lodash/debounce";
 
 export const NextNodeElementWrapper = (
@@ -19,6 +19,8 @@ export const NextNodeElementWrapper = (
                 output: { type: Object },
                 owners: { type: Array },
                 assets: { type: Array },
+                prompt: { type: Object },
+                chat: { type: Object },
                 error: { type: Error },
                 config: { type: Object },
                 keys: { type: Array },
@@ -76,11 +78,15 @@ export const NextNodeElementWrapper = (
             if (
                 changedProperties.has("error") ||
                 changedProperties.has("output") ||
-                changedProperties.has("source")
+                changedProperties.has("source") ||
+                changedProperties.has("prompt") ||
+                changedProperties.has("chat")
             ) {
                 node.error = this.error || node.error;
                 node.output = this.output || node.output;
                 node.source = this.source || node.source;
+                node.prompt = this.prompt || node.prompt;
+                node.chat = this.chat || node.chat;
             }
 
             for (const [key, value] of changedProperties) {
@@ -98,12 +104,11 @@ export const NextNodeElementWrapper = (
             // Clear the accumulated properties after they've been used
         }, 500); // Adjust the debounce time as needed
 
-        async codeShift({ transformString }) {
-            const { default: transform } = await importFromString(
-                transformString
-            );
+        async codeShift({ transform }) {
+            const { default: transformFn } = await importFromString(transform);
             const source = this.source;
-            this.source = await transform(jscodeshift, source);
+            const root = jscodeshift(source);
+            this.source = await transformFn(root, jscodeshift);
         }
 
         get api() {
@@ -165,56 +170,77 @@ export const NextNodeElementWrapper = (
                 apiKey,
                 dangerouslyAllowBrowser: true,
             });
-            const remainder = n - 1;
 
-            const streamOptions = {
-                ...options,
-                stream: true,
-                n: 1,
-            };
+            if (functions) {
+                const responses = [];
+                for (let i = 0; i < n; i += 10) {
+                    const batchSize = Math.min(n - i, 10);
+                    const batchOptions = {
+                        ...options,
+                        n: batchSize,
+                    };
+                    responses.push(
+                        openai.chat.completions.create(batchOptions)
+                    );
+                }
 
-            const stream = await openai.chat.completions.create(streamOptions);
+                const allResponses = (await Promise.all(responses))
+                    .flat()
+                    .map((e) => e.choices.map((e) => e.message))
+                    .flat();
 
-            let streamContent = "";
-
-            const remainderResponses = [];
-            for (let i = 0; i < remainder; i += 10) {
-                const batchSize = Math.min(remainder - i, 10);
-                const remainderOptions = {
+                return [...messages, allResponses];
+            } else {
+                const remainder = n - 1;
+                const streamOptions = {
                     ...options,
-                    n: batchSize,
+                    stream: true,
+                    n: 1,
                 };
-                remainderResponses.push(
-                    openai.chat.completions.create(remainderOptions)
+
+                const stream = await openai.chat.completions.create(
+                    streamOptions
                 );
+
+                let streamContent = "";
+
+                const remainderResponses = [];
+                for (let i = 0; i < remainder; i += 10) {
+                    const batchSize = Math.min(remainder - i, 10);
+                    const remainderOptions = {
+                        ...options,
+                        n: batchSize,
+                    };
+                    remainderResponses.push(
+                        openai.chat.completions.create(remainderOptions)
+                    );
+                }
+
+                const allResponses = (
+                    await Promise.all([
+                        (async () => {
+                            for await (const part of stream) {
+                                const delta =
+                                    part.choices[0]?.delta?.content || "";
+                                streamContent += delta;
+                                cb(streamContent);
+                            }
+                            return {
+                                content: streamContent,
+                                role: "assistant",
+                            };
+                        })(),
+                        Promise.all(remainderResponses).then((responses) => {
+                            return responses.flatMap((e) =>
+                                e.choices.map((e) => e.message)
+                            );
+                        }),
+                    ])
+                ).flat();
+
+                return [...messages, allResponses];
             }
-
-            const allResponses = (
-                await Promise.all([
-                    (async () => {
-                        for await (const part of stream) {
-                            const delta = part.choices[0]?.delta?.content || "";
-                            streamContent += delta;
-                            cb(streamContent);
-                        }
-                        return streamContent;
-                    })(),
-                    Promise.all(remainderResponses).then((responses) => {
-                        return responses.flatMap((e) =>
-                            e.choices.map((e) => e.message.content)
-                        );
-                    }),
-                ])
-            )
-                .flat()
-                .map((content) => ({
-                    role: "assistant",
-                    content,
-                }));
-
-            return [...messages, allResponses];
         }
-
         __wrapMethods() {
             const methods = [
                 ...Object.getOwnPropertyNames(Object.getPrototypeOf(this)),

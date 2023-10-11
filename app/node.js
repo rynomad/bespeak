@@ -37,6 +37,7 @@ import "./flipper.js";
 import "./compass.js";
 import "./monaco.js";
 import "./mixins.js";
+import { PromptGPT } from "./prompt.wrapped.js";
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
         return {
@@ -1081,6 +1082,8 @@ export class NextLitNode extends Node {
             ...super.properties,
             source: { type: String },
             element: { type: Object },
+            prompt: { type: Object },
+            chat: { type: Array },
             input: { type: Object },
             output: { type: Object },
             owners: { type: Array },
@@ -1133,8 +1136,15 @@ export class NextLitNode extends Node {
                 filter((value) => value && value.source),
                 take(1),
                 tap((value) => {
-                    const { source, output, inputSchema, config, keysSchema } =
-                        value;
+                    const {
+                        source,
+                        output,
+                        inputSchema,
+                        config,
+                        keysSchema,
+                        prompt,
+                        chat,
+                    } = value;
                     if (source) {
                         this.source = source;
                     }
@@ -1151,6 +1161,12 @@ export class NextLitNode extends Node {
                     if (keysSchema) {
                         this.keysSchema = keysSchema;
                         this.keysSchema$.next(keysSchema);
+                    }
+                    if (prompt) {
+                        this.prompt = prompt;
+                    }
+                    if (chat) {
+                        this.chat = chat;
                     }
                 })
             )
@@ -1178,11 +1194,20 @@ export class NextLitNode extends Node {
             )
             .subscribe();
 
-        merge(this.output$, this.inputSchema$, this.source$, this.config$)
+        merge(
+            this.output$,
+            this.inputSchema$,
+            this.source$,
+            this.config$,
+            this.prompt$,
+            this.chat$
+        )
             .pipe(
                 debounceTime(100),
                 map(() => this.serialize()),
-                filter(() => this.source),
+                filter(
+                    () => this.source && Date.now() - this.lastUpdated > 200
+                ),
                 tap(this.propagateOwnersAndAssets.bind(this)),
                 takeUntil(this.data.removed$)
             )
@@ -1200,6 +1225,8 @@ export class NextLitNode extends Node {
         this.assets = [];
         this.output$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
+        this.prompt$ = new ReplaySubject(1);
+        this.chat$ = new ReplaySubject(1);
         this.owners$ = new ReplaySubject(1);
         this.source$ = new ReplaySubject(1);
         this.keys$ = new ReplaySubject(1);
@@ -1215,6 +1242,8 @@ export class NextLitNode extends Node {
             node: this.id,
             source: this.source,
             output: this.output,
+            prompt: this.prompt,
+            chat: this.chat,
             inputSchema: this.inputSchema,
             config: this.config,
             keysSchema: this.keysSchema,
@@ -1231,6 +1260,8 @@ export class NextLitNode extends Node {
             this.element.config = this.config;
             this.element.keys = this.keys;
             this.element.output = this.output;
+            this.element.prompt = this.prompt;
+            this.element.chat = this.chat;
         }
 
         if (
@@ -1243,6 +1274,14 @@ export class NextLitNode extends Node {
         if (changedProperties.has("error")) {
             console.error(this.error);
             this.error$.next(this.error);
+        }
+
+        if (changedProperties.has("prompt") && this.prompt?.content) {
+            this.prompt$.next(this.prompt);
+        }
+
+        if (changedProperties.has("chat")) {
+            this.chat$.next(this.chat);
         }
 
         if (changedProperties.has("output")) {
@@ -1346,6 +1385,7 @@ export class NextLitNode extends Node {
 
     async connectedCallback() {
         super.connectedCallback();
+        this.lastConnected = Date.now();
         await this.updateComplete;
         // Create a ResizeObserver instance
         this.resizeObserver = new ResizeObserver((entries) => {
@@ -1414,6 +1454,7 @@ export class NextLitNode extends Node {
     async updateElement() {
         // Get the source code from the editor
         const sourceCode = this.source;
+        this.lastUpdated = Date.now();
 
         if (sourceCode === (await this.element?.quine?.())) {
             return;
@@ -1434,7 +1475,17 @@ export class NextLitNode extends Node {
         const nonce = Math.floor(Math.random() * 0xfffff).toString(16);
 
         // Import the module from the blob URL
-        const module = await import(blobUrl);
+        const module = await import(blobUrl).catch((error) => {
+            this.error = error;
+            if (this.element) {
+                this.element.error = error;
+            }
+            return null;
+        });
+
+        if (!module) {
+            return;
+        }
         // Create the custom element
         this.customElement = NextNodeElementWrapper(
             this,
@@ -1452,6 +1503,7 @@ export class NextLitNode extends Node {
 
         // Attach the custom element
         this.element = new this.customElement();
+        this.element.source = sourceCode;
         this.shadowRoot
             .querySelector(".container")
             .replaceChildren(this.element);
@@ -1554,3 +1606,5 @@ export class NextLitNode extends Node {
 customElements.define("bespeak-next-node", NextLitNode);
 
 NextReteNode.registerComponent(GPT);
+NextReteNode.registerComponent(NodeMakerGPT);
+NextReteNode.registerComponent(PromptGPT);

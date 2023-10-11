@@ -209,8 +209,8 @@ export class Editor extends LitElement {
         this.setupArrange();
         this.setupStorage();
         this.setupCrud();
-        this.setupState();
-        this.setupIO();
+        // this.setupState();
+        // this.setupIO();
 
         AreaExtensions.zoomAt(area, editor.getNodes());
 

@@ -1,6 +1,11 @@
 import NodeMaker, { quine } from "./nodeMaker.js";
-import { ComponentMixin } from "./component.js";
+import { NextNodeElementWrapper } from "./node-element-wrapper.js";
 
-export const NodeMakerGPT = ComponentMixin(NodeMaker, undefined, quine, true);
+export const NodeMakerGPT = NextNodeElementWrapper(
+    undefined,
+    NodeMaker,
+    quine,
+    true
+);
 
 customElements.define("bespeak-node-maker-node", NodeMakerGPT);

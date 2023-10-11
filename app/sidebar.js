@@ -119,6 +119,7 @@ class MySidebar extends LitElement {
         this.editor$ = new Subject();
         this.configSchema$ = new Subject();
         this.config$ = new Subject();
+        this.prompt$ = new Subject();
         this.inputs$ = new Subject();
         this.outputs$ = new Subject();
         this.types = Types;
@@ -257,10 +258,23 @@ class MySidebar extends LitElement {
                                 .subscribe((config) =>
                                     this.config$.next(config)
                                 ),
+
+                            target.editorNode.prompt$
+                                .pipe(take(1))
+                                .subscribe((prompt) =>
+                                    this.prompt$.next(prompt)
+                                ),
+
                             this.config$
                                 .pipe(distinctUntilChanged())
                                 .subscribe((config) =>
                                     target.editorNode.config$.next(config)
+                                ),
+
+                            this.prompt$
+                                .pipe(distinctUntilChanged())
+                                .subscribe((prompt) =>
+                                    target.editorNode.prompt$.next(prompt)
                                 ),
                         ];
                         this.show();
@@ -296,11 +310,11 @@ class MySidebar extends LitElement {
     }
 
     get tabs() {
-        return ["Config", "Keys", "Types"];
+        return ["Prompt", "Config", "Keys"];
     }
 
     get openTab() {
-        return this.tabs[this.activeTabIndex] || "Keys";
+        return this.tabs[this.activeTabIndex] || "Prompt";
     }
 
     render() {
@@ -378,15 +392,40 @@ class MySidebar extends LitElement {
                         )}
                     </div>
 
-                    <div name="Types">
-                        ${Array.from(this.types.entries()).map(
-                            ([type, schema]) =>
-                                html`<yaml-renderer
-                                    .data=${schema}
-                                    .preamble=${`# ${type}\n\n${
-                                        schema.description || ""
-                                    }`}></yaml-renderer>`
-                        )}
+                    <div name="Prompt">
+                        <bespeak-form
+                            nodeId=${this.target?.id}
+                            .onChange=${(event) => {
+                                this.prompt = event.formData;
+                            }}
+                            .props=${{
+                                name: "Prompt",
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        role: {
+                                            type: "string",
+                                            enum: [
+                                                "user",
+                                                "system",
+                                                "assistant",
+                                            ],
+                                        },
+                                        content: {
+                                            type: "string",
+                                        },
+                                    },
+                                },
+                                uiSchema: {
+                                    content: {
+                                        "ui:widget": "textarea",
+                                        "ui:options": {
+                                            rows: 50,
+                                        },
+                                    },
+                                },
+                                formData: this.prompt || {},
+                            }}></bespeak-form>
                     </div>
                 </dile-pages>
             </div>
