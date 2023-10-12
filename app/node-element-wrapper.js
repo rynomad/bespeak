@@ -3,6 +3,8 @@ import { importFromString } from "./util.js";
 import { LitElement } from "https://esm.sh/lit";
 import OpenAI from "https://esm.sh/openai@4.11.0";
 import debounce from "https://esm.sh/lodash/debounce";
+import { deepEqual } from "https://esm.sh/fast-equals";
+import jsonpath from "https://esm.sh/jsonpath";
 
 export const NextNodeElementWrapper = (
     node,
@@ -19,7 +21,7 @@ export const NextNodeElementWrapper = (
                 output: { type: Object },
                 owners: { type: Array },
                 assets: { type: Array },
-                prompt: { type: Object },
+                specification: { type: String },
                 chat: { type: Object },
                 error: { type: Error },
                 config: { type: Object },
@@ -71,21 +73,73 @@ export const NextNodeElementWrapper = (
 
         constructor() {
             super();
-            // this.__wrapMethods();
+            this.__wrapMethods();
+            this.__reactiveCache = new Map();
         }
+
+        shouldUpdate() {
+            const reactivePaths = this.constructor.reactivePaths;
+
+            if (!reactivePaths || reactivePaths.length === 0) {
+                return true;
+            }
+
+            let hasDifferences = false;
+
+            reactivePaths.forEach((path) => {
+                const newValues = jsonpath.query(this, path);
+                const newValue =
+                    newValues.length > 0 ? newValues[0] : undefined;
+
+                const cachedValue = this.__reactiveCache.get(path);
+
+                if (!deepEqual(cachedValue, newValue)) {
+                    hasDifferences = true;
+                    this.__reactiveCache.set(path, newValue);
+                }
+            });
+
+            return hasDifferences;
+        }
+
+        parseJSDocComments() {
+            const classAsString = this.toString();
+            const jsDocComments =
+                classAsString.match(
+                    /\/\*\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\//g
+                ) || [];
+            const parsedComments = jsDocComments.map((comment) => {
+                const jsonStart = comment.indexOf("{");
+                const jsonEnd = comment.lastIndexOf("}") + 1;
+                const jsonString = comment.slice(jsonStart, jsonEnd);
+                try {
+                    return JSON.parse(jsonString);
+                } catch (error) {
+                    console.warn(
+                        "Failed to parse JSDoc comment as JSON:",
+                        comment
+                    );
+                    return null;
+                }
+            });
+            const parsed = parsedComments.filter((comment) => comment !== null);
+            if (!parsed.length) return;
+            return parsed;
+        }
+
         __accumulatedProperties = new Map();
         updated(changedProperties) {
             if (
                 changedProperties.has("error") ||
                 changedProperties.has("output") ||
                 changedProperties.has("source") ||
-                changedProperties.has("prompt") ||
+                changedProperties.has("specification") ||
                 changedProperties.has("chat")
             ) {
                 node.error = this.error || node.error;
                 node.output = this.output || node.output;
                 node.source = this.source || node.source;
-                node.prompt = this.prompt || node.prompt;
+                node.specification = this.specification || node.specification;
                 node.chat = this.chat || node.chat;
             }
 

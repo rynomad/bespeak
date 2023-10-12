@@ -38,6 +38,8 @@ import "./compass.js";
 import "./monaco.js";
 import "./mixins.js";
 import { PromptGPT } from "./prompt.wrapped.js";
+import { TextAreaWidget } from "./form-textarea.js";
+
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
         return {
@@ -870,7 +872,7 @@ export class ReteNode extends Classic.Node {
                         const match = parameters.find(
                             (p) => p.type === input.type
                         );
-                        if (match && match.type !== "prompt") {
+                        if (match && match.type !== "specification") {
                             match.subject.subscribe((value) => {
                                 console.log(
                                     "debug order setupParameters",
@@ -1082,7 +1084,7 @@ export class NextLitNode extends Node {
             ...super.properties,
             source: { type: String },
             element: { type: Object },
-            prompt: { type: Object },
+            specification: { type: String },
             chat: { type: Array },
             input: { type: Object },
             output: { type: Object },
@@ -1125,6 +1127,7 @@ export class NextLitNode extends Node {
     async firstUpdated() {
         await this.updateComplete;
         this.keysSchema$.next({});
+        this.configSchema$.next({});
         this.keys$.next({});
         this.data.editorNode = this;
         if (this.data.source) {
@@ -1142,7 +1145,7 @@ export class NextLitNode extends Node {
                         inputSchema,
                         config,
                         keysSchema,
-                        prompt,
+                        specification,
                         chat,
                     } = value;
                     if (source) {
@@ -1162,8 +1165,8 @@ export class NextLitNode extends Node {
                         this.keysSchema = keysSchema;
                         this.keysSchema$.next(keysSchema);
                     }
-                    if (prompt) {
-                        this.prompt = prompt;
+                    if (specification) {
+                        this.specification = specification;
                     }
                     if (chat) {
                         this.chat = chat;
@@ -1199,7 +1202,7 @@ export class NextLitNode extends Node {
             this.inputSchema$,
             this.source$,
             this.config$,
-            this.prompt$,
+            this.specification$,
             this.chat$
         )
             .pipe(
@@ -1223,9 +1226,11 @@ export class NextLitNode extends Node {
         this.connectedNodes = [];
         this.owners = [];
         this.assets = [];
+        this.chat = [];
+
         this.output$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
-        this.prompt$ = new ReplaySubject(1);
+        this.specification$ = new ReplaySubject(1);
         this.chat$ = new ReplaySubject(1);
         this.owners$ = new ReplaySubject(1);
         this.source$ = new ReplaySubject(1);
@@ -1242,7 +1247,7 @@ export class NextLitNode extends Node {
             node: this.id,
             source: this.source,
             output: this.output,
-            prompt: this.prompt,
+            specification: this.specification,
             chat: this.chat,
             inputSchema: this.inputSchema,
             config: this.config,
@@ -1260,7 +1265,7 @@ export class NextLitNode extends Node {
             this.element.config = this.config;
             this.element.keys = this.keys;
             this.element.output = this.output;
-            this.element.prompt = this.prompt;
+            this.element.specification = this.specification;
             this.element.chat = this.chat;
         }
 
@@ -1276,8 +1281,8 @@ export class NextLitNode extends Node {
             this.error$.next(this.error);
         }
 
-        if (changedProperties.has("prompt") && this.prompt?.content) {
-            this.prompt$.next(this.prompt);
+        if (changedProperties.has("specification") && this.specification) {
+            this.specification$.next(this.specification);
         }
 
         if (changedProperties.has("chat")) {
@@ -1591,6 +1596,30 @@ export class NextLitNode extends Node {
                                 slot="front"
                                 style="min-width: 300px; min-height: 300px; padding: 1.5rem;"></div>
                             <div slot="back" style="padding: 1.5rem">
+                                <bespeak-form
+                                    .props=${{
+                                        schema: {
+                                            type: "object",
+                                            properties: {
+                                                value: {
+                                                    type: "string",
+                                                    title: "Specification",
+                                                },
+                                            },
+                                        },
+                                        uiSchema: {
+                                            value: {
+                                                "ui:widget": "textarea",
+                                                "ui:options": {
+                                                    label: "Specification",
+                                                },
+                                            },
+                                        },
+                                        formData: { value: this.specification },
+                                    }}
+                                    .onChange=${(e) => {
+                                        this.specification = e.formData.value;
+                                    }}></bespeak-form>
                                 <bespeak-monaco-editor
                                     .value=${this
                                         .source}></bespeak-monaco-editor>

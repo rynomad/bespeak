@@ -32,6 +32,10 @@ export default class NodeMakerGPT extends LitElement {
 
     static get styles() {
         return css`
+            :host {
+                display: block;
+                width: 800px;
+            }
             .chat-log {
                 display: flex;
                 flex-direction: column;
@@ -45,6 +49,8 @@ export default class NodeMakerGPT extends LitElement {
                 margin-bottom: 10px;
                 padding: 10px;
                 border-radius: 5px;
+                white-space: pre-wrap;
+                text-align: left;
             }
             .system {
                 background-color: #f0f0f0;
@@ -87,6 +93,7 @@ export default class NodeMakerGPT extends LitElement {
             changedProperties.has("chat") &&
             this.chat.length &&
             this.output?.chat !== this.chat &&
+            !this.chatInProgress &&
             this.keys.apiKey
         ) {
             this.doChat();
@@ -95,14 +102,27 @@ export default class NodeMakerGPT extends LitElement {
 
     async doChat() {
         this.chatInProgress = true;
-        this.output = {
-            chat: (
-                await this.gpt(this.keys.apiKey, {
-                    ...this.config,
-                    messages: this.chat,
-                })
-            ).flat(),
-        };
+        const result = await this.gpt(this.keys.apiKey, {
+            ...this.config,
+            functions: this.parseJSDocComments,
+            messages: this.chat,
+        });
+
+        const lastMessage = result.pop().pop();
+        if (lastMessage.function_call) {
+            this[lastMessage.function_call.name](
+                lastMessage.function_call.parameters
+            );
+        } else {
+            this.output = {
+                chat: this.chat.concat([lastMessage]),
+            };
+        }
+
+        const code = extractCodeBlocks(lastMessage.content).pop();
+        if (code) {
+            this.assets[0].source = code;
+        }
         this.chat = this.output.chat;
         this.chatInProgress = false;
     }
@@ -191,7 +211,7 @@ export default class NodeMakerGPT extends LitElement {
                         : this.prompt)).bind(this)}>
             </bespeak-form>
             <div class="chat-log">
-                ${this.chat.map(
+                ${(this.chat || []).map(
                     (message) => html`
                         <div class="message ${message.role}">
                             <strong>${message.role}</strong>: ${message.content}

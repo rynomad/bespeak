@@ -6,6 +6,8 @@ import { BehaviorSubject, filter } from "https://esm.sh/rxjs@7.3.0";
 import { PropagationStopper, CardStyleMixin } from "./mixins.js";
 import { bootstrapCss } from "./bootstrap.css.js";
 import "./react.js";
+import { TextAreaWidget } from "./form-textarea.js";
+
 export function setSubmitButtonOptions(uiSchema, options) {
     const newUiSchema = uiSchema || {};
     newUiSchema["ui:submitButtonOptions"] = {
@@ -44,16 +46,24 @@ export const RJSFComponent = CardStyleMixin(
                     schema: {},
                     uiSchema: {},
                     formData: {},
-                    onSubmit: (e) => {
-                        delete e.formData.fromStorage;
-                        this.props.subject?.next(e.formData);
-                        if (
-                            this.props.node &&
-                            this.props.node.component &&
-                            this.props.name
-                        ) {
-                            this.props.node.component[this.props.name] =
-                                e.formData;
+                    onChange: (e) => {
+                        // Ignore the event if a textarea is focused
+                        this.formData = e.formData;
+                        if (!this.focused) {
+                            this.onChange(e);
+                        }
+                    },
+                    // Add onFocus and onBlur handlers
+                    onFocus: (id, value) => {
+                        if (id.includes("textarea")) {
+                            this.focused = true;
+                        }
+                    },
+                    onBlur: (id, value) => {
+                        if (id.includes("textarea")) {
+                            this.focused = false;
+                            // Trigger an onChange event on blur
+                            this.onChange({ formdata: this.formData });
                         }
                     },
                     validator: validator,
@@ -76,9 +86,48 @@ export const RJSFComponent = CardStyleMixin(
                             this.props.uiSchema || {},
                             {}
                         ),
+
+                        onChange: (e) => {
+                            // Ignore the event if a textarea is focused
+                            this.formData = e.formData;
+                            if (!this.focused) {
+                                this.onChange(e);
+                            }
+                        },
+                        widgets: {
+                            textarea: TextAreaWidget,
+                        },
+                        // Add onFocus and onBlur handlers
+                        onFocus: (id, value) => {
+                            const path = id.replace("root_", "").split("_");
+                            let schemaPart = this.props.uiSchema;
+                            for (let part of path) {
+                                schemaPart = schemaPart[part];
+                            }
+                            if (
+                                schemaPart &&
+                                schemaPart["ui:widget"] === "textarea"
+                            ) {
+                                this.focused = true;
+                            }
+                        },
+                        onBlur: (id, value) => {
+                            const path = id.replace("root_", "").split("_");
+                            let schemaPart = this.props.uiSchema;
+                            for (let part of path) {
+                                schemaPart = schemaPart[part];
+                            }
+                            if (
+                                schemaPart &&
+                                schemaPart["ui:widget"] === "textarea"
+                            ) {
+                                this.focused = false;
+                                this.onChange({ formData: this.formData });
+                            }
+                        },
                         formData: this.formData,
-                        onChange: this.onChange,
                         children: true,
+                        fields: { TextAreaWidget },
                     };
                 }
             }
@@ -97,6 +146,27 @@ export const RJSFComponent = CardStyleMixin(
                             submitText: "REMOVE THIS BUTTON IT DOES NOTHING",
                         }
                     ),
+
+                    onChange: (e) => {
+                        // Ignore the event if a textarea is focused
+                        this.formData = e.formData;
+                        if (!this.focused) {
+                            this.onChange(e);
+                        }
+                    },
+                    // Add onFocus and onBlur handlers
+                    onFocus: (id, value) => {
+                        if (id.includes("textarea")) {
+                            this.focused = true;
+                        }
+                    },
+                    onBlur: (id, value) => {
+                        if (id.includes("textarea")) {
+                            this.focused = false;
+                            // Trigger an onChange event on blur
+                            this.onChange({ formdata: this.formData });
+                        }
+                    },
                     children: true,
                     onChange: this.onChange,
                 };
