@@ -53,17 +53,35 @@ export const RJSFComponent = CardStyleMixin(
                             this.onChange(e);
                         }
                     },
+                    widgets: {
+                        textarea: TextAreaWidget,
+                    },
                     // Add onFocus and onBlur handlers
                     onFocus: (id, value) => {
-                        if (id.includes("textarea")) {
+                        const path = id.replace("root_", "").split("_");
+                        let schemaPart = this.props.uiSchema;
+                        for (let part of path) {
+                            schemaPart = schemaPart[part];
+                        }
+                        if (
+                            schemaPart &&
+                            schemaPart["ui:widget"] === "textarea"
+                        ) {
                             this.focused = true;
                         }
                     },
                     onBlur: (id, value) => {
-                        if (id.includes("textarea")) {
+                        const path = id.replace("root_", "").split("_");
+                        let schemaPart = this.props.uiSchema;
+                        for (let part of path) {
+                            schemaPart = schemaPart[part];
+                        }
+                        if (
+                            schemaPart &&
+                            schemaPart["ui:widget"] === "textarea"
+                        ) {
                             this.focused = false;
-                            // Trigger an onChange event on blur
-                            this.onChange({ formdata: this.formData });
+                            this.onChange({ formData: this.formData });
                         }
                     },
                     validator: validator,
@@ -127,7 +145,6 @@ export const RJSFComponent = CardStyleMixin(
                         },
                         formData: this.formData,
                         children: true,
-                        fields: { TextAreaWidget },
                     };
                 }
             }
@@ -146,7 +163,6 @@ export const RJSFComponent = CardStyleMixin(
                             submitText: "REMOVE THIS BUTTON IT DOES NOTHING",
                         }
                     ),
-
                     onChange: (e) => {
                         // Ignore the event if a textarea is focused
                         this.formData = e.formData;
@@ -154,23 +170,40 @@ export const RJSFComponent = CardStyleMixin(
                             this.onChange(e);
                         }
                     },
+                    widgets: {
+                        textarea: TextAreaWidget,
+                    },
                     // Add onFocus and onBlur handlers
                     onFocus: (id, value) => {
-                        if (id.includes("textarea")) {
+                        const path = id.replace("root_", "").split("_");
+                        let schemaPart = this.props.uiSchema;
+                        for (let part of path) {
+                            schemaPart = schemaPart[part];
+                        }
+                        if (
+                            schemaPart &&
+                            schemaPart["ui:widget"] === "textarea"
+                        ) {
                             this.focused = true;
                         }
                     },
                     onBlur: (id, value) => {
-                        if (id.includes("textarea")) {
+                        const path = id.replace("root_", "").split("_");
+                        let schemaPart = this.props.uiSchema;
+                        for (let part of path) {
+                            schemaPart = schemaPart[part];
+                        }
+                        if (
+                            schemaPart &&
+                            schemaPart["ui:widget"] === "textarea"
+                        ) {
                             this.focused = false;
-                            // Trigger an onChange event on blur
-                            this.onChange({ formdata: this.formData });
+                            this.onChange({ formData: this.formData });
                         }
                     },
                     children: true,
-                    onChange: this.onChange,
                 };
-                console.log(reactWrapper.props);
+                // console.log(reactWrapper.props);
                 this.appendChild(reactWrapper);
             }
 

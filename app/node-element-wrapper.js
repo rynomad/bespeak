@@ -77,7 +77,7 @@ export const NextNodeElementWrapper = (
             this.__reactiveCache = new Map();
         }
 
-        shouldUpdate() {
+        __shouldSuperUpdate() {
             const reactivePaths = this.constructor.reactivePaths;
 
             if (!reactivePaths || reactivePaths.length === 0) {
@@ -100,6 +100,10 @@ export const NextNodeElementWrapper = (
             });
 
             return hasDifferences;
+        }
+
+        async quine() {
+            return quine ? quine() : this.constructor.toString();
         }
 
         parseJSDocComments() {
@@ -128,6 +132,7 @@ export const NextNodeElementWrapper = (
         }
 
         __accumulatedProperties = new Map();
+
         updated(changedProperties) {
             if (
                 changedProperties.has("error") ||
@@ -148,7 +153,10 @@ export const NextNodeElementWrapper = (
                     this.__accumulatedProperties.set(key, value);
                 }
             }
-            this.__debouncedSuperUpdate();
+
+            if (this.__shouldSuperUpdate()) {
+                this.__debouncedSuperUpdate();
+            }
         }
 
         __debouncedSuperUpdate = debounce(() => {

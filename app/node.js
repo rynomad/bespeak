@@ -1208,9 +1208,7 @@ export class NextLitNode extends Node {
             .pipe(
                 debounceTime(100),
                 map(() => this.serialize()),
-                filter(
-                    () => this.source && Date.now() - this.lastUpdated > 200
-                ),
+                filter(() => this.source),
                 tap(this.propagateOwnersAndAssets.bind(this)),
                 takeUntil(this.data.removed$)
             )
@@ -1461,13 +1459,12 @@ export class NextLitNode extends Node {
         const sourceCode = this.source;
         this.lastUpdated = Date.now();
 
-        if (sourceCode === (await this.element?.quine?.())) {
-            return;
-        }
-
         // Transform the source code to handle relative imports
         const transformedSource = transformSource(sourceCode);
 
+        if (transformedSource === (await this.element?.quine?.())) {
+            return;
+        }
         // Create a blob from the transformed source code
         const blob = new Blob([transformedSource], {
             type: "text/javascript",
@@ -1518,7 +1515,6 @@ export class NextLitNode extends Node {
         const editor = this.shadowRoot.querySelector("bespeak-monaco-editor");
         if (face === "front") {
             this.source = editor.getValue();
-            await this.updateElement();
             editor.visible = false;
         } else {
             editor.visible = true;
