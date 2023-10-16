@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit";
 import { CONFIG, API_KEY } from "./types/gpt.js";
 export default class ChatGPT extends LitElement {
+    static reactivePaths = ["$.output.prompt", "$.input.messages"];
     static config = CONFIG.schema;
     static keys = API_KEY.schema;
 
@@ -12,51 +13,12 @@ export default class ChatGPT extends LitElement {
 
     updated(changedProperties) {
         super.updated(changedProperties);
-        if (this.shouldCallOpenAI(changedProperties)) {
-            if (this.callInProgress) {
-                this.callPending = true;
-            } else {
-                this.callOpenAI();
-            }
-        }
+        this.callOpenAI();
     }
 
     connectedCallback() {
         super.connectedCallback();
         this.start = Date.now();
-    }
-
-    shouldCallOpenAI(changedProperties) {
-        if (
-            this.output?.prompt &&
-            !this.output?.messages &&
-            this.keys.apiKey &&
-            Date.now() - this.start > 1000
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    parseJSDocComments() {
-        const classAsString = this.toString();
-        const jsDocComments =
-            classAsString.match(
-                /\/\*\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\//g
-            ) || [];
-        const parsedComments = jsDocComments.map((comment) => {
-            const jsonStart = comment.indexOf("{");
-            const jsonEnd = comment.lastIndexOf("}") + 1;
-            const jsonString = comment.slice(jsonStart, jsonEnd);
-            try {
-                return JSON.parse(jsonString);
-            } catch (error) {
-                console.warn("Failed to parse JSDoc comment as JSON:", comment);
-                return null;
-            }
-        });
-        return parsedComments.filter((comment) => comment !== null);
     }
 
     async callOpenAI() {
@@ -108,6 +70,7 @@ export default class ChatGPT extends LitElement {
 
     handleMessage({ content }) {
         this.output = {
+            ...this.output,
             prompt: {
                 role: this.config.role || "user",
                 content,

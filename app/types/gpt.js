@@ -89,7 +89,8 @@ export const CONFIG = {
                 maximum: 2,
                 default: 0.4,
             },
-            quantity: {
+            n: {
+                title: "Quantity",
                 type: "number",
                 minimum: 1,
                 maximum: 100,

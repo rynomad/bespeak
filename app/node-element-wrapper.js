@@ -5,11 +5,13 @@ import OpenAI from "https://esm.sh/openai@4.11.0";
 import debounce from "https://esm.sh/lodash/debounce";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import jsonpath from "https://esm.sh/jsonpath";
+import localForage from "https://esm.sh/localforage";
 
 export const NextNodeElementWrapper = (
     node,
     Base,
     quine,
+    url,
     hardCoded = false,
     owner = "default"
 ) => {
@@ -59,6 +61,10 @@ export const NextNodeElementWrapper = (
             return quine ? quine() : Base.toString();
         }
 
+        get __elementUrl() {
+            return url;
+        }
+
         static get hardCoded() {
             return hardCoded;
         }
@@ -74,10 +80,12 @@ export const NextNodeElementWrapper = (
         constructor() {
             super();
             this.__wrapMethods();
-            this.__reactiveCache = new Map();
+            this.__reactiveCache = localForage.createInstance({
+                name: `reactiveCache-${this.id}`,
+            });
         }
 
-        __shouldSuperUpdate() {
+        async __shouldSuperUpdate() {
             const reactivePaths = this.constructor.reactivePaths;
 
             if (!reactivePaths || reactivePaths.length === 0) {
@@ -86,20 +94,52 @@ export const NextNodeElementWrapper = (
 
             let hasDifferences = false;
 
-            reactivePaths.forEach((path) => {
-                const newValues = jsonpath.query(this, path);
-                const newValue =
-                    newValues.length > 0 ? newValues[0] : undefined;
+            await Promise.all(
+                reactivePaths.map(async (path) => {
+                    const newValues = jsonpath.query(this, path);
+                    const newValue =
+                        newValues.length > 0 ? newValues[0] : undefined;
 
-                const cachedValue = this.__reactiveCache.get(path);
+                    const cachedValue = await this.__reactiveCache.getItem(
+                        path
+                    );
 
-                if (!deepEqual(cachedValue, newValue)) {
-                    hasDifferences = true;
-                    this.__reactiveCache.set(path, newValue);
-                }
-            });
+                    if (
+                        !deepEqual(cachedValue, newValue) &&
+                        (newValue || cachedValue)
+                    ) {
+                        hasDifferences = true;
+                        this.__reactiveCache.setItem(path, newValue);
+                    }
+                })
+            );
 
             return hasDifferences;
+        }
+
+        async __clearNetworkCache() {
+            if (
+                "serviceWorker" in navigator &&
+                navigator.serviceWorker.controller
+            ) {
+                // Send a message to the service worker to clear the cache
+                navigator.serviceWorker.controller.postMessage({
+                    action: "clearCache",
+                    cacheName: this.__url,
+                });
+
+                // Optional: Listen for a response from the service worker
+                const onMessage = (event) => {
+                    console.log(event.data); // Handle the service worker response here
+                    navigator.serviceWorker.removeEventListener(
+                        "message",
+                        onMessage
+                    );
+                };
+                navigator.serviceWorker.addEventListener("message", onMessage);
+            } else {
+                console.warn("Service worker is not available.");
+            }
         }
 
         async quine() {
@@ -133,7 +173,7 @@ export const NextNodeElementWrapper = (
 
         __accumulatedProperties = new Map();
 
-        updated(changedProperties) {
+        async updated(changedProperties) {
             if (
                 changedProperties.has("error") ||
                 changedProperties.has("output") ||
@@ -154,7 +194,7 @@ export const NextNodeElementWrapper = (
                 }
             }
 
-            if (this.__shouldSuperUpdate()) {
+            if (await this.__shouldSuperUpdate()) {
                 this.__debouncedSuperUpdate();
             }
         }
@@ -164,7 +204,7 @@ export const NextNodeElementWrapper = (
             super.updated(this.__accumulatedProperties);
             this.__accumulatedProperties = new Map();
             // Clear the accumulated properties after they've been used
-        }, 500); // Adjust the debounce time as needed
+        }, 100); // Adjust the debounce time as needed
 
         async codeShift({ transform }) {
             const { default: transformFn } = await importFromString(transform);
@@ -240,6 +280,7 @@ export const NextNodeElementWrapper = (
                     const batchOptions = {
                         ...options,
                         n: batchSize,
+                        user: `batch-${i}`,
                     };
                     responses.push(
                         openai.chat.completions.create(batchOptions)
@@ -258,6 +299,7 @@ export const NextNodeElementWrapper = (
                     ...options,
                     stream: true,
                     n: 1,
+                    user: `stream`,
                 };
 
                 const stream = await openai.chat.completions.create(
@@ -272,6 +314,7 @@ export const NextNodeElementWrapper = (
                     const remainderOptions = {
                         ...options,
                         n: batchSize,
+                        user: `remainder-${i}`,
                     };
                     remainderResponses.push(
                         openai.chat.completions.create(remainderOptions)
@@ -309,7 +352,7 @@ export const NextNodeElementWrapper = (
                 ...Object.getOwnPropertyNames(Base.prototype),
             ];
             methods.forEach((method) => {
-                console.log("check method", method);
+                // console.log("check method", method);
                 if (
                     typeof this[method] === "function" &&
                     method !== "constructor"

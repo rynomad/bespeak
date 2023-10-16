@@ -949,11 +949,11 @@ export class NextReteNode extends ReteNode {
         }
     }
 
-    get _width() {
+    get width() {
         return this.editorNode.width;
     }
 
-    get _height() {
+    get height() {
         return this.editorNode.height;
     }
 
@@ -1492,7 +1492,8 @@ export class NextLitNode extends Node {
         this.customElement = NextNodeElementWrapper(
             this,
             module.default,
-            getSource(blobUrl)
+            getSource(blobUrl),
+            blobUrl
         );
 
         this.keysSchema = this.customElement.keys;

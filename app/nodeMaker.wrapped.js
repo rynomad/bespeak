@@ -5,6 +5,7 @@ export const NodeMakerGPT = NextNodeElementWrapper(
     undefined,
     NodeMaker,
     quine,
+    "./nodeMaker.js",
     true
 );
 

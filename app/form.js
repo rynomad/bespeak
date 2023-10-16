@@ -7,6 +7,7 @@ import { PropagationStopper, CardStyleMixin } from "./mixins.js";
 import { bootstrapCss } from "./bootstrap.css.js";
 import "./react.js";
 import { TextAreaWidget } from "./form-textarea.js";
+import { JsonTextAreaWidget } from "./form-json.js";
 
 export function setSubmitButtonOptions(uiSchema, options) {
     const newUiSchema = uiSchema || {};
@@ -55,36 +56,40 @@ export const RJSFComponent = CardStyleMixin(
                     },
                     widgets: {
                         textarea: TextAreaWidget,
+                        json: JsonTextAreaWidget,
                     },
                     // Add onFocus and onBlur handlers
                     onFocus: (id, value) => {
                         const path = id.replace("root_", "").split("_");
-                        let schemaPart = this.props.uiSchema;
+                        let schemaPart = this.props.uiSchema || {};
                         for (let part of path) {
                             schemaPart = schemaPart[part];
                         }
                         if (
                             schemaPart &&
-                            schemaPart["ui:widget"] === "textarea"
+                            (schemaPart["ui:widget"] === "textarea" ||
+                                schemaPart["ui:widget"] === "json")
                         ) {
                             this.focused = true;
                         }
                     },
                     onBlur: (id, value) => {
                         const path = id.replace("root_", "").split("_");
-                        let schemaPart = this.props.uiSchema;
+                        let schemaPart = this.props.uiSchema || {};
                         for (let part of path) {
                             schemaPart = schemaPart[part];
                         }
                         if (
                             schemaPart &&
-                            schemaPart["ui:widget"] === "textarea"
+                            (schemaPart["ui:widget"] === "textarea" ||
+                                schemaPart["ui:widget"] === "json")
                         ) {
                             this.focused = false;
                             this.onChange({ formData: this.formData });
                         }
                     },
                     validator: validator,
+                    children: true,
                 };
                 // console.log("props?", this.props);
             }
@@ -97,6 +102,7 @@ export const RJSFComponent = CardStyleMixin(
                     this.uiSchema = this.props.schema?.uiSchema;
                     this.formData = this.props.formData;
                     this.reactWrapper.props = {
+                        ...this._props,
                         ...this.reactWrapper.props,
                         ...this.props,
                         schema: this.schema,
@@ -104,47 +110,7 @@ export const RJSFComponent = CardStyleMixin(
                             this.props.uiSchema || {},
                             {}
                         ),
-
-                        onChange: (e) => {
-                            // Ignore the event if a textarea is focused
-                            this.formData = e.formData;
-                            if (!this.focused) {
-                                this.onChange(e);
-                            }
-                        },
-                        widgets: {
-                            textarea: TextAreaWidget,
-                        },
-                        // Add onFocus and onBlur handlers
-                        onFocus: (id, value) => {
-                            const path = id.replace("root_", "").split("_");
-                            let schemaPart = this.props.uiSchema;
-                            for (let part of path) {
-                                schemaPart = schemaPart[part];
-                            }
-                            if (
-                                schemaPart &&
-                                schemaPart["ui:widget"] === "textarea"
-                            ) {
-                                this.focused = true;
-                            }
-                        },
-                        onBlur: (id, value) => {
-                            const path = id.replace("root_", "").split("_");
-                            let schemaPart = this.props.uiSchema;
-                            for (let part of path) {
-                                schemaPart = schemaPart[part];
-                            }
-                            if (
-                                schemaPart &&
-                                schemaPart["ui:widget"] === "textarea"
-                            ) {
-                                this.focused = false;
-                                this.onChange({ formData: this.formData });
-                            }
-                        },
                         formData: this.formData,
-                        children: true,
                     };
                 }
             }
@@ -157,51 +123,6 @@ export const RJSFComponent = CardStyleMixin(
                 reactWrapper.props = {
                     ...this._props,
                     ...this.props,
-                    uiSchema: setSubmitButtonOptions(
-                        this.props.uiSchema || {},
-                        {
-                            submitText: "REMOVE THIS BUTTON IT DOES NOTHING",
-                        }
-                    ),
-                    onChange: (e) => {
-                        // Ignore the event if a textarea is focused
-                        this.formData = e.formData;
-                        if (!this.focused) {
-                            this.onChange(e);
-                        }
-                    },
-                    widgets: {
-                        textarea: TextAreaWidget,
-                    },
-                    // Add onFocus and onBlur handlers
-                    onFocus: (id, value) => {
-                        const path = id.replace("root_", "").split("_");
-                        let schemaPart = this.props.uiSchema;
-                        for (let part of path) {
-                            schemaPart = schemaPart[part];
-                        }
-                        if (
-                            schemaPart &&
-                            schemaPart["ui:widget"] === "textarea"
-                        ) {
-                            this.focused = true;
-                        }
-                    },
-                    onBlur: (id, value) => {
-                        const path = id.replace("root_", "").split("_");
-                        let schemaPart = this.props.uiSchema;
-                        for (let part of path) {
-                            schemaPart = schemaPart[part];
-                        }
-                        if (
-                            schemaPart &&
-                            schemaPart["ui:widget"] === "textarea"
-                        ) {
-                            this.focused = false;
-                            this.onChange({ formData: this.formData });
-                        }
-                    },
-                    children: true,
                 };
                 // console.log(reactWrapper.props);
                 this.appendChild(reactWrapper);

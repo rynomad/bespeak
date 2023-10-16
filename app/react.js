@@ -33,11 +33,11 @@ class ReactWrapper extends LitElement {
     }
 
     updated(changedProperties) {
-        console.log("updated", changedProperties);
+        // console.log("updated", changedProper ties);
         // React will efficiently update the component when the same ReactDOM.render() is called
         // on the existing container, keeping the internal state intact.
         if (changedProperties.has("props")) {
-            console.log("props changed");
+            // console.log("props changed");
             this.renderReactComponent();
         }
     }
@@ -52,7 +52,7 @@ class ReactWrapper extends LitElement {
     }
 
     render() {
-        console.log("render react");
+        // console.log("render react");
         return html`<div id="react-root"></div>`;
     }
 }

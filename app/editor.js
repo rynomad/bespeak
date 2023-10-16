@@ -667,8 +667,8 @@ export class Editor extends LitElement {
         }
     }
 
-    doLayout() {
-        const applier = new DoubleApplier({
+    doLayout(options = {}) {
+        const applier = new ArrangeAppliers.TransitionApplier({
             duration: 200,
             timingFunction: (t) => t,
             onTick: () => {
@@ -677,11 +677,29 @@ export class Editor extends LitElement {
         });
 
         const nodes = this.editor.getNodes();
-        const connections = this.editor.getConnections();
-        const arrangedNodes = layout(nodes, connections);
-        applier.setEditor(this.editor);
-        applier.setArea(this.area);
-        applier.apply(arrangedNodes);
+        const connections = this.editor.getConnections().map((connection) => ({
+            ...connection,
+            targetInput: connection.targetInput || "owners",
+        }));
+        // .map((connection) =>
+        //     connection.targetInput === "input"
+        //         ? connection
+        //         : getSiblingConnection(
+        //               this.editor.getConnections(),
+        //               connection
+        //           )
+        // );
+        console.log(nodes, connections);
+
+        this.arrange.layout({
+            applier,
+            nodes,
+            connections,
+            options: {
+                "elk.direction": "DOWN",
+                "elk.edgeRouting": "ORTHOGONAL",
+            },
+        });
 
         return applier;
     }
@@ -723,16 +741,7 @@ export class Editor extends LitElement {
             <div class="column">
                 <bespeak-nodes-icon
                     style="position: absolute; top: 0; right: 0; cursor: pointer; z-index: 9999;"
-                    @click="${() =>
-                        this.doLayout(
-                            this.editor.getNodes()
-                        )}"></bespeak-nodes-icon>
-                <bespeak-nodes-icon
-                    style="position: absolute; top: 0; right: 30px; cursor: pointer; transform: rotate(90deg); z-index: 9999;"
-                    @click="${() =>
-                        this.doLayout(this.editor.getNodes(), {
-                            "elk.direction": "RIGHT",
-                        })}"></bespeak-nodes-icon>
+                    @click="${() => this.doLayout()}"></bespeak-nodes-icon>
                 ${this.collapsable
                     ? html`
                           <div class="status">
@@ -767,6 +776,29 @@ export class Editor extends LitElement {
         }
         this.requestUpdate();
     }
+}
+
+function getSiblingConnection(connections, connection) {
+    const downGraph = connections.filter(
+        (connection) => connection.sourceOutput === "output"
+    );
+    const newParent = downGraph.find(
+        (c) => c.target === connection.source || c.target === connection.target
+    );
+    const newConnection = newParent
+        ? {
+              id: connection.id,
+              source: newParent.source,
+              target:
+                  newParent.target === connection.source
+                      ? connection.target
+                      : connection.source,
+              sourceOutput: connection.sourceOutput,
+              targetInput: connection.targetInput,
+          }
+        : connection;
+
+    return newConnection;
 }
 
 customElements.define("bespeak-editor", Editor);
