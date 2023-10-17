@@ -232,6 +232,15 @@ export class Editor extends LitElement {
         }
     }
 
+    getInputNode() {
+        return this.editor
+            .getNodes()
+            .find(
+                (node) =>
+                    node.editorNode.customElement?.tagName === "flow-input"
+            );
+    }
+
     async setupStorage() {
         this.hydrated$ = new Subject();
         this.storageSubscription = this.hydrated$
@@ -722,18 +731,21 @@ export class Editor extends LitElement {
     async handleDrop(event) {
         event.preventDefault();
         const componentName = event.dataTransfer.getData("text/plain");
-        const component = NextReteNode.components.get(componentName);
-        if (component) {
-            const node = new NextReteNode(
-                this.ide,
-                this,
-                await component.quine()
-            );
-            this.addNode(node, null, true);
+        if (componentName.startsWith("workspace:")) {
+            const next = new NextReteNode(this.ide, this, componentName);
+            this.addNode(next); //, null, true);
+        } else {
+            const component = NextReteNode.components.get(componentName);
+            if (component) {
+                const node = new NextReteNode(
+                    this.ide,
+                    this,
+                    await component.quine()
+                );
+                this.addNode(node, null, true);
+            }
             return;
         }
-        const next = new NextReteNode(this.ide, this);
-        this.addNode(next); //, null, true);
     }
 
     render() {

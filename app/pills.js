@@ -150,6 +150,7 @@ class BespeakNodePill extends LitElement {
 
     static properties = {
         component: { type: Object },
+        workspace: { type: Object },
     };
 
     constructor() {
@@ -159,11 +160,13 @@ class BespeakNodePill extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.name = this.component.name;
+        this.name = this.component?.name || `workspace:${this.workspace.name}`;
+        this.transfer =
+            this.component?.name || `workspace:${this.workspace.id}`;
     }
 
     handleDragStart(event) {
-        event.dataTransfer.setData("text/plain", this.name);
+        event.dataTransfer.setData("text/plain", this.transfer);
         const dragImage = event.currentTarget.cloneNode(true);
         dragImage.style.position = "absolute";
         dragImage.style.top = "-1000px";

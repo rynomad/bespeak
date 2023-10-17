@@ -39,7 +39,7 @@ import "./monaco.js";
 import "./mixins.js";
 import { PromptGPT } from "./prompt.wrapped.js";
 import { TextAreaWidget } from "./form-textarea.js";
-import { DropZone } from "./dropzone.wrapped.js";
+import { FlowInput } from "./flow-input.wrapped.js";
 import { FlowOutput } from "./flow-output.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
@@ -930,6 +930,8 @@ export class NextReteNode extends ReteNode {
     serialize() {
         return {
             id: this.id,
+            Component: this.editorNode.customElement?.tagName,
+            selected: this.selected,
         };
     }
 
@@ -1205,7 +1207,9 @@ export class NextLitNode extends Node {
             this.source$,
             this.config$,
             this.specification$,
-            this.chat$
+            this.chat$,
+            this.customElement$,
+            this.subflowEditor$
         )
             .pipe(
                 debounceTime(100),
@@ -1240,6 +1244,7 @@ export class NextLitNode extends Node {
         this.configSchema$ = new ReplaySubject(1);
         this.keysSchema$ = new ReplaySubject(1);
         this.customElement$ = new ReplaySubject(1);
+        this.subflowEditor$ = new ReplaySubject(1);
     }
 
     serialize() {
@@ -1344,6 +1349,16 @@ export class NextLitNode extends Node {
                         .subscribe((data) => {
                             this.input = data;
                             this.inputSchema = generateSchemaFromValue(data);
+
+                            if (this.subflowEditor) {
+                                const inputNode =
+                                    this.subflowEditor.getInputNode();
+
+                                if (inputNode) {
+                                    inputNode.output = data;
+                                    inputNode.inputSchema = this.inputSchema;
+                                }
+                            }
                         });
                 } else {
                     this.input = {};
@@ -1456,9 +1471,53 @@ export class NextLitNode extends Node {
         return "";
     }
 
+    async updateWorkspaceElement(sourceCode) {
+        const editor = (this.subflowEditor =
+            this.shadowRoot.querySelector("bespeak-editor"));
+
+        this.subflowSubscriptions?.forEach((sub) => sub.unsubscribe());
+
+        editor.events$
+            .pipe(
+                filter(({ type }) => type === "hydrated"),
+                take(1),
+                switchMap(() => {
+                    const nodes = editor.editor.getNodes();
+                    return combineLatest(
+                        ...nodes.map((node) =>
+                            merge(
+                                node.editorNode.customElement$,
+                                node.editorNode.subflowEditor$
+                            ).pipe(map(() => node))
+                        )
+                    );
+                }),
+                tap((nodes) => {
+                    const connections = editor.editor.getConnections();
+
+                    const output = nodes.find(
+                        (node) =>
+                            node.editorNode.customElement?.tagName ===
+                            "flow-output"
+                    );
+
+                    this.subflowSubscriptions = [
+                        output.editorNode.output$.subscribe((output) => {
+                            this.output = output;
+                        }),
+                    ];
+                })
+            )
+            .subscribe(this.subflowEditor$);
+    }
+
     async updateElement() {
         // Get the source code from the editor
         const sourceCode = this.source;
+
+        if (sourceCode.startsWith("workspace:")) {
+            return this.updateWorkspaceElement(sourceCode);
+        }
         this.lastUpdated = Date.now();
 
         // Transform the source code to handle relative imports
@@ -1627,9 +1686,16 @@ export class NextLitNode extends Node {
                                     .onChange=${(e) => {
                                         this.specification = e.formData.value;
                                     }}></bespeak-form>
-                                <bespeak-monaco-editor
-                                    .value=${this
-                                        .source}></bespeak-monaco-editor>
+                                ${this.source?.startsWith("workspace:")
+                                    ? html`<bespeak-editor
+                                          .ide=${this.data.ide}
+                                          .open=${true}
+                                          .id=${this.source
+                                              .split(":")
+                                              .pop()}></bespeak-editor>`
+                                    : html`<bespeak-monaco-editor
+                                          .value=${this
+                                              .source}></bespeak-monaco-editor>`}
                             </div>
                         </bespeak-flipper>
                     </div>
@@ -1644,5 +1710,5 @@ customElements.define("bespeak-next-node", NextLitNode);
 NextReteNode.registerComponent(GPT);
 NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(PromptGPT);
-NextReteNode.registerComponent(DropZone);
+NextReteNode.registerComponent(FlowInput);
 NextReteNode.registerComponent(FlowOutput);

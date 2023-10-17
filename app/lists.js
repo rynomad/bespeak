@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
-import { merge, tap } from "https://esm.sh/rxjs";
+import { merge, tap, map } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
 import { ChatFlowInput, ChatFlowOutput, ReteNode } from "./node.js";
 
@@ -75,6 +75,8 @@ customElements.define("bespeak-workspace-list", BespeakWorkspaceList);
 class BespeakNodeList extends LitElement {
     static properties = {
         components: { type: Array },
+        workspaces: { type: Array },
+        ide: { type: Object },
     };
 
     constructor() {
@@ -95,6 +97,28 @@ class BespeakNodeList extends LitElement {
         };
     }
 
+    connectedCallback() {
+        super.connectedCallback();
+        this.ide?.workspaces$
+            .pipe(
+                map((workspaces) =>
+                    workspaces.filter(({ nodes }) =>
+                        nodes.some((node) =>
+                            [
+                                "flow-input",
+                                "flow-output",
+                                "flow-owners",
+                                "flow-assets",
+                            ].some((name) => name === node.Component)
+                        )
+                    )
+                )
+            )
+            .subscribe((workspaces) => {
+                this.workspaces = workspaces;
+            });
+    }
+
     render() {
         return html`
             <bespeak-list>
@@ -103,6 +127,11 @@ class BespeakNodeList extends LitElement {
                     (component) =>
                         html`<bespeak-node-pill
                             .component=${component}></bespeak-node-pill>`
+                )}
+                ${this.workspaces?.map(
+                    (workspace) =>
+                        html`<bespeak-node-pill
+                            .workspace=${workspace}></bespeak-node-pill>`
                 )}
             </bespeak-list>
         `;

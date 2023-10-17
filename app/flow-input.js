@@ -2,7 +2,7 @@ import { LitElement, html, css } from "https://esm.sh/lit";
 import { NextReteNode } from "./node.js";
 import _ from "https://esm.sh/lodash";
 
-class DropZone extends LitElement {
+class FlowInput extends LitElement {
     static properties = {
         components: { type: Array },
         dragOver: { type: Boolean },
@@ -158,7 +158,7 @@ class DropZone extends LitElement {
     }
 }
 
-export default DropZone;
+export default FlowInput;
 
 // leave this here for now
 export async function quine() {
