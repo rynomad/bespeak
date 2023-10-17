@@ -9,11 +9,16 @@ class Prompt extends LitElement {
     static outputSchema = {
         type: "object",
         properties: {
-            role: { type: "string" },
-            content: { type: "string" },
+            prompt: {
+                type: "object",
+                properties: {
+                    role: { type: "string" },
+                    content: { type: "string" },
+                },
+            },
         },
-        required: ["role", "content"],
     };
+
     static styles = css`
         :host {
             display: block;
@@ -55,8 +60,9 @@ class Prompt extends LitElement {
     constructor() {
         super();
         this.input = {};
-        this.output = {};
-        this.prompt = { role: "user", content: "" };
+        this.output = {
+            prompt: { role: "user", content: "" },
+        };
     }
 
     render() {
@@ -80,12 +86,13 @@ class Prompt extends LitElement {
                             rows: 10,
                         },
                     },
-                    formData: this.prompt,
+                    formData: this.output?.prompt,
                 }}
-                .onChange=${((e) =>
-                    (this.prompt = e.formData.content
-                        ? e.formData
-                        : this.prompt)).bind(this)}>
+                .onChange=${(e) => {
+                    this.output = {
+                        prompt: e.formData,
+                    };
+                }}>
             </bespeak-form>
         `;
     }

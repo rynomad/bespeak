@@ -41,6 +41,7 @@ import { PromptGPT } from "./prompt.wrapped.js";
 import { TextAreaWidget } from "./form-textarea.js";
 import { FlowInput } from "./flow-input.wrapped.js";
 import { FlowOutput } from "./flow-output.wrapped.js";
+import { Debug } from "./debug.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -1030,9 +1031,10 @@ export class NextReteNode extends ReteNode {
                 switchMap((nodes) =>
                     combineLatest(
                         nodes.map(({ node, connection }) =>
-                            node.editorNode.customElement$.pipe(
-                                map(() => ({ node, connection }))
-                            )
+                            merge(
+                                node.editorNode.customElement$,
+                                node.editorNode.subflowEditor$
+                            ).pipe(map(() => ({ node, connection })))
                         )
                     )
                 )
@@ -1097,6 +1099,7 @@ export class NextLitNode extends Node {
             error: { type: Error },
             customElement: { type: Object },
             connectedNodes: { type: Array },
+            ports: { type: Array },
             inputSchema: {
                 type: Object,
                 hasChanged,
@@ -1355,8 +1358,8 @@ export class NextLitNode extends Node {
                                     this.subflowEditor.getInputNode();
 
                                 if (inputNode) {
-                                    inputNode.output = data;
-                                    inputNode.inputSchema = this.inputSchema;
+                                    inputNode.editorNode.output = data;
+                                    // inputNode.editorNode.inputSchema = this.inputSchema;
                                 }
                             }
                         });
@@ -1494,12 +1497,47 @@ export class NextLitNode extends Node {
                 }),
                 tap((nodes) => {
                     const connections = editor.editor.getConnections();
-
+                    let ports = [];
                     const output = nodes.find(
                         (node) =>
                             node.editorNode.customElement?.tagName ===
                             "flow-output"
                     );
+
+                    if (output) {
+                        ports.push("output");
+                    }
+
+                    const input = nodes.find(
+                        (node) =>
+                            node.editorNode.customElement?.tagName ===
+                            "flow-input"
+                    );
+
+                    if (input) {
+                        ports.push("input");
+                    }
+
+                    const assets = nodes.find(
+                        (node) =>
+                            node.editorNode.customElement?.tagName ===
+                            "flow-assets"
+                    );
+
+                    if (assets) {
+                        ports.push("assets");
+                    }
+
+                    const owners = nodes.find(
+                        (node) =>
+                            node.editorNode.customElement?.tagName === "owners"
+                    );
+
+                    if (owners) {
+                        ports.push("flow-owners");
+                    }
+
+                    this.ports = ports;
 
                     this.subflowSubscriptions = [
                         output.editorNode.output$.subscribe((output) => {
@@ -1567,6 +1605,7 @@ export class NextLitNode extends Node {
 
         // Attach the custom element
         this.element = new this.customElement();
+        this.ports = this.element.ports;
         this.element.source = sourceCode;
         this.shadowRoot
             .querySelector(".container")
@@ -1592,7 +1631,7 @@ export class NextLitNode extends Node {
         return html`
             <div class="tracker" @click=${() => console.log("tracker click")}>
                 <bespeak-compass>
-                    ${this.element?.ports?.includes("input")
+                    ${this.ports?.includes("input")
                         ? html`<div slot="north">
                               ${html`<ref-element
                                   class="input-socket"
@@ -1607,7 +1646,7 @@ export class NextLitNode extends Node {
                                   data-testid="input-socket"></ref-element>`}
                           </div>`
                         : ""}
-                    ${this.element?.ports?.includes("output")
+                    ${this.ports?.includes("output")
                         ? html`<div slot="south">
                               ${html`<ref-element
                                   class="output-socket"
@@ -1622,7 +1661,7 @@ export class NextLitNode extends Node {
                                   data-testid="output-socket"></ref-element>`}
                           </div>`
                         : ""}
-                    ${this.element?.ports?.includes("assets")
+                    ${this.ports?.includes("assets")
                         ? html`<div slot="east">
                               ${html`<ref-element
                                   class="output-socket"
@@ -1637,7 +1676,7 @@ export class NextLitNode extends Node {
                                   data-testid="output-socket"></ref-element>`}
                           </div>`
                         : ""}
-                    ${this.element?.ports?.includes("owners")
+                    ${this.ports?.includes("owners")
                         ? html`<div slot="west">
                               ${html`<ref-element
                                   class="input-socket"
@@ -1712,3 +1751,4 @@ NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(PromptGPT);
 NextReteNode.registerComponent(FlowInput);
 NextReteNode.registerComponent(FlowOutput);
+NextReteNode.registerComponent(Debug);
