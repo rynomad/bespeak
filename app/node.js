@@ -39,6 +39,7 @@ import "./monaco.js";
 import "./mixins.js";
 import { PromptGPT } from "./prompt.wrapped.js";
 import { TextAreaWidget } from "./form-textarea.js";
+import { DropZone } from "./dropzone.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -1262,7 +1263,7 @@ export class NextLitNode extends Node {
             this.element.assets = this.assets;
             this.element.config = this.config;
             this.element.keys = this.keys;
-            this.element.output = this.output;
+            this.element.output = this.output || this.element.output;
             this.element.specification = this.specification;
             this.element.chat = this.chat;
         }
@@ -1531,58 +1532,66 @@ export class NextLitNode extends Node {
         return html`
             <div class="tracker" @click=${() => console.log("tracker click")}>
                 <bespeak-compass>
-                    <div slot="north">
-                        ${html`<ref-element
-                            class="input-socket"
-                            .data=${{
-                                type: "socket",
-                                side: "input",
-                                key: input.label,
-                                nodeId: this.data?.id,
-                                payload: input.socket,
-                            }}
-                            .emit=${this.emit}
-                            data-testid="input-socket"></ref-element>`}
-                    </div>
-                    <div slot="south">
-                        ${html`<ref-element
-                            class="output-socket"
-                            .data=${{
-                                type: "socket",
-                                side: "output",
-                                key: output.label,
-                                nodeId: this.data?.id,
-                                payload: output.socket,
-                            }}
-                            .emit=${this.emit}
-                            data-testid="output-socket"></ref-element>`}
-                    </div>
-                    <div slot="east">
-                        ${html`<ref-element
-                            class="output-socket"
-                            .data=${{
-                                type: "socket",
-                                side: "output",
-                                key: assets.label,
-                                nodeId: this.data?.id,
-                                payload: assets.socket,
-                            }}
-                            .emit=${this.emit}
-                            data-testid="output-socket"></ref-element>`}
-                    </div>
-                    <div slot="west">
-                        ${html`<ref-element
-                            class="input-socket"
-                            .data=${{
-                                type: "socket",
-                                side: "input",
-                                key: owners.label,
-                                nodeId: this.data?.id,
-                                payload: owners.socket,
-                            }}
-                            .emit=${this.emit}
-                            data-testid="output-socket"></ref-element>`}
-                    </div>
+                    ${this.element?.ports?.includes("input")
+                        ? html`<div slot="north">
+                              ${html`<ref-element
+                                  class="input-socket"
+                                  .data=${{
+                                      type: "socket",
+                                      side: "input",
+                                      key: input.label,
+                                      nodeId: this.data?.id,
+                                      payload: input.socket,
+                                  }}
+                                  .emit=${this.emit}
+                                  data-testid="input-socket"></ref-element>`}
+                          </div>`
+                        : ""}
+                    ${this.element?.ports?.includes("output")
+                        ? html`<div slot="south">
+                              ${html`<ref-element
+                                  class="output-socket"
+                                  .data=${{
+                                      type: "socket",
+                                      side: "output",
+                                      key: output.label,
+                                      nodeId: this.data?.id,
+                                      payload: output.socket,
+                                  }}
+                                  .emit=${this.emit}
+                                  data-testid="output-socket"></ref-element>`}
+                          </div>`
+                        : ""}
+                    ${this.element?.ports?.includes("assets")
+                        ? html`<div slot="east">
+                              ${html`<ref-element
+                                  class="output-socket"
+                                  .data=${{
+                                      type: "socket",
+                                      side: "output",
+                                      key: assets.label,
+                                      nodeId: this.data?.id,
+                                      payload: assets.socket,
+                                  }}
+                                  .emit=${this.emit}
+                                  data-testid="output-socket"></ref-element>`}
+                          </div>`
+                        : ""}
+                    ${this.element?.ports?.includes("owners")
+                        ? html`<div slot="west">
+                              ${html`<ref-element
+                                  class="input-socket"
+                                  .data=${{
+                                      type: "socket",
+                                      side: "input",
+                                      key: owners.label,
+                                      nodeId: this.data?.id,
+                                      payload: owners.socket,
+                                  }}
+                                  .emit=${this.emit}
+                                  data-testid="output-socket"></ref-element>`}
+                          </div>`
+                        : ""}
                     <div>
                         <bespeak-flipper
                             @click=${() => console.log("click node flipper")}
@@ -1634,3 +1643,4 @@ customElements.define("bespeak-next-node", NextLitNode);
 NextReteNode.registerComponent(GPT);
 NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(PromptGPT);
+NextReteNode.registerComponent(DropZone);

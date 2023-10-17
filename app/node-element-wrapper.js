@@ -32,6 +32,18 @@ export const NextNodeElementWrapper = (
             };
         }
 
+        static get ouptutSchema() {
+            return Base.outputSchema || {};
+        }
+
+        static get ports() {
+            return Base.ports || ["input", "output", "owners", "assets"];
+        }
+
+        get ports() {
+            return this.constructor.ports;
+        }
+
         static get name() {
             // Get the name of the base class
             const baseName = Base.toString().match(/\w+/g)[1];

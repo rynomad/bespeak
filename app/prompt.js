@@ -6,7 +6,14 @@ class Prompt extends LitElement {
         output: { type: Object },
         prompt: { type: Object },
     };
-
+    static outputSchema = {
+        type: "object",
+        properties: {
+            role: { type: "string" },
+            content: { type: "string" },
+        },
+        required: ["role", "content"],
+    };
     static styles = css`
         :host {
             display: block;

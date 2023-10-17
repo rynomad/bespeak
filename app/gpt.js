@@ -4,6 +4,32 @@ export default class ChatGPT extends LitElement {
     static reactivePaths = ["$.output.prompt", "$.input.messages"];
     static config = CONFIG.schema;
     static keys = API_KEY.schema;
+    static outputSchema = {
+        type: "object",
+        properties: {
+            prompt: {
+                type: "object",
+                properties: {
+                    role: { type: "string" },
+                    content: { type: "string" },
+                },
+                required: ["role", "content"],
+            },
+            response: { type: "string" },
+            messages: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        role: { type: "string" },
+                        content: { type: "string" },
+                    },
+                    required: ["role", "content"],
+                },
+            },
+        },
+        required: ["prompt", "response", "messages"],
+    };
 
     static get properties() {
         return {

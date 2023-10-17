@@ -2,7 +2,7 @@ import React, { Component } from "https://esm.sh/react@18.2.0";
 import { utils } from "https://esm.sh/@rjsf/core@3.2.0";
 const { getDisplayLabel } = utils;
 
-class AutoGrowTextarea extends Component {
+export class AutoGrowTextarea extends Component {
     constructor(props) {
         super(props);
         this.state = { value: props.value };
