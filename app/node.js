@@ -40,6 +40,7 @@ import "./mixins.js";
 import { PromptGPT } from "./prompt.wrapped.js";
 import { TextAreaWidget } from "./form-textarea.js";
 import { DropZone } from "./dropzone.wrapped.js";
+import { FlowOutput } from "./flow-output.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -1644,3 +1645,4 @@ NextReteNode.registerComponent(GPT);
 NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(PromptGPT);
 NextReteNode.registerComponent(DropZone);
+NextReteNode.registerComponent(FlowOutput);

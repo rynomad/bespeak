@@ -143,13 +143,16 @@ class DropZone extends LitElement {
             </div>
             ${this.output.mergedSchema
                 ? html`<bespeak-form
-                      .props=${{ schema: this.output.mergedSchema }}
+                      .props=${{
+                          schema: this.output.mergedSchema,
+                          formData: this.output,
+                      }}
                       .onChange=${(e) => {
                           this.output = {
                               ...this.output,
                               ...e.formData,
                           };
-                      }} ></bespeak - form >`
+                      }}></bespeak-form>`
                 : ""}
         `;
     }
