@@ -73,7 +73,7 @@ class FlowInput extends LitElement {
                     mergedSchema: _.merge(
                         ...[
                             {},
-                            ...this.output.components.map(
+                            ...this.output.components?.map(
                                 (component) =>
                                     NextReteNode.components.get(component)
                                         .outputSchema
@@ -128,7 +128,7 @@ class FlowInput extends LitElement {
                 @dragleave=${this.handleDragLeave}>
                 Drop your components here
                 <ul>
-                    ${this.output.components.map(
+                    ${this.output.components?.map(
                         (component, index) => html`
                             <li>
                                 <span>${component}</span>

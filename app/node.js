@@ -1506,6 +1506,20 @@ export class NextLitNode extends Node {
 
                     if (output) {
                         ports.push("output");
+
+                        const outputConnections = connections.filter(
+                            (c) => (c.target = output.id)
+                        );
+
+                        const outputElements = outputConnections
+                            .map((c) => c.source)
+                            .map((id) => editor.editor.getNode(id))
+                            .map((node) => node.editorNode.element)
+                            .filter((e) => e);
+
+                        this.shadowRoot
+                            .querySelector(".container")
+                            .replaceChildren(...outputElements);
                     }
 
                     const input = nodes.find(
@@ -1530,11 +1544,12 @@ export class NextLitNode extends Node {
 
                     const owners = nodes.find(
                         (node) =>
-                            node.editorNode.customElement?.tagName === "owners"
+                            node.editorNode.customElement?.tagName ===
+                            "flow-owners"
                     );
 
                     if (owners) {
-                        ports.push("flow-owners");
+                        ports.push("owners");
                     }
 
                     this.ports = ports;
