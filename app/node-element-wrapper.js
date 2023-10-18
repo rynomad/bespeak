@@ -1,6 +1,6 @@
 import jscodeshift from "https://esm.sh/jscodeshift";
 import { importFromString } from "./util.js";
-import { LitElement } from "https://esm.sh/lit";
+import { LitElement } from "https://esm.sh/lit@2.8.0";
 import OpenAI from "https://esm.sh/openai@4.11.0";
 import debounce from "https://esm.sh/lodash/debounce";
 import { deepEqual } from "https://esm.sh/fast-equals";

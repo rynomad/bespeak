@@ -1,4 +1,4 @@
-import { css } from "https://esm.sh/lit";
+import { css } from "https://esm.sh/lit@2.8.0";
 export const bootstrapCss = css`
     :root {
         --blue: #007bff;

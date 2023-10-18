@@ -1,4 +1,4 @@
-import { LitElement, css, html } from "https://esm.sh/lit@2.0.1";
+import { LitElement, css, html } from "https://esm.sh/lit@2.8.0";
 import { NodeEditor } from "https://esm.sh/rete";
 import {
     AreaExtensions,
@@ -546,69 +546,6 @@ export class Editor extends LitElement {
     }
 
     setupArrange() {
-        this.arrange = new AutoArrangePlugin();
-        this.arrange.addPreset(() => ({
-            port(data) {
-                const { spacing, top, bottom } = {
-                    spacing: data.width / (data.ports * 2),
-                };
-
-                // if (data.side === "output") {
-                //     return {
-                //         x: 0,
-                //         y: top + data.index * spacing,
-                //         width: 15,
-                //         height: 15,
-                //         side: "EAST",
-                //     };
-                // }
-                // return {
-                //     x: 0,
-                //     y:
-                //         data.height -
-                //         bottom -
-                //         data.ports * spacing +
-                //         data.index * spacing,
-                //     width: 15,
-                //     height: 15,
-                //     side: "WEST",
-                // };
-                if (data.side === "output" && data.key === "output") {
-                    return {
-                        x: data.width / 2,
-                        y: data.height,
-                        width: 15,
-                        height: 15,
-                        side: "SOUTH",
-                    };
-                } else if (data.side === "output" && data.key === "assets") {
-                    return {
-                        x: data.width,
-                        y: 0,
-                        width: 15,
-                        height: 15,
-                        side: "EAST",
-                    };
-                } else if (data.side === "input" && data.key === "owners") {
-                    return {
-                        x: 0,
-                        y: 0,
-                        width: 15,
-                        height: 15,
-                        side: "WEST",
-                    };
-                }
-                return {
-                    x: data.width / 2,
-                    y: 0,
-                    width: 15,
-                    height: 15,
-                    side: "NORTH",
-                };
-            },
-        }));
-        this.area.use(this.arrange);
-
         // this.events$
         //     .pipe(
         //         filter((event) => event.type === "custom-node-resize"),
@@ -676,7 +613,91 @@ export class Editor extends LitElement {
         }
     }
 
-    doLayout(options = {}) {
+    async doLayout(options = {}) {
+        this.arrange = new AutoArrangePlugin();
+
+        const nodes = this.editor.getNodes();
+        const connections = this.editor.getConnections().map((connection) => ({
+            ...connection,
+            targetInput: connection.targetInput || "owners",
+        }));
+
+        const { vertical, horizontal } = separateSubgraphs(connections, nodes);
+        let isDoingHorizontal = false;
+        this.arrange.addPreset(() => ({
+            port(data) {
+                const { spacing, top, bottom } = {
+                    spacing: data.width / (data.ports * 2),
+                };
+
+                // if (data.side === "output") {
+                //     return {
+                //         x: 0,
+                //         y: top + data.index * spacing,
+                //         width: 15,
+                //         height: 15,
+                //         side: "EAST",
+                //     };
+                // }
+                // return {
+                //     x: 0,
+                //     y:
+                //         data.height -
+                //         bottom -
+                //         data.ports * spacing +
+                //         data.index * spacing,
+                //     width: 15,
+                //     height: 15,
+                //     side: "WEST",
+                // };
+                if (data.side === "output" && data.key === "output") {
+                    return {
+                        x: data.width / 2,
+                        y: data.height,
+                        width: 15,
+                        height: 15,
+                        side: "SOUTH",
+                    };
+                } else if (data.side === "output" && data.key === "assets") {
+                    return {
+                        x: data.width,
+                        y: 0,
+                        width: 15,
+                        height: 15,
+                        side: "EAST",
+                    };
+                } else if (data.side === "input" && data.key === "owners") {
+                    return {
+                        x: 0,
+                        y: 0,
+                        width: 15,
+                        height: 15,
+                        side: "WEST",
+                    };
+                }
+                return {
+                    x: data.width / 2,
+                    y: 0,
+                    width: 15,
+                    height: 15,
+                    side: "NORTH",
+                };
+            },
+            options(id) {
+                if (!isDoingHorizontal) {
+                    return {};
+                }
+
+                const fixed = vertical.nodes.some((node) => node.id === id);
+
+                return {
+                    fixed,
+                    priority: fixed ? 2 : 0,
+                };
+            },
+        }));
+
+        this.area.use(this.arrange);
         const applier = new ArrangeAppliers.TransitionApplier({
             duration: 200,
             timingFunction: (t) => t,
@@ -685,11 +706,6 @@ export class Editor extends LitElement {
             },
         });
 
-        const nodes = this.editor.getNodes();
-        const connections = this.editor.getConnections().map((connection) => ({
-            ...connection,
-            targetInput: connection.targetInput || "owners",
-        }));
         // .map((connection) =>
         //     connection.targetInput === "input"
         //         ? connection
@@ -700,15 +716,24 @@ export class Editor extends LitElement {
         // );
         console.log(nodes, connections);
 
-        this.arrange.layout({
-            applier,
+        await this.arrange.layout({
             nodes,
             connections,
+            applier,
             options: {
                 "elk.direction": "DOWN",
-                "elk.edgeRouting": "ORTHOGONAL",
             },
         });
+
+        // isDoingHorizontal = true;
+        // this.arrange.layout({
+        //     ...horizontal,
+        //     applier,
+        //     options: {
+        //         algorithm: "force",
+        //         "elk.direction": "RIGHT",
+        //     },
+        // });
 
         return applier;
     }
@@ -811,6 +836,46 @@ function getSiblingConnection(connections, connection) {
         : connection;
 
     return newConnection;
+}
+
+function separateSubgraphs(connections, nodes) {
+    // Initialize empty subgraphs
+    let verticalSubgraph = {
+        nodes: [],
+        connections: [],
+    };
+
+    let horizontalSubgraph = {
+        nodes: [],
+        connections: [],
+    };
+
+    // Helper function to add a node to a subgraph by its id if it's not already present
+    function addNodeToSubgraph(subgraph, nodeId) {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (node && !subgraph.nodes.some((n) => n.id === nodeId)) {
+            subgraph.nodes.push(node);
+        }
+    }
+
+    // Populate subgraphs based on connections
+    connections.forEach((connection) => {
+        if (connection.sourceOutput === "output") {
+            addNodeToSubgraph(verticalSubgraph, connection.source);
+            addNodeToSubgraph(verticalSubgraph, connection.target);
+            verticalSubgraph.connections.push(connection);
+        } else if (connection.sourceOutput === "assets") {
+            addNodeToSubgraph(horizontalSubgraph, connection.source);
+            addNodeToSubgraph(horizontalSubgraph, connection.target);
+            horizontalSubgraph.connections.push(connection);
+        }
+    });
+
+    // Return the subgraphs in an object
+    return {
+        vertical: verticalSubgraph,
+        horizontal: horizontalSubgraph,
+    };
 }
 
 customElements.define("bespeak-editor", Editor);

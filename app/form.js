@@ -1,4 +1,4 @@
-import { LitElement, css, html } from "https://esm.sh/lit";
+import { LitElement, css, html } from "https://esm.sh/lit@2.8.0";
 import validator from "https://esm.sh/@rjsf/validator-ajv8?alias=lodash:lodash-es";
 import Form from "https://esm.sh/@rjsf/bootstrap-4?alias=lodash:lodash-es,deps=react@18.2.0,react-dom@18.2.0";
 

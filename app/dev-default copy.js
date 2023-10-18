@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { PROMPT, CHAT, CONFIG } from "./types/gpt.js";
 import { EDITOR_STATE } from "./types/editor.js";
 import { ComponentMixin } from "./component.js";

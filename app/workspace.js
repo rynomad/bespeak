@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { tap } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
 import "./chat.js";

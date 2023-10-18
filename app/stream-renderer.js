@@ -1,4 +1,4 @@
-import { LitElement, css, html } from "https://esm.sh/lit";
+import { LitElement, css, html } from "https://esm.sh/lit@2.8.0";
 import { filter, switchMap, tap } from "https://esm.sh/rxjs@7.3.0";
 import { PropagationStopper } from "./mixins.js";
 

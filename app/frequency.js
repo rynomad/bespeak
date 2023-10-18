@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { repeat } from "https://esm.sh/lit/directives/repeat.js";
 import _ from "https://esm.sh/lodash";
 import { ComponentMixin } from "./component.js";

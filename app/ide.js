@@ -1,5 +1,5 @@
 // Import LitElement and html helper function
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { v4 as uuid } from "https://esm.sh/uuid";
 import { BehaviorSubject } from "https://esm.sh/rxjs";
 
@@ -8,6 +8,7 @@ import "./chat.js";
 import "./db.js";
 import "./workspace.js";
 import "./pallet.js";
+import "./icons/fa.js";
 class IDEElement extends LitElement {
     static get styles() {
         return css`

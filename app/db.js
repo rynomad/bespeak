@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.2";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { openDB } from "https://esm.sh/idb";
 
 const DB_VERSION = 1;

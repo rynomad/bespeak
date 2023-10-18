@@ -1,4 +1,4 @@
-import { css, LitElement, html } from "https://esm.sh/lit";
+import { css, LitElement, html } from "https://esm.sh/lit@2.8.0";
 
 export class Connection extends LitElement {
     static styles = css`

@@ -1,4 +1,4 @@
-import { LitElement, html } from "https://esm.sh/lit";
+import { LitElement, html } from "https://esm.sh/lit@2.8.0";
 import { PROMPT, CHAT, CONFIG } from "./types/gpt.js";
 import { ReteNode } from "./node.js";
 import { Stream } from "./stream.js";

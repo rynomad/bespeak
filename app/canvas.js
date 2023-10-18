@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
 import {

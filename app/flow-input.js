@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { NextReteNode } from "./node.js";
 import _ from "https://esm.sh/lodash";
 

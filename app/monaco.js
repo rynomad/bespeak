@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import * as monaco from "https://esm.sh/monaco-editor";
 import { monacoStyles } from "./monaco-styles.js";
 

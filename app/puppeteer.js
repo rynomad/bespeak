@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import OpenAI from "https://esm.sh/openai";
 import "./stream-renderer.js";
 import { PROMPT, CONFIG, API_KEY, CHAT } from "./types/gpt.js";

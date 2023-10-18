@@ -1,6 +1,6 @@
 import React from "https://esm.sh/react@18.2.0?bundle";
 import ReactDOM from "https://esm.sh/react-dom@18.2.0?bundle";
-import { LitElement, css, html } from "https://esm.sh/lit";
+import { LitElement, css, html } from "https://esm.sh/lit@2.8.0";
 import { bootstrapCss } from "./bootstrap.css.js";
 
 class ReactWrapper extends LitElement {

@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import "./lists.js";
 
 class Pallet extends LitElement {

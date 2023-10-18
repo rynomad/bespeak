@@ -1,7 +1,7 @@
 import { Presets as LitPresets } from "https://esm.sh/gh/rynomad/rete-lit-plugin/dist/rete-litv-plugin.esm.local.js";
 import { ClassicPreset as Classic } from "https://esm.sh/rete";
-import { css } from "https://esm.sh/lit";
-import { html, LitElement } from "https://esm.sh/lit";
+import { css } from "https://esm.sh/lit@2.8.0";
+import { html, LitElement } from "https://esm.sh/lit@2.8.0";
 import {
     ReplaySubject,
     filter,

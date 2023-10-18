@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { css } from "https://esm.sh/lit";
+import { css } from "https://esm.sh/lit@2.8.0";
 export const monacoStyles = css`
     .monaco-action-bar {
         white-space: nowrap;

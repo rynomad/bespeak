@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { CONFIG, API_KEY } from "./types/gpt.js";
 export default class ChatGPT extends LitElement {
     static reactivePaths = ["$.output.prompt", "$.input.messages"];

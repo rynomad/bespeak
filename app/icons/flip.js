@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { PropagationStopper } from "../mixins.js";
 
 class FlipIcon extends PropagationStopper(LitElement) {

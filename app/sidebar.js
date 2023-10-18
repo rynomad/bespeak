@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "https://esm.sh/lit@2.0.2";
+import { html, css, LitElement } from "https://esm.sh/lit@2.8.0";
 import { repeat } from "https://esm.sh/lit/directives/repeat.js";
 import {
     Subject,

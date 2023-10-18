@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { Types } from "./types.js";
 const CUSTOM_TYPE = {
     type: "custom-type",

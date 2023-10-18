@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit@2.0.1";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 
 import Swal from "https://esm.sh/sweetalert2";
 class BespeakWorkspacePill extends LitElement {

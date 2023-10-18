@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "https://esm.sh/lit";
+import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { ComponentMixin } from "./component.js";
 import * as monaco from "https://esm.sh/monaco-editor";
 import { monacoStyles } from "./monaco-styles.js";
@@ -346,7 +346,7 @@ class Custom extends LitElement {
     `;
 }
 export const CustomWrapped = ComponentMixin(Custom, undefined, async () => {
-    return `import { LitElement, html, css } from "https://esm.sh/lit";
+    return `import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { Types } from "./types.js";
 const CUSTOM_TYPE = {
     label: "Example",

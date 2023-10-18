@@ -1,5 +1,5 @@
 import { dedupeMixin } from "https://esm.sh/@open-wc/dedupe-mixin";
-import { css, LitElement, html } from "https://esm.sh/lit";
+import { css, LitElement, html } from "https://esm.sh/lit@2.8.0";
 
 export const PropagationStopper = dedupeMixin(
     (Base, events = ["pointerdown", "wheel", "dblclick", "contextmenu"]) =>

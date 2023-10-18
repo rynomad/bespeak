@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "https://esm.sh/lit@2.0.2";
+import { html, css, LitElement } from "https://esm.sh/lit@2.8.0";
 import { Subject } from "https://esm.sh/rxjs@7.3.0";
 import { load } from "https://esm.sh/js-yaml@4.1.0";
 import Prism from "https://esm.sh/prismjs@1.24.1/components/prism-core.js";
