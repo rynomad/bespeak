@@ -1,10 +1,25 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { NextReteNode } from "./node.js";
-
+import { faBrands, faSolid } from "./icons/fa.index.js";
 class FlowOutput extends LitElement {
     static properties = {
         input: { type: Object },
         output: { type: Object },
+    };
+
+    static config = {
+        type: "object",
+        properties: {
+            icon: {
+                type: "string",
+                description:
+                    "The icon to display when this flow is used as a node in another flow",
+                enum: faBrands
+                    .map((icon) => `brand-${icon.name}`)
+                    .concat(faSolid.map((icon) => icon.name))
+                    .concat(["openai"]),
+            },
+        },
     };
 
     static ports = ["input"];

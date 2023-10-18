@@ -8,14 +8,29 @@ import { bootstrapCss } from "./bootstrap.css.js";
 import "./react.js";
 import { TextAreaWidget } from "./form-textarea.js";
 import { JsonTextAreaWidget } from "./form-json.js";
+import { AutoCompleteWidget } from "./form-autocomplete.js";
 
-export function setSubmitButtonOptions(uiSchema, options) {
+export function setSubmitButtonOptions(uiSchema, options, schema) {
+    // find any properties in the schema which have an enum with more than 10 options, and set it to use the autocomplete widget if so
+
     const newUiSchema = uiSchema || {};
     newUiSchema["ui:submitButtonOptions"] = {
         showSubmitButton: false, // Set default behavior to not show the submit button
         ...newUiSchema["ui:submitButtonOptions"], // Preserve existing options if they exist
         ...options, // Merge with new options
     };
+
+    Object.keys(schema.properties ? schema.properties : {}).forEach((key) => {
+        if (
+            schema.properties[key].enum &&
+            schema.properties[key].enum.length > 10
+        ) {
+            newUiSchema[key] = {
+                "ui:widget": "autocomplete",
+            };
+        }
+    });
+
     return newUiSchema;
 }
 export const RJSFComponent = CardStyleMixin(
@@ -57,6 +72,7 @@ export const RJSFComponent = CardStyleMixin(
                     widgets: {
                         textarea: TextAreaWidget,
                         json: JsonTextAreaWidget,
+                        autocomplete: AutoCompleteWidget,
                     },
                     // Add onFocus and onBlur handlers
                     onFocus: (id, value) => {
@@ -68,7 +84,8 @@ export const RJSFComponent = CardStyleMixin(
                         if (
                             schemaPart &&
                             (schemaPart["ui:widget"] === "textarea" ||
-                                schemaPart["ui:widget"] === "json")
+                                schemaPart["ui:widget"] === "json" ||
+                                schemaPart["ui:widget"] === "autocomplete")
                         ) {
                             this.focused = true;
                         }
@@ -82,7 +99,8 @@ export const RJSFComponent = CardStyleMixin(
                         if (
                             schemaPart &&
                             (schemaPart["ui:widget"] === "textarea" ||
-                                schemaPart["ui:widget"] === "json")
+                                schemaPart["ui:widget"] === "json" ||
+                                schemaPart["ui:widget"] === "autocomplete")
                         ) {
                             this.focused = false;
                             this.onChange({ formData: this.formData });
@@ -108,7 +126,8 @@ export const RJSFComponent = CardStyleMixin(
                         schema: this.schema,
                         uiSchema: setSubmitButtonOptions(
                             this.props.uiSchema || {},
-                            {}
+                            {},
+                            this.schema
                         ),
                         formData: this.formData,
                     };
