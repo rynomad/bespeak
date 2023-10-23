@@ -95,7 +95,9 @@ class FaIcon extends LitElement {
                 </svg>
             </div>`;
         } else {
-            const classes = `fas fa-${this.icon} fa-${this.size} ${this.animation}`;
+            const classes = `${
+                this.icon?.startsWith("brand") ? "fa-brands" : "fas"
+            } fa-${this.icon} fa-${this.size} ${this.animation}`;
             return html` <i class="${classes}"></i> `;
         }
     }
