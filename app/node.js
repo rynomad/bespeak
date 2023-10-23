@@ -1533,6 +1533,27 @@ export class NextLitNode extends Node {
                         ports.push("input");
                     }
 
+                    if (input && output) {
+                        const icon = document.createElement("fa-icon");
+                        icon.size = "5rem";
+                        icon.icon = output.editorNode.config.icon;
+                        input.editorNode.output$
+                            .pipe(takeUntil(this.data.removed$))
+                            .subscribe((data) => {
+                                icon.animation = "spin-y";
+                            });
+
+                        output.editorNode.output$
+                            .pipe(takeUntil(this.data.removed$))
+                            .subscribe((data) => {
+                                icon.animation = "";
+                            });
+
+                        this.shadowRoot
+                            .querySelector(".container")
+                            .replaceChildren(icon);
+                    }
+
                     const assets = nodes.find(
                         (node) =>
                             node.editorNode.customElement?.tagName ===
