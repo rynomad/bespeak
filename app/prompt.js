@@ -1,6 +1,6 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 
-class Prompt extends LitElement {
+class GPTPrompt extends LitElement {
     static reactivePaths = ["$.input.messages"];
     static properties = {
         input: { type: Object },
@@ -76,13 +76,6 @@ class Prompt extends LitElement {
         };
     }
 
-    updated(changedProperties) {
-        this.output = {
-            ...this.output,
-            messages: (this.input.messages || []).concat(this.output.prompt),
-        };
-    }
-
     render() {
         return html`
             <bespeak-form
@@ -119,7 +112,7 @@ class Prompt extends LitElement {
     }
 }
 
-export default Prompt;
+export default GPTPrompt;
 
 // leave this here for now
 export async function quine() {

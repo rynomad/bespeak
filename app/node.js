@@ -42,7 +42,7 @@ import { TextAreaWidget } from "./form-textarea.js";
 import { FlowInput } from "./flow-input.wrapped.js";
 import { FlowOutput } from "./flow-output.wrapped.js";
 import { Debug } from "./debug.wrapped.js";
-import { GPTResponse } from "./gpt-response.wrapped.js";
+import { GPTRender } from "./gpt-response.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -1783,10 +1783,10 @@ export class NextLitNode extends Node {
 
 customElements.define("bespeak-next-node", NextLitNode);
 
-NextReteNode.registerComponent(GPT);
-NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(PromptGPT);
+NextReteNode.registerComponent(GPT);
+NextReteNode.registerComponent(GPTRender);
+// NextReteNode.registerComponent(NodeMakerGPT);
 NextReteNode.registerComponent(FlowInput);
 NextReteNode.registerComponent(FlowOutput);
 NextReteNode.registerComponent(Debug);
-NextReteNode.registerComponent(GPTResponse);
