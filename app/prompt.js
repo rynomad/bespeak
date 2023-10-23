@@ -102,7 +102,7 @@ class GPTPrompt extends LitElement {
                 .onChange=${(e) => {
                     this.output = {
                         messages: (this.input.messages || []).concat(
-                            this.output.prompt
+                            e.formData
                         ),
                         prompt: e.formData,
                     };
