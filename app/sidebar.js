@@ -160,14 +160,24 @@ class MySidebar extends LitElement {
 
                     return combineLatest(
                         nodes.map((n) =>
-                            n.editorNode.customElement$.pipe(map((data) => n))
+                            merge(
+                                n.editorNode.customElement$.pipe(
+                                    map((data) => n)
+                                ),
+                                n.editorNode.subflowEditor$.pipe(
+                                    map((data) =>
+                                        n.editorNode.subflowEditor.editor.getNodes()
+                                    )
+                                )
+                            )
                         )
                     );
                 }),
                 switchMap((nodes) => {
-                    nodesList = nodes;
+                    nodesList = nodes.flat();
                     const unique = new Map();
                     nodes
+                        .flat()
                         .filter((node) => node.editorNode.name)
                         .forEach((node) => {
                             unique.set(node.editorNode.name, node);
