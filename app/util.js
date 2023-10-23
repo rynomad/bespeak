@@ -256,7 +256,7 @@ export function generateSchemaFromValue(value) {
             }
             break;
         default:
-            throw new Error(`Unsupported value type: ${typeof value}`);
+            return {};
     }
 
     return schema;

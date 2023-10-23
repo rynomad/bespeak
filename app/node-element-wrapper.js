@@ -6,7 +6,9 @@ import debounce from "https://esm.sh/lodash/debounce";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import jsonpath from "https://esm.sh/jsonpath";
 import localForage from "https://esm.sh/localforage";
-
+const hasChanged = (a, b) => {
+    return !deepEqual(a, b);
+};
 export const NextNodeElementWrapper = (
     node,
     Base,
@@ -19,16 +21,16 @@ export const NextNodeElementWrapper = (
         static get properties() {
             return {
                 ...Base.properties,
-                input: { type: Object },
-                output: { type: Object },
+                input: { type: Object, hasChanged },
+                output: { type: Object, hasChanged },
                 owners: { type: Array },
                 assets: { type: Array },
-                specification: { type: String },
+                specification: { type: String, hasChanged },
                 chat: { type: Object },
                 error: { type: Error },
-                config: { type: Object },
-                keys: { type: Array },
-                source: { type: String },
+                config: { type: Object, hasChanged },
+                keys: { type: Array, hasChanged },
+                source: { type: String, hasChanged },
             };
         }
 
@@ -116,10 +118,7 @@ export const NextNodeElementWrapper = (
                         path
                     );
 
-                    if (
-                        !deepEqual(cachedValue, newValue) &&
-                        (newValue || cachedValue)
-                    ) {
+                    if (!deepEqual(cachedValue, newValue) && newValue) {
                         hasDifferences = true;
                         this.__reactiveCache.setItem(path, newValue);
                     }
@@ -195,7 +194,7 @@ export const NextNodeElementWrapper = (
             ) {
                 node.error = this.error || node.error;
                 node.output = this.output || node.output;
-                node.source = this.source || node.source;
+                // node.source = this.source || node.source;
                 node.specification = this.specification || node.specification;
                 node.chat = this.chat || node.chat;
             }

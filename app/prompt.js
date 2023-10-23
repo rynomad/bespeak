@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 
 class Prompt extends LitElement {
+    static reactivePaths = ["$.input.messages"];
     static properties = {
         input: { type: Object },
         output: { type: Object },
@@ -9,6 +10,15 @@ class Prompt extends LitElement {
     static outputSchema = {
         type: "object",
         properties: {
+            messages: {
+                items: {
+                    type: "object",
+                    properties: {
+                        role: { type: "string" },
+                        content: { type: "string" },
+                    },
+                },
+            },
             prompt: {
                 type: "object",
                 properties: {
@@ -22,8 +32,8 @@ class Prompt extends LitElement {
     static styles = css`
         :host {
             display: block;
-            padding: 16px;
             color: var(--my-element-text-color, black);
+            width: 50rem;
         }
         .content-editable {
             border: 1px solid #ccc;
@@ -61,7 +71,15 @@ class Prompt extends LitElement {
         super();
         this.input = {};
         this.output = {
-            prompt: { role: "user", content: "" },
+            messages: [],
+            prompt: {},
+        };
+    }
+
+    updated(changedProperties) {
+        this.output = {
+            ...this.output,
+            messages: (this.input.messages || []).concat(this.output.prompt),
         };
     }
 
@@ -90,6 +108,9 @@ class Prompt extends LitElement {
                 }}
                 .onChange=${(e) => {
                     this.output = {
+                        messages: (this.input.messages || []).concat(
+                            this.output.prompt
+                        ),
                         prompt: e.formData,
                     };
                 }}>

@@ -18,7 +18,8 @@ const StreamRenderer = class extends PropagationStopper(LitElement) {
             background-color: #f5f5f5;
             border-radius: 10px;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-            margin: 15px;
+            // margin: 15px;
+            width: 50rem;
             // margin: 15px;
             // padding: 15px;
             // max-width: 80vw;
@@ -54,7 +55,7 @@ const StreamRenderer = class extends PropagationStopper(LitElement) {
     }
 
     updated(changedProperties) {
-        if (changedProperties.has("subject")) {
+        if (changedProperties.has("subject") && this.subject) {
             this.subscription?.unsubscribe();
             this.subscription = this.subject
                 .pipe(

@@ -42,6 +42,7 @@ import { TextAreaWidget } from "./form-textarea.js";
 import { FlowInput } from "./flow-input.wrapped.js";
 import { FlowOutput } from "./flow-output.wrapped.js";
 import { Debug } from "./debug.wrapped.js";
+import { GPTResponse } from "./gpt-response.wrapped.js";
 
 class WrenchIcon extends PropagationStopper(LitElement) {
     static get properties() {
@@ -1092,8 +1093,8 @@ export class NextLitNode extends Node {
             element: { type: Object },
             specification: { type: String },
             chat: { type: Array },
-            input: { type: Object },
-            output: { type: Object },
+            input: { type: Object, hasChanged },
+            output: { type: Object, hasChanged },
             owners: { type: Array },
             assets: { type: Array },
             error: { type: Error },
@@ -1507,19 +1508,19 @@ export class NextLitNode extends Node {
                     if (output) {
                         ports.push("output");
 
-                        const outputConnections = connections.filter(
-                            (c) => (c.target = output.id)
-                        );
+                        // const outputConnections = connections.filter(
+                        //     (c) => (c.target = output.id)
+                        // );
 
-                        const outputElements = outputConnections
-                            .map((c) => c.source)
-                            .map((id) => editor.editor.getNode(id))
-                            .map((node) => node.editorNode.element)
-                            .filter((e) => e);
+                        // const outputElements = outputConnections
+                        //     .map((c) => c.source)
+                        //     .map((id) => editor.editor.getNode(id))
+                        //     .map((node) => node.editorNode.element)
+                        //     .filter((e) => e);
 
-                        this.shadowRoot
-                            .querySelector(".container")
-                            .replaceChildren(...outputElements);
+                        // this.shadowRoot
+                        //     .querySelector(".container")
+                        //     .replaceChildren(...outputElements);
                     }
 
                     const input = nodes.find(
@@ -1714,7 +1715,7 @@ export class NextLitNode extends Node {
                             <div
                                 class="container"
                                 slot="front"
-                                style="min-width: 300px; min-height: 300px; padding: 1.5rem;"></div>
+                                style="min-width: 20px; min-height: 20px; padding: 1.5rem;"></div>
                             <div slot="back" style="padding: 1.5rem">
                                 <bespeak-form
                                     .props=${{
@@ -1767,3 +1768,4 @@ NextReteNode.registerComponent(PromptGPT);
 NextReteNode.registerComponent(FlowInput);
 NextReteNode.registerComponent(FlowOutput);
 NextReteNode.registerComponent(Debug);
+NextReteNode.registerComponent(GPTResponse);

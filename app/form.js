@@ -42,6 +42,7 @@ export const RJSFComponent = CardStyleMixin(
                     :host {
                         display: block;
                         overflow: auto;
+                        margin: 0;
                     }
                 `,
             ];

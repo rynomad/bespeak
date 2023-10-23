@@ -1,20 +1,14 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { CONFIG, API_KEY } from "./types/gpt.js";
+import { deepEqual } from "https://esm.sh/fast-equals";
 export default class ChatGPT extends LitElement {
-    static reactivePaths = ["$.output.prompt", "$.input.messages"];
+    static reactivePaths = ["$.input.messages", "$.keys.apiKey"];
     static config = CONFIG.schema;
     static keys = API_KEY.schema;
     static outputSchema = {
         type: "object",
+        title: "GPT Messages",
         properties: {
-            prompt: {
-                type: "object",
-                properties: {
-                    role: { type: "string" },
-                    content: { type: "string" },
-                },
-                required: ["role", "content"],
-            },
             response: { type: "string" },
             messages: {
                 type: "array",
@@ -34,12 +28,22 @@ export default class ChatGPT extends LitElement {
     static get properties() {
         return {
             response: { type: String },
+            callInProgress: { type: Boolean },
         };
     }
 
     updated(changedProperties) {
         super.updated(changedProperties);
-        this.callOpenAI();
+        if (
+            this.input.messages?.length &&
+            !deepEqual(this.input.messages, this.output?.messages?.slice(0, -1))
+        ) {
+            console.log(
+                this.input.messages,
+                this.output?.messages?.slice(0, -1)
+            );
+            this.callOpenAI();
+        }
     }
 
     connectedCallback() {
@@ -61,8 +65,13 @@ export default class ChatGPT extends LitElement {
                     ? message
                     : message[0]
             )
-            .concat([this.output.prompt])
             .flat();
+
+        if (!messages.length) {
+            this.callInProgress = false;
+            return;
+        }
+
         const _messages = await this.gpt(
             apiKey,
             {
@@ -105,14 +114,10 @@ export default class ChatGPT extends LitElement {
     }
 
     render() {
-        return html`
-            <bespeak-chat
-                .handleMessage=${this.handleMessage.bind(this)}
-                .value=${this.output?.prompt?.content}>
-            </bespeak-chat>
-            <bespeak-stream-renderer .content=${this.output?.response}>
-            </bespeak-stream-renderer>
-        `;
+        return html`<fa-icon
+            .size=${"5rem"}
+            .icon=${"openai"}
+            .animation=${this.callInProgress ? "spin-y" : ""}></fa-icon>`;
     }
 }
 
