@@ -6,6 +6,7 @@ import debounce from "https://esm.sh/lodash/debounce";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import jsonpath from "https://esm.sh/jsonpath";
 import localForage from "https://esm.sh/localforage";
+import Ajv from "https://esm.sh/ajv@8.6.3";
 const hasChanged = (a, b) => {
     return !deepEqual(a, b);
 };
@@ -89,6 +90,25 @@ export const NextNodeElementWrapper = (
 
         get id() {
             return node.id;
+        }
+
+        static get defaultConfig() {
+            if (!this.config) return {};
+
+            const ajv = new Ajv({
+                strict: false,
+                useDefaults: true,
+            });
+            const augmentedSchema = addDefaultValuesToSchema(this.config);
+            const validate = ajv.compile(augmentedSchema);
+
+            // Create an object that will be populated with default values
+            const defaultData = {};
+
+            // Apply default values to the object based on schema
+            validate(defaultData);
+
+            return defaultData;
         }
 
         constructor() {

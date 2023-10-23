@@ -1132,6 +1132,10 @@ export class NextLitNode extends Node {
         return this.data.id;
     }
 
+    get defaultConfig() {
+        return this.customElement?.defaultConfig || {};
+    }
+
     async firstUpdated() {
         await this.updateComplete;
         this.keysSchema$.next({});
@@ -1168,6 +1172,8 @@ export class NextLitNode extends Node {
                     if (config) {
                         this.config = config;
                         this.config$.next(config);
+                    } else {
+                        this.config = this.defaultConfig();
                     }
                     if (keysSchema) {
                         this.keysSchema = keysSchema;
