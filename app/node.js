@@ -1173,7 +1173,7 @@ export class NextLitNode extends Node {
                         this.config = config;
                         this.config$.next(config);
                     } else {
-                        this.config = this.defaultConfig();
+                        this.config = this.defaultConfig;
                     }
                     if (keysSchema) {
                         this.keysSchema = keysSchema;
