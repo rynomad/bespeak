@@ -75,6 +75,12 @@ class GPTPrompt extends LitElement {
             prompt: {},
         };
     }
+    updated() {
+        this.output = {
+            messages: (this.input.messages || []).concat(this.output.prompt),
+            prompt: this.output.prompt,
+        };
+    }
 
     render() {
         return html`
