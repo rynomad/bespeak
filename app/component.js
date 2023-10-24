@@ -108,7 +108,7 @@ export default class BespeakComponent extends LitElement {
             const keys = validateAgainstSchema(this.keys, this.keysSchema);
 
             const cachedOutput = await this.cache.getItem(
-                hashObject([input, config, keys])
+                await hashObject([input, config, keys])
             );
 
             if (!force && cachedOutput) {
@@ -129,9 +129,13 @@ export default class BespeakComponent extends LitElement {
         console.warn("process not implemented for", this.name);
     }
 
-    async _shouldProcess() {
+    async send() {
         if (!this.output) {
-            return true;
+            return;
+        }
+
+        for (const component of this.piped) {
+            component.input = this.output;
         }
     }
 }

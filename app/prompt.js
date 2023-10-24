@@ -29,6 +29,32 @@ class GPTPrompt extends LitElement {
         },
     };
 
+    static config = {
+        type: "object",
+        properties: {
+            placement: {
+                type: "string",
+                description: "Should the prompt be appended or prepended?",
+                enum: ["append", "prepend"],
+                default: "append",
+            },
+            history: {
+                type: "number",
+                description:
+                    "How many messages should be included? When used with 'join', this is the number of messages per thread. Use 0 to include all messages.",
+                default: 0,
+            },
+            join: {
+                title: "Join Strategy",
+                type: "string",
+                description:
+                    "When encountering multiple threads, how should they be joined?",
+                enum: ["sequential", "zipper"],
+                default: "sequential",
+            },
+        },
+    };
+
     static styles = css`
         :host {
             display: block;
@@ -75,10 +101,58 @@ class GPTPrompt extends LitElement {
             prompt: {},
         };
     }
-    updated() {
+    updated(changedProperties) {
+        if (changedProperties.has("input") || changedProperties.has("config")) {
+            this.makeOutput(this.output.prompt);
+        }
+    }
+
+    makeOutput(prompt) {
+        if (!this.config) return;
+        const { placement, history, join } = this.config;
+
+        const messages =
+            this.input.messages instanceof Set
+                ? new Set(this.input.messages)
+                : new Set([this.input.messages || []]);
+
+        const threads = [];
+        for (let thread of messages) {
+            if (history > 0) {
+                thread = thread.slice(-history);
+            }
+
+            threads.push(thread);
+        }
+
+        const messagesOut = [];
+
+        if (join === "sequential") {
+            for (let thread of threads) {
+                messagesOut.push(...thread);
+            }
+        } else {
+            const maxLength = Math.max(
+                ...threads.map((thread) => thread.length)
+            );
+            for (let i = 0; i < maxLength; i++) {
+                for (let thread of threads) {
+                    if (thread[i]) {
+                        messagesOut.push(thread[i]);
+                    }
+                }
+            }
+        }
+
+        if (placement === "append") {
+            messagesOut.push(prompt);
+        } else {
+            messagesOut.unshift(prompt);
+        }
+
         this.output = {
-            messages: (this.input.messages || []).concat(this.output.prompt),
-            prompt: this.output.prompt,
+            messages: messagesOut,
+            prompt,
         };
     }
 
@@ -106,12 +180,7 @@ class GPTPrompt extends LitElement {
                     formData: this.output?.prompt,
                 }}
                 .onChange=${(e) => {
-                    this.output = {
-                        messages: (this.input.messages || []).concat(
-                            e.formData
-                        ),
-                        prompt: e.formData,
-                    };
+                    this.makeOutput(e.formData);
                 }}>
             </bespeak-form>
         `;

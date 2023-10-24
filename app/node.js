@@ -1405,10 +1405,11 @@ export class NextLitNode extends Node {
             if (!objValue) {
                 return srcValue;
             }
-            if (_.isArray(objValue)) {
-                return objValue.concat([srcValue]);
+
+            if (objValue instanceof Set) {
+                objValue.add(srcValue);
             } else {
-                return [objValue, srcValue];
+                return new Set([objValue, srcValue]);
             }
         });
     }

@@ -11,6 +11,8 @@ import {
     switchMap,
 } from "https://esm.sh/rxjs@7.3.0";
 
+import { sha256 } from "https://esm.sh/sha-anything";
+
 export const sanitizeAndRenderYaml = (object) => {
     const sanitizedObject = safeStringify(object);
     if (!sanitizedObject) return;
@@ -75,6 +77,11 @@ export function extractCodeBlocks(text) {
 
     return codeBlocks;
 }
+
+export async function hashObject(obj) {
+    return sha256(obj, { deepSort: true });
+}
+
 const switchMapToLatest = (asyncTask) => (source) => {
     let pending = false;
     let latestValue = null;

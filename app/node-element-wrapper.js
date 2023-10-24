@@ -100,8 +100,7 @@ export const NextNodeElementWrapper = (
                 strict: false,
                 useDefaults: true,
             });
-            const augmentedSchema = addDefaultValuesToSchema(this.config);
-            const validate = ajv.compile(augmentedSchema);
+            const validate = ajv.compile(this.config);
 
             // Create an object that will be populated with default values
             const defaultData = {};
