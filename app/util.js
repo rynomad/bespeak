@@ -205,6 +205,27 @@ export function addDefaultValuesToSchema(schema) {
     return schema;
 }
 
+export function validateAgainstSchema(data, schema) {
+    if (!schema) {
+        return data;
+    }
+
+    const ajv = new Ajv({
+        useDefaults: true,
+        additonalProperties: true,
+        strict: false,
+    });
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
+
+    if (!valid) {
+        console.error(validate.errors);
+        throw new Error("Invalid data");
+    }
+
+    return data;
+}
+
 export function getSource(url) {
     return async () => {
         const response = await fetch(url);

@@ -109,6 +109,10 @@ export const NextNodeElementWrapper = (
             // Apply default values to the object based on schema
             validate(defaultData);
 
+            if (defaultData.model) {
+                defaultData.model = "gpt-3.5-turbo-0613";
+            }
+
             return defaultData;
         }
 

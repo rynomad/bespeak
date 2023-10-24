@@ -1,6 +1,7 @@
 import { LitElement, html } from "lit-element";
 import Ajv from "https://esm.sh/ajv@8.6.3";
-import { addDefaultValuesToSchema } from "./util.js";
+import { validateAgainstSchema } from "./util.js";
+import { v4 as uuid } from "https://esm.sh/uuid";
 
 export default class BespeakComponent extends LitElement {
     static get properties() {
@@ -15,6 +16,15 @@ export default class BespeakComponent extends LitElement {
 
     piped = new Set();
     used = new Set();
+
+    constructor(id = uuid()) {
+        super();
+        this.id = id;
+
+        this.cache = localForage.createInstance({
+            name: `bespeak-cache-${this.name}-${this.id}`,
+        });
+    }
 
     get keysSchema() {
         return this.constructor.keys || null;
@@ -68,7 +78,8 @@ export default class BespeakComponent extends LitElement {
         }
 
         if (changedProperties.has("output")) {
-            this.dispatch();
+            await this.save();
+            this.send();
         }
 
         if (changedProperties.has("error")) {
@@ -88,18 +99,29 @@ export default class BespeakComponent extends LitElement {
     }
 
     async process(force = false) {
-        if (force || (await this.shouldProcess())) {
-            try {
-                const input = this._validate(this.input, this.inputSchema);
-                const config = this._validate(this.config, this.configSchema);
-                const keys = this._validate(this.keys, this.keysSchema);
+        try {
+            const input = validateAgainstSchema(this.input, this.inputSchema);
+            const config = validateAgainstSchema(
+                this.config,
+                this.configSchema
+            );
+            const keys = validateAgainstSchema(this.keys, this.keysSchema);
 
-                return this._process(input, config, keys).catch((e) => {
-                    this.error = e;
-                });
-            } catch (e) {
-                console.warn("failed to validate process", e);
+            const cachedOutput = await this.cache.getItem(
+                hashObject([input, config, keys])
+            );
+
+            if (!force && cachedOutput) {
+                return cachedOutput;
             }
+
+            return this._process(input, config, keys).catch((e) => {
+                this.error = e;
+                return null;
+            });
+        } catch (e) {
+            console.warn("failed to validate process", e);
+            return null;
         }
     }
 
@@ -107,24 +129,9 @@ export default class BespeakComponent extends LitElement {
         console.warn("process not implemented for", this.name);
     }
 
-    _validate(data, schema) {
-        if (!schema) {
-            return data;
+    async _shouldProcess() {
+        if (!this.output) {
+            return true;
         }
-
-        const ajv = new Ajv({
-            useDefaults: true,
-            additonalProperties: true,
-            strict: false,
-        });
-        const validate = ajv.compile(schema);
-        const valid = validate(data);
-
-        if (!valid) {
-            console.error(validate.errors);
-            throw new Error("Invalid data");
-        }
-
-        return data;
     }
 }

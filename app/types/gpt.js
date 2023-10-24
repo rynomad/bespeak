@@ -66,7 +66,7 @@ export const CONFIG = {
         properties: {
             model: {
                 type: "string",
-                default: "gpt-4",
+                default: "gpt-3.5-turbo-0613",
                 enum: ["gpt-4", "gpt-3.5-turbo-0613"],
             },
             context: {
