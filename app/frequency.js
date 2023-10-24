@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { repeat } from "https://esm.sh/lit/directives/repeat.js";
 import _ from "https://esm.sh/lodash";
-import { ComponentMixin } from "./component.js";
+import { ComponentMixin } from "./component.old.js";
 import { CHAT } from "./types/gpt.js";
 import { FREQUENCY_TABLE } from "./types/frequency.js";
 import { Chart } from "https://esm.sh/chart.js/auto";

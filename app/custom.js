@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
-import { ComponentMixin } from "./component.js";
+import { ComponentMixin } from "./component.old.js";
 import * as monaco from "https://esm.sh/monaco-editor";
 import { monacoStyles } from "./monaco-styles.js";
 import { ReteNode } from "./node.js";

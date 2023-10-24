@@ -7,6 +7,7 @@ import { deepEqual } from "https://esm.sh/fast-equals";
 import jsonpath from "https://esm.sh/jsonpath";
 import localForage from "https://esm.sh/localforage";
 import Ajv from "https://esm.sh/ajv@8.6.3";
+import Swal from "https://esm.sh/sweetalert2";
 const hasChanged = (a, b) => {
     return !deepEqual(a, b);
 };
@@ -217,6 +218,13 @@ export const NextNodeElementWrapper = (
                 // node.source = this.source || node.source;
                 node.specification = this.specification || node.specification;
                 node.chat = this.chat || node.chat;
+            }
+
+            if (changedProperties.has("error")) {
+                Swal.fire({
+                    title: "Error in " + this.name,
+                    text: this.error.message + "\n" + this.error.stack,
+                });
             }
 
             for (const [key, value] of changedProperties) {
