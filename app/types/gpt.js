@@ -11,6 +11,34 @@ const UpDownWidget = (props) => {
     });
 };
 
+export const PAYLOAD = {
+    type: "object",
+    title: "GPT Messages",
+    properties: {
+        prompt: {
+            type: "object",
+            properties: {
+                role: { type: "string" },
+                content: { type: "string" },
+            },
+            required: ["role", "content"],
+        },
+        response: { type: "string" },
+        messages: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    role: { type: "string" },
+                    content: { type: "string" },
+                },
+                required: ["role", "content"],
+            },
+        },
+    },
+    required: ["prompt", "response", "messages"],
+};
+
 export const PROMPT = {
     label: "Prompt",
     type: "prompt",
@@ -68,20 +96,6 @@ export const CONFIG = {
                 type: "string",
                 default: "gpt-3.5-turbo-0613",
                 enum: ["gpt-4", "gpt-3.5-turbo-0613"],
-            },
-            context: {
-                type: "string",
-                enum: ["yes", "no"],
-                default: "yes",
-                description:
-                    "Include the context from connected nodes in the chat history? If yes, the context will be included in the chat history as a system message. In the future, you will have more granular control via templates directly in the chat box.",
-            },
-            chooser: {
-                type: "string",
-                enum: ["single", "all"],
-                default: "single",
-                description:
-                    'This has no effect unless there are messages with multiple choices in the chat history. If "single", the first choice is used in each case where there are multiple. If "all", all results are included in the history, as a series of assistand messages.',
             },
             temperature: {
                 type: "number",

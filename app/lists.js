@@ -81,10 +81,14 @@ class BespeakNodeList extends LitElement {
 
     constructor() {
         super();
-        this.components = Array.from(ReteNode.components.values()).filter(
-            (component) =>
-                ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(component)
-        );
+        this.components = Array.from(ReteNode.components.values())
+            .filter(
+                (component) =>
+                    ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(
+                        component.Component
+                    )
+            )
+            .map(({ Component }) => Component);
 
         ReteNode.onComponentsChanged = (components) => {
             this.components = Array.from(components.values()).filter(
@@ -124,9 +128,9 @@ class BespeakNodeList extends LitElement {
             <bespeak-list>
                 <slot></slot>
                 ${this.components.map(
-                    (component) =>
+                    ({ Component }) =>
                         html`<bespeak-node-pill
-                            .component=${component}></bespeak-node-pill>`
+                            .component=${Component}></bespeak-node-pill>`
                 )}
                 ${this.workspaces?.map(
                     (workspace) =>

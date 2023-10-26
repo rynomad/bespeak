@@ -53,6 +53,7 @@ import { Custom } from "./custom.js";
 import { Example } from "./example.wrapped.js";
 import { layout } from "./layout.js";
 import "./icons/nodes.js";
+import { getText } from "./util.js";
 
 export class Editor extends LitElement {
     static get properties() {
@@ -760,12 +761,13 @@ export class Editor extends LitElement {
             const next = new NextReteNode(this.ide, this, componentName);
             this.addNode(next); //, null, true);
         } else {
-            const component = NextReteNode.components.get(componentName);
-            if (component) {
+            const { Component, file } =
+                NextReteNode.components.get(componentName) || {};
+            if (Component) {
                 const node = new NextReteNode(
                     this.ide,
                     this,
-                    await component.quine()
+                    await getText(getAbsoluteUrl(file))
                 );
                 this.addNode(node, null, true);
             }
@@ -879,3 +881,9 @@ function separateSubgraphs(connections, nodes) {
 }
 
 customElements.define("bespeak-editor", Editor);
+
+function getAbsoluteUrl(relativeUrl) {
+    const baseUrl = new URL(".", import.meta.url).href;
+    const absoluteUrl = new URL(relativeUrl, baseUrl).href;
+    return absoluteUrl;
+}

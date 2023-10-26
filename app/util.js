@@ -10,16 +10,36 @@ import {
     bufferCount,
     switchMap,
 } from "https://esm.sh/rxjs@7.3.0";
+import Ajv from "https://esm.sh/ajv@8.6.3";
 
 import { sha256 } from "https://esm.sh/sha-anything";
-
+export async function getText(url) {
+    const response = await fetch(url);
+    return await response.text();
+}
 export const sanitizeAndRenderYaml = (object) => {
     const sanitizedObject = safeStringify(object);
     if (!sanitizedObject) return;
     const parsedObject = JSON.parse(sanitizedObject);
     return yaml.dump(parsedObject);
 };
+export function getDefaultValue(schema) {
+    if (!schema) {
+        return undefined;
+    } else {
+        const ajv = new Ajv({ strict: false, useDefaults: true });
+        const augmentedSchema = addDefaultValuesToSchema(schema);
+        const validate = ajv.compile(augmentedSchema);
 
+        // Create an object that will be populated with default values
+        const defaultData = {};
+
+        // Apply default values to the object based on schema
+        validate(defaultData);
+
+        return defaultData;
+    }
+}
 export const adaptiveDebounce = (minTime, maxTime, increment) => {
     return (source) => {
         let debounceTimeMs = minTime;
@@ -79,7 +99,9 @@ export function extractCodeBlocks(text) {
 }
 
 export async function hashObject(obj) {
-    return sha256(obj, { deepSort: true });
+    const hash = await sha256(obj, { deepSort: true });
+    console.log(hash, obj);
+    return hash;
 }
 
 const switchMapToLatest = (asyncTask) => (source) => {

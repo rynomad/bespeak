@@ -675,20 +675,33 @@ export class ReteNode extends Classic.Node {
     static components = new Map();
 
     static registerComponent(Component, force = false) {
-        const isExisting = this.components.get(Component.name);
-        if (isExisting && !force) {
-            if (["Chat GPT", "Custom"].includes(Component.name)) {
-                throw new Error(
-                    "You cannot overwrite a hard-coded node, you must change the name of the class"
-                );
-            } else {
-                throw new Error(
-                    "A node with this name already exists, do you want to overwrite it? You can change the name of the class to create a new node type."
-                );
+        if (typeof Component === "string") {
+            import(Component).then((module) => {
+                this.components.set(module.default.name, {
+                    Component: module.default,
+                    file: Component,
+                });
+                this.onComponentsChanged?.(this.components);
+            });
+        } else {
+            const isExisting = this.components.get(Component.name);
+            if (isExisting && !force) {
+                if (["Chat GPT", "Custom"].includes(Component.name)) {
+                    throw new Error(
+                        "You cannot overwrite a hard-coded node, you must change the name of the class"
+                    );
+                } else {
+                    throw new Error(
+                        "A node with this name already exists, do you want to overwrite it? You can change the name of the class to create a new node type."
+                    );
+                }
             }
+            this.components.set(Component.name, {
+                Component,
+            });
         }
-        this.components.set(Component.name, Component);
-        this.onComponentsChanged?.(this.components);
+
+        // this.onComponentsChanged?.(this.components);
     }
 
     static deserialize(ide, editor, definition) {
@@ -1048,26 +1061,20 @@ export class NextReteNode extends ReteNode {
 
 function transformSource(source) {
     const baseUrl = new URL(".", import.meta.url).href;
-    source = `import { PropagationStopper } from "./mixins.js"\n` + source;
-    return source
-        .replace(
-            /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
-            (match, importList, importPath) => {
-                if (importPath.startsWith(".")) {
-                    const absoluteUrl = new URL(importPath, baseUrl).href;
-                    if (importList) {
-                        return `import ${importList} from "${absoluteUrl}"`;
-                    } else {
-                        return `import "${absoluteUrl}"`;
-                    }
+    return source.replace(
+        /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
+        (match, importList, importPath) => {
+            if (importPath.startsWith(".")) {
+                const absoluteUrl = new URL(importPath, baseUrl).href;
+                if (importList) {
+                    return `import ${importList} from "${absoluteUrl}"`;
+                } else {
+                    return `import "${absoluteUrl}"`;
                 }
-                return match;
             }
-        )
-        .replace(
-            "extends LitElement",
-            "extends PropagationStopper(LitElement)"
-        );
+            return match;
+        }
+    );
 }
 export class NextLitNode extends Node {
     static get styles() {
@@ -1274,7 +1281,7 @@ export class NextLitNode extends Node {
         super.updated(changedProperties);
         if (this.element) {
             this.element.input = this.input;
-            this.element.inputSchema = this.inputSchema;
+            // this.element.inputSchema = this.inputSchema;
             this.element.owners = this.owners;
             this.element.assets = this.assets;
             this.element.config = this.config;
@@ -1648,7 +1655,7 @@ export class NextLitNode extends Node {
         );
 
         // Attach the custom element
-        this.element = new this.customElement();
+        this.element = new this.customElement(this.id);
         this.ports = this.element.ports;
         this.element.source = sourceCode;
         this.shadowRoot
@@ -1790,10 +1797,14 @@ export class NextLitNode extends Node {
 
 customElements.define("bespeak-next-node", NextLitNode);
 
-NextReteNode.registerComponent(PromptGPT);
-NextReteNode.registerComponent(GPT);
-NextReteNode.registerComponent(GPTRender);
-// NextReteNode.registerComponent(NodeMakerGPT);
-NextReteNode.registerComponent(FlowInput);
-NextReteNode.registerComponent(FlowOutput);
-NextReteNode.registerComponent(Debug);
+// NextReteNode.registerComponent(PromptGPT);
+// NextReteNode.registerComponent(GPT);
+// NextReteNode.registerComponent(GPTRender);
+// // NextReteNode.registerComponent(NodeMakerGPT);
+// NextReteNode.registerComponent(FlowInput);
+// NextReteNode.registerComponent(FlowOutput);
+// NextReteNode.registerComponent(Debug);
+
+NextReteNode.registerComponent("./gpt.child.js");
+NextReteNode.registerComponent("./gpt-response.child.js");
+NextReteNode.registerComponent("./prompt.child.js");

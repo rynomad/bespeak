@@ -59,7 +59,7 @@ class FlowInput extends LitElement {
         event.stopPropagation();
         const componentName = event.dataTransfer.getData("text/plain");
         if (componentName) {
-            const Component = NextReteNode.components.get(componentName);
+            const { Component } = NextReteNode.components.get(componentName);
 
             this.output = {
                 ...this.output,
@@ -76,7 +76,7 @@ class FlowInput extends LitElement {
                             ...this.output.components?.map(
                                 (component) =>
                                     NextReteNode.components.get(component)
-                                        .outputSchema
+                                        ?.Component.outputSchema
                             ),
                         ]
                     ),
@@ -108,7 +108,7 @@ class FlowInput extends LitElement {
                         .filter((_, i) => i !== index)
                         .map(
                             (component) =>
-                                NextReteNode.components.get(component)
+                                NextReteNode.components.get(component).Component
                                     .outputSchema
                         ),
                 ]
