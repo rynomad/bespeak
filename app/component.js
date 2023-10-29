@@ -24,7 +24,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
     static styles = css``;
 
-    used = new Set();
     processing = false;
     shouldProcessAgain = false;
 
@@ -33,11 +32,20 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     get configSchema() {
-        return this.constructor.config || null;
-    }
-
-    get inputSchema() {
-        return this.constructor.input || null;
+        const base = this.constructor.config || {
+            type: "object",
+            properties: {},
+        };
+        return {
+            ...base,
+            properties: {
+                description: {
+                    type: "string",
+                    description: "A description of this node.",
+                },
+                ...base.properties,
+            },
+        };
     }
 
     get outputSchema() {
@@ -58,13 +66,13 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         return this.constructor.description || null;
     }
 
-    get name() {
-        const baseName = this.constructor.toString().match(/\w+/g)[1];
+    static get name() {
+        const baseName = this.toString().match(/\w+/g)[1];
 
         return baseName !== "extends" ? baseName : "anonymous";
     }
 
-    get title() {
+    static get title() {
         const words = this.name.split(
             /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/
         );
@@ -76,6 +84,18 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         return titleCaseName;
     }
 
+    static get tagName() {
+        return this.title.toLowerCase().replace(/\s/g, "-");
+    }
+
+    get name() {
+        return this.constructor.name;
+    }
+
+    get title() {
+        this.constructor.title;
+    }
+
     constructor(id) {
         super();
 
@@ -85,6 +105,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             name: `bespeak-cache-${this.name}-${this.id}`,
         });
 
+        this.input = [];
         this.output = getDefaultValue(this.outputSchema);
         this.config = getDefaultValue(this.configSchema);
         this.keys = getDefaultValue(this.keysSchema);
@@ -111,7 +132,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         if (changedProperties.has("error")) {
-            this.onError();
+            this.onError?.();
         }
 
         if (changedProperties.has("piped")) {
@@ -119,18 +140,19 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
     }
 
-    async call(parameters) {
-        parameters = validateAgainstSchema(parameters, this.apiSchema);
-        return this._call(parameters).catch((e) => {
-            this.error = e;
-        });
+    async call({ input, config }) {
+        try {
+            return await this._process(input, config, this.keys);
+        } catch (e) {
+            console.warn("failed to validate call", e);
+        }
     }
 
     async _call() {
         console.warn("API not implemented for", this.name);
     }
 
-    async process(force = false) {
+    async process(force = !this.keysSchema) {
         if (this.processing) {
             this.shouldProcessAgain = true;
             return;
@@ -139,12 +161,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.processing = true;
         let output = this.output;
         try {
-            const input = validateAgainstSchema(this.input, this.inputSchema);
-            const config = validateAgainstSchema(
-                this.config,
-                this.configSchema
-            );
-            const keys = validateAgainstSchema(this.keys, this.keysSchema);
+            const { input, config, keys } = this;
 
             const cachedOutput = await this.cache.getItem(
                 await hashObject([input, config])
@@ -156,7 +173,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
             output = await this._process(input, config, keys).catch((e) => {
                 this.error = e;
-                return null;
+                return this.output;
             });
         } catch (e) {
             console.warn("failed to validate process", e);
@@ -173,17 +190,14 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
     async _process() {
         console.warn("process not implemented for", this.name);
-        return this.input;
+        return this.outputSchema ? this.output : this.input;
     }
 
     async save() {
         if (this.output) {
             await this.cache.setItem("output", this.output);
             await this.cache.setItem(
-                await hashObject([
-                    validateAgainstSchema(this.input, this.inputSchema),
-                    validateAgainstSchema(this.config, this.configSchema),
-                ]),
+                await hashObject([this.input, this.config]),
                 this.output
             );
         }
@@ -194,8 +208,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     async load() {
-        this.output = await this.cache.getItem("output");
-        this.config = await this.cache.getItem("config");
+        this.output =
+            (await this.cache.getItem("output")) ||
+            getDefaultValue(this.outputSchema);
+        this.config =
+            (await this.cache.getItem("config")) ||
+            getDefaultValue(this.configSchema);
     }
 
     pipe(component) {
@@ -220,16 +238,19 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         this.pipeSubscription = combineLatest(
-            Array.from(this.piped).map((component) => component.output$)
+            Array.from(this.piped).map((component) =>
+                component.output$.pipe(
+                    map((value) => ({
+                        nodeId: component.reteId,
+                        nodeName: component.name,
+                        config: component.config,
+                        schema: component.outputSchema,
+                        value,
+                    }))
+                )
+            )
         ).subscribe((outputs) => {
-            this.input = outputs.reduce((input, output) => {
-                const [name, value] = output;
-                if (input[name]) {
-                    input[name].add(value);
-                } else {
-                    input[name] = new Set([value]);
-                }
-            }, {});
+            this.input = outputs;
         });
     }
 

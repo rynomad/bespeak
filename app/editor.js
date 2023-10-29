@@ -13,7 +13,6 @@ import {
     ArrangeAppliers,
 } from "https://esm.sh/rete-auto-arrange-plugin?deps=rete-area-plugin@2.0.0";
 import { MinimapPlugin } from "https://esm.sh/rete-minimap-plugin@2.0.0?deps=rete-area-plugin@2.0.0";
-import { ChatFlowInput, Node, ChatFlowOutput } from "./node.js";
 import { BetterDomSocketPosition } from "./socket-position.js";
 import { Connection } from "./connection.js";
 import { structures } from "https://esm.sh/rete-structures?deps=rete-area-plugin@2.0.0";
@@ -40,18 +39,7 @@ import { DevDefault } from "./dev-default.js";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
 
-import {
-    ReteNode,
-    InputNode,
-    OutputNode,
-    NextReteNode,
-    NextLitNode,
-} from "./node.js";
-import { DoubleApplier } from "./layout-applier.js";
-import { CONFIG } from "./types/gpt.js";
-import { Custom } from "./custom.js";
-import { Example } from "./example.wrapped.js";
-import { layout } from "./layout.js";
+import { ReteNode, LitNode } from "./node.child.js";
 import "./icons/nodes.js";
 import { getText } from "./util.js";
 
@@ -174,15 +162,7 @@ export class Editor extends LitElement {
                 socketPositionWatcher: new BetterDomSocketPosition(),
                 customize: {
                     node({ payload: node }) {
-                        if (node.Component === ChatFlowInput) {
-                            return InputNode;
-                        } else if (node.Component === ChatFlowOutput) {
-                            return OutputNode;
-                        } else if (node instanceof NextReteNode) {
-                            return NextLitNode;
-                        }
-
-                        return Node;
+                        return LitNode;
                     },
                     connection() {
                         return Connection;
@@ -210,8 +190,6 @@ export class Editor extends LitElement {
         this.setupArrange();
         this.setupStorage();
         this.setupCrud();
-        // this.setupState();
-        // this.setupIO();
 
         AreaExtensions.zoomAt(area, editor.getNodes());
 
@@ -269,11 +247,7 @@ export class Editor extends LitElement {
             this.name = snapshot.name;
             for (const node of snapshot.nodes) {
                 await this.addNode(
-                    (this.isDev ? ReteNode : NextReteNode).deserialize(
-                        this.ide,
-                        this,
-                        node
-                    ),
+                    await ReteNode.deserialize(this.ide, this, node),
                     null,
                     false
                 );
@@ -285,9 +259,6 @@ export class Editor extends LitElement {
             setTimeout(() => {
                 let node = this.structures.leaves().nodes().pop();
                 if (node) {
-                    if (node.Component === ChatFlowOutput) {
-                        node = this.structures.incomers(node.id).nodes().pop();
-                    }
                     this.doLayout([node]);
                 }
             }, 100);
@@ -346,11 +317,11 @@ export class Editor extends LitElement {
             .pipe(
                 filter((crud) => !Stream.storage.has(crud)),
                 debug(this, "crud$"),
-                tap((operations) => {
+                tap(async (operations) => {
                     const create = operations.create;
                     const remove = operations.delete;
                     for (const serialized of create.nodes || []) {
-                        const node = NextReteNode.deserialize(
+                        const node = await ReteNode.deserialize(
                             this.ide,
                             this,
                             serialized
@@ -372,50 +343,6 @@ export class Editor extends LitElement {
                 })
             )
             .subscribe();
-    }
-
-    setupIO() {
-        this.hydrated$.pipe(take(1)).subscribe(async () => {
-            if (this.inputs$) {
-                const nodes = this.editor.getNodes();
-                let input, output;
-                if (nodes.length === 0) {
-                    input = new ReteNode(this.ide, this, ChatFlowInput);
-                    output = new ReteNode(this.ide, this, ChatFlowOutput);
-                    const devDefault = new ReteNode(this.ide, this, DevDefault);
-                    await this.addNode(input, null, true);
-                    await this.addNode(output, null, true);
-                    await this.addNode(devDefault, null, true);
-                    await this.addConnection({
-                        id: `${input.id}-${devDefault.id}`,
-                        source: input.id,
-                        target: devDefault.id,
-                        sourceOutput: "output",
-                        targetInput: "input",
-                    });
-
-                    await this.addConnection({
-                        id: `${devDefault.id}-${output.id}`,
-                        source: devDefault.id,
-                        target: output.id,
-                        sourceOutput: "output",
-                        targetInput: "input",
-                    });
-                } else {
-                    input = nodes.find(
-                        (node) => node.Component === ChatFlowInput
-                    );
-                    output = nodes.find(
-                        (node) => node.Component === ChatFlowOutput
-                    );
-                }
-
-                this.inputs$.subscribe(input.outputs$);
-                output.inputs$
-                    .pipe(debug(this, "output inputs"))
-                    .subscribe(this.outputs$);
-            }
-        });
     }
 
     selectNode(node, focus = true) {
@@ -597,17 +524,6 @@ export class Editor extends LitElement {
             .subscribe();
     }
 
-    layoutLeaves() {
-        const leaves = this.structures.leaves().nodes();
-        const nodes = leaves.filter(
-            (node) => node.Component !== ChatFlowOutput
-        );
-        if (leaves.length && !nodes.length) {
-            nodes.push(this.structures.incomers(leaves[0].id).nodes());
-        }
-        return this.doLayout(nodes.flat());
-    }
-
     zoom(nodes) {
         if (nodes) {
             AreaExtensions.zoomAt(this.area, nodes);
@@ -756,23 +672,10 @@ export class Editor extends LitElement {
 
     async handleDrop(event) {
         event.preventDefault();
-        const componentName = event.dataTransfer.getData("text/plain");
-        if (componentName.startsWith("workspace:")) {
-            const next = new NextReteNode(this.ide, this, componentName);
-            this.addNode(next); //, null, true);
-        } else {
-            const { Component, file } =
-                NextReteNode.components.get(componentName) || {};
-            if (Component) {
-                const node = new NextReteNode(
-                    this.ide,
-                    this,
-                    await getText(getAbsoluteUrl(file))
-                );
-                this.addNode(node, null, true);
-            }
-            return;
-        }
+        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        const node = await ReteNode.deserialize(this.ide, this, data);
+        await this.addNode(node);
+        node.move(event.clientX, event.clientY);
     }
 
     render() {
@@ -810,7 +713,6 @@ export class Editor extends LitElement {
                     type: "editor-open",
                     data: this,
                 });
-                this.layoutLeaves();
             }, 100);
         }
         this.requestUpdate();

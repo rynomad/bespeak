@@ -117,7 +117,7 @@ export const NextNodeElementWrapper = (
 
         constructor() {
             super();
-            this.__wrapMethods();
+            // this.__wrapMethods();
             this.__reactiveCache = localForage.createInstance({
                 name: `reactiveCache-${this.id}`,
             });

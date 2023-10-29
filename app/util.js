@@ -23,6 +23,36 @@ export const sanitizeAndRenderYaml = (object) => {
     const parsedObject = JSON.parse(sanitizedObject);
     return yaml.dump(parsedObject);
 };
+
+export function baseUrl() {
+    return new URL(".", import.meta.url).href;
+}
+
+export function getAbsoluteUrl(url) {
+    const _baseUrl = baseUrl();
+    return new URL(url, _baseUrl).href;
+}
+
+export async function getProjectSource(relativeUrl) {
+    const _baseUrl = baseUrl();
+    const absoluteUrl = new URL(relativeUrl, _baseUrl).href;
+    const text = await fetch(absoluteUrl).then((response) => response.text());
+    return text.replace(
+        /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
+        (match, importList, importPath) => {
+            if (importPath.startsWith(".")) {
+                const absoluteUrl = new URL(importPath, _baseUrl).href;
+                if (importList) {
+                    return `import ${importList} from "${absoluteUrl}"`;
+                } else {
+                    return `import "${absoluteUrl}"`;
+                }
+            }
+            return match;
+        }
+    );
+}
+
 export function getDefaultValue(schema) {
     if (!schema) {
         return undefined;

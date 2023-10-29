@@ -149,8 +149,8 @@ class BespeakNodePill extends LitElement {
     static styles = BespeakWorkspacePill.styles;
 
     static properties = {
-        component: { type: Object },
-        workspace: { type: Object },
+        title: { type: String },
+        definition: { type: Object },
     };
 
     constructor() {
@@ -160,13 +160,14 @@ class BespeakNodePill extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.name = this.component?.name || `workspace:${this.workspace.name}`;
-        this.transfer =
-            this.component?.name || `workspace:${this.workspace.id}`;
+        this.title = this.definition.title;
     }
 
     handleDragStart(event) {
-        event.dataTransfer.setData("text/plain", this.transfer);
+        event.dataTransfer.setData(
+            "text/plain",
+            JSON.stringify(this.definition)
+        );
         const dragImage = event.currentTarget.cloneNode(true);
         dragImage.style.position = "absolute";
         dragImage.style.top = "-1000px";
@@ -180,7 +181,7 @@ class BespeakNodePill extends LitElement {
                 class="pill-container"
                 draggable="true"
                 @dragstart=${this.handleDragStart}>
-                <div class="name">${this.name}</div>
+                <div class="name">${this.title}</div>
             </div>
         `;
     }

@@ -24,7 +24,7 @@ import { Types } from "./types.js";
 
 import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
-import { NextReteNode } from "./node.js";
+import { ReteNode } from "./node.child.js";
 class MySidebar extends LitElement {
     static get properties() {
         return {
@@ -144,166 +144,166 @@ class MySidebar extends LitElement {
 
         let nodesList = [];
 
-        this.editor$
-            .pipe(
-                switchMap(({ editor, devEditor }) => editor.events$),
-                filter(
-                    (event) =>
-                        event.type === "saved" || event.type === "hydrated"
-                ),
-                withLatestFrom(this.editor$),
-                debounceTime(200),
-                switchMap(([_, { editor }]) => {
-                    const nodes = editor.editor
-                        .getNodes()
-                        .filter((n) => n instanceof NextReteNode);
+        // this.editor$
+        //     .pipe(
+        //         switchMap(({ editor, devEditor }) => editor.events$),
+        //         filter(
+        //             (event) =>
+        //                 event.type === "saved" || event.type === "hydrated"
+        //         ),
+        //         withLatestFrom(this.editor$),
+        //         debounceTime(200),
+        //         switchMap(([_, { editor }]) => {
+        //             const nodes = editor.editor
+        //                 .getNodes()
+        //                 .filter((n) => n instanceof ReteNode);
 
-                    return combineLatest(
-                        nodes.map((n) =>
-                            merge(
-                                n.editorNode.customElement$.pipe(
-                                    map((data) => n)
-                                ),
-                                n.editorNode.subflowEditor$.pipe(
-                                    map((data) =>
-                                        n.editorNode.subflowEditor.editor.getNodes()
-                                    )
-                                )
-                            )
-                        )
-                    );
-                }),
-                switchMap((nodes) => {
-                    nodesList = nodes.flat();
-                    const unique = new Map();
-                    nodes
-                        .flat()
-                        .filter((node) => node.editorNode.name)
-                        .forEach((node) => {
-                            unique.set(node.editorNode.name, node);
-                        });
+        //             return combineLatest(
+        //                 nodes.map((n) =>
+        //                     merge(
+        //                         n.editorNode.customElement$.pipe(
+        //                             map((data) => n)
+        //                         ),
+        //                         n.editorNode.subflowEditor$.pipe(
+        //                             map((data) =>
+        //                                 n.editorNode.subflowEditor.editor.getNodes()
+        //                             )
+        //                         )
+        //                     )
+        //                 )
+        //             );
+        //         }),
+        //         switchMap((nodes) => {
+        //             nodesList = nodes.flat();
+        //             const unique = new Map();
+        //             nodes
+        //                 .flat()
+        //                 .filter((node) => node.editorNode.name)
+        //                 .forEach((node) => {
+        //                     unique.set(node.editorNode.name, node);
+        //                 });
 
-                    this.keySchemaNodes = Array.from(unique.values());
-                    return combineLatest(
-                        this.keySchemaNodes.map((n) =>
-                            n.editorNode.keysSchema$.pipe(
-                                withLatestFrom(n.editorNode.keys$),
-                                map(([schema, keys]) => ({
-                                    node: n,
-                                    schema,
-                                    keys,
-                                    stream: new Stream(
-                                        {
-                                            ...n,
-                                            db: n.db,
-                                            id: "keys-",
-                                        },
-                                        { schema, name: n.editorNode.name }
-                                    ),
-                                }))
-                            )
-                        )
-                    );
-                }),
-                tap((nodes) => {
-                    this.keyNodes = nodes;
-                }),
-                scan((acc, nodes) => {
-                    acc.forEach((sub) => sub.unsubscribe());
-                    acc = nodes.map((node) =>
-                        node.stream.subject.subscribe((keys) => {
-                            nodesList
-                                .filter(
-                                    (n) =>
-                                        n.editorNode.name ===
-                                        node.node.editorNode.name
-                                )
-                                .forEach((n) => n.editorNode.keys$.next(keys));
-                            node.keys = keys;
-                            this.keyNodes = [...this.keyNodes];
-                        })
-                    );
-                    return acc;
-                }, [])
-            )
-            .subscribe();
+        //             this.keySchemaNodes = Array.from(unique.values());
+        //             return combineLatest(
+        //                 this.keySchemaNodes.map((n) =>
+        //                     n.editorNode.keysSchema$.pipe(
+        //                         withLatestFrom(n.editorNode.keys$),
+        //                         map(([schema, keys]) => ({
+        //                             node: n,
+        //                             schema,
+        //                             keys,
+        //                             stream: new Stream(
+        //                                 {
+        //                                     ...n,
+        //                                     db: n.db,
+        //                                     id: "keys-",
+        //                                 },
+        //                                 { schema, name: n.editorNode.name }
+        //                             ),
+        //                         }))
+        //                     )
+        //                 )
+        //             );
+        //         }),
+        //         tap((nodes) => {
+        //             this.keyNodes = nodes;
+        //         }),
+        //         scan((acc, nodes) => {
+        //             acc.forEach((sub) => sub.unsubscribe());
+        //             acc = nodes.map((node) =>
+        //                 node.stream.subject.subscribe((keys) => {
+        //                     nodesList
+        //                         .filter(
+        //                             (n) =>
+        //                                 n.editorNode.name ===
+        //                                 node.node.editorNode.name
+        //                         )
+        //                         .forEach((n) => n.editorNode.keys$.next(keys));
+        //                     node.keys = keys;
+        //                     this.keyNodes = [...this.keyNodes];
+        //                 })
+        //             );
+        //             return acc;
+        //         }, [])
+        //     )
+        //     .subscribe();
 
-        this.editor$
-            .pipe(
-                switchMap(({ editor, devEditor }) =>
-                    merge(editor.events$, devEditor.events$)
-                ),
-                filter((event) =>
-                    [
-                        "chat-focus",
-                        "chat-blur",
-                        "custom-node-selected",
-                        "node-selected",
-                    ].some((type) => event.type === type)
-                ),
-                filter(() => !this.mouseInSidebar),
-                withLatestFrom(this.editor$),
+        // this.editor$
+        //     .pipe(
+        //         switchMap(({ editor, devEditor }) =>
+        //             merge(editor.events$, devEditor.events$)
+        //         ),
+        //         filter((event) =>
+        //             [
+        //                 "chat-focus",
+        //                 "chat-blur",
+        //                 "custom-node-selected",
+        //                 "node-selected",
+        //             ].some((type) => event.type === type)
+        //         ),
+        //         filter(() => !this.mouseInSidebar),
+        //         withLatestFrom(this.editor$),
 
-                scan((acc, [event, { editor, devEditor }]) => {
-                    let target = null;
-                    let hide = true;
-                    if (event.type === "chat-focus") {
-                        target = devEditor.selected();
-                    } else if (event.type === "chat-blur") {
-                        target = editor.selected();
-                    } else {
-                        target = event.data;
-                    }
+        //         scan((acc, [event, { editor, devEditor }]) => {
+        //             let target = null;
+        //             let hide = true;
+        //             if (event.type === "chat-focus") {
+        //                 target = devEditor.selected();
+        //             } else if (event.type === "chat-blur") {
+        //                 target = editor.selected();
+        //             } else {
+        //                 target = event.data;
+        //             }
 
-                    this.target = target;
-                    if (target && target.editorNode.configSchema$) {
-                        acc.forEach((sub) => sub.unsubscribe());
-                        acc = [
-                            target.editorNode.configSchema$.subscribe(
-                                this.configSchema$
-                            ),
-                            target.editorNode.config$
-                                .pipe(take(1))
-                                .subscribe((config) =>
-                                    this.config$.next(config)
-                                ),
+        //             this.target = target;
+        //             if (target && target.editorNode.configSchema$) {
+        //                 acc.forEach((sub) => sub.unsubscribe());
+        //                 acc = [
+        //                     target.editorNode.configSchema$.subscribe(
+        //                         this.configSchema$
+        //                     ),
+        //                     target.editorNode.config$
+        //                         .pipe(take(1))
+        //                         .subscribe((config) =>
+        //                             this.config$.next(config)
+        //                         ),
 
-                            this.config$
-                                .pipe(distinctUntilChanged())
-                                .subscribe((config) =>
-                                    target.editorNode.config$.next(config)
-                                ),
-                        ];
-                        this.show();
-                        this.requestUpdate();
-                    } else {
-                        acc = [];
-                        this.hide();
-                    }
-                    return acc;
-                }, [])
-            )
-            .subscribe();
+        //                     this.config$
+        //                         .pipe(distinctUntilChanged())
+        //                         .subscribe((config) =>
+        //                             target.editorNode.config$.next(config)
+        //                         ),
+        //                 ];
+        //                 this.show();
+        //                 this.requestUpdate();
+        //             } else {
+        //                 acc = [];
+        //                 this.hide();
+        //             }
+        //             return acc;
+        //         }, [])
+        //     )
+        //     .subscribe();
 
-        this.configSchema$
-            .pipe(
-                distinctUntilChanged(),
-                debug(this, "sidebar parameters spy"),
-                tap((schema) => {
-                    this.configSchema = schema;
-                })
-            )
-            .subscribe();
+        // this.configSchema$
+        //     .pipe(
+        //         distinctUntilChanged(),
+        //         debug(this, "sidebar parameters spy"),
+        //         tap((schema) => {
+        //             this.configSchema = schema;
+        //         })
+        //     )
+        //     .subscribe();
 
-        this.config$
-            .pipe(
-                distinctUntilChanged(),
-                debug(this, "sidebar config spy"),
-                tap((config) => {
-                    this.config = config;
-                })
-            )
-            .subscribe();
+        // this.config$
+        //     .pipe(
+        //         distinctUntilChanged(),
+        //         debug(this, "sidebar config spy"),
+        //         tap((config) => {
+        //             this.config = config;
+        //         })
+        //     )
+        //     .subscribe();
     }
 
     get tabs() {

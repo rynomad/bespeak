@@ -13,7 +13,7 @@ const UpDownWidget = (props) => {
 
 export const PAYLOAD = {
     type: "object",
-    title: "GPT Messages",
+    title: "GPT",
     properties: {
         prompt: {
             type: "object",
@@ -24,19 +24,22 @@ export const PAYLOAD = {
             required: ["role", "content"],
         },
         response: { type: "string" },
-        messages: {
+        threads: {
             type: "array",
             items: {
-                type: "object",
-                properties: {
-                    role: { type: "string" },
-                    content: { type: "string" },
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        role: { type: "string" },
+                        content: { type: "string" },
+                    },
+                    required: ["role", "content"],
                 },
-                required: ["role", "content"],
             },
         },
     },
-    required: ["prompt", "response", "messages"],
+    required: ["prompt", "response", "threads"],
 };
 
 export const PROMPT = {

@@ -1,10 +1,10 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { merge, tap, map } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
-import { ChatFlowInput, ChatFlowOutput, ReteNode } from "./node.js";
-
+import { ReteNode } from "./node.child.js";
+import BespeakComponent from "./component.js";
 import "./pills.js";
-import { DevDefault } from "./dev-default.js";
+import NodeRegistry from "./node-registry.js";
 
 class BespeakList extends LitElement {
     static styles = css`
@@ -72,7 +72,7 @@ class BespeakWorkspaceList extends LitElement {
 }
 customElements.define("bespeak-workspace-list", BespeakWorkspaceList);
 
-class BespeakNodeList extends LitElement {
+export class BespeakNodeList extends BespeakComponent {
     static properties = {
         components: { type: Array },
         workspaces: { type: Array },
@@ -81,24 +81,10 @@ class BespeakNodeList extends LitElement {
 
     constructor() {
         super();
-        this.components = Array.from(ReteNode.components.values())
-            .filter(
-                (component) =>
-                    ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(
-                        component.Component
-                    )
-            )
-            .map(({ Component }) => Component);
-
-        ReteNode.onComponentsChanged = (components) => {
-            this.components = Array.from(components.values()).filter(
-                (component) =>
-                    ![ChatFlowInput, ChatFlowOutput, DevDefault].includes(
-                        component
-                    )
-            );
-            this.requestUpdate();
-        };
+        this.components = [];
+        ReteNode.components$.subscribe((components) => {
+            this.components = components;
+        });
     }
 
     connectedCallback() {
@@ -113,7 +99,7 @@ class BespeakNodeList extends LitElement {
                                 "flow-output",
                                 "flow-owners",
                                 "flow-assets",
-                            ].some((name) => name === node.Component)
+                            ].some((name) => name === node.key)
                         )
                     )
                 )
@@ -128,9 +114,9 @@ class BespeakNodeList extends LitElement {
             <bespeak-list>
                 <slot></slot>
                 ${this.components.map(
-                    ({ Component }) =>
+                    (definition) =>
                         html`<bespeak-node-pill
-                            .component=${Component}></bespeak-node-pill>`
+                            .definition=${definition}></bespeak-node-pill>`
                 )}
                 ${this.workspaces?.map(
                     (workspace) =>
@@ -143,3 +129,5 @@ class BespeakNodeList extends LitElement {
 }
 
 customElements.define("bespeak-node-list", BespeakNodeList);
+
+customElements.define("bespeak-node-registry", NodeRegistry);

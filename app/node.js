@@ -1378,11 +1378,7 @@ export class NextLitNode extends Node {
                             }
                         });
                 } else {
-                    this.input = {};
-                    this.inputSchema = {
-                        type: "object",
-                        additionalProperties: true,
-                    };
+                    this.input = [];
                 }
                 this.requestUpdate();
             }
@@ -1808,3 +1804,4 @@ customElements.define("bespeak-next-node", NextLitNode);
 NextReteNode.registerComponent("./gpt.child.js");
 NextReteNode.registerComponent("./gpt-response.child.js");
 NextReteNode.registerComponent("./prompt.child.js");
+NextReteNode.registerComponent("./node-registry.js");
