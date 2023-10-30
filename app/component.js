@@ -260,17 +260,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         this.pipeSubscription = combineLatest(
-            Array.from(this.piped).map((component) =>
-                component.output$.pipe(
-                    map((value) => ({
-                        nodeId: component.reteId,
-                        nodeName: component.name,
-                        config: component.config,
-                        schema: component.outputSchema,
-                        value,
-                    }))
-                )
-            )
+            Array.from(this.piped).map((component) => component.output$)
         ).subscribe((outputs) => {
             this.input = outputs;
         });
