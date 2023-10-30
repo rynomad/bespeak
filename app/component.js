@@ -151,6 +151,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         if (changedProperties.has("piped")) {
             this.onPipe();
         }
+
+        if (changedProperties.has("processing")) {
+            this.requestUpdate();
+        }
     }
 
     async call({ input, config }) {
@@ -196,6 +200,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             console.warn("failed to validate process", e);
         } finally {
             this.processing = false;
+            this.requestUpdate();
             if (this.shouldProcessAgain) {
                 this.shouldProcessAgain = false;
                 return this.process(force);
