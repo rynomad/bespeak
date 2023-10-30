@@ -10,14 +10,15 @@ import { ReplaySubject, combineLatest, map } from "https://esm.sh/rxjs";
 import { PropagationStopper } from "./mixins.js";
 import localForage from "https://esm.sh/localforage";
 import { deepEqual } from "https://esm.sh/fast-equals";
+const hasChanged = (a, b) => !deepEqual(a, b);
 
 export default class BespeakComponent extends PropagationStopper(LitElement) {
     static get properties() {
         return {
             input: { type: Object },
-            output: { type: Object },
-            config: { type: Object },
-            keys: { type: Object },
+            output: { type: Object, hasChanged },
+            config: { type: Object, hasChanged },
+            keys: { type: Object, hasChanged },
             error: { type: Object },
             piped: { type: Set },
             processing: { type: Boolean },
@@ -184,13 +185,13 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             );
 
             if (!force && cachedOutput) {
-                return cachedOutput;
+                output = cachedOutput;
+            } else {
+                output = await this._process(input, config, keys).catch((e) => {
+                    this.error = e;
+                    return this.output;
+                });
             }
-
-            output = await this._process(input, config, keys).catch((e) => {
-                this.error = e;
-                return this.output;
-            });
         } catch (e) {
             console.warn("failed to validate process", e);
         } finally {

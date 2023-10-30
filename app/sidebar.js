@@ -357,36 +357,7 @@ class MySidebar extends LitElement {
                             }}></bespeak-form>
                     </div>
                     <div name="Keys">
-                        ${repeat(
-                            this.keyNodes.filter(
-                                ({ schema }) => schema?.properties
-                            ),
-                            ({ stream }) => stream.node.id,
-                            ({
-                                node,
-                                schema,
-                                keys,
-                                stream,
-                            }) => html`<bespeak-form
-                                nodeId=${this.target?.id}
-                                .onChange=${(event) => {
-                                    node.editorNode.keys$.next(event.formData);
-                                    stream.subject.next(event.formData);
-                                }}
-                                .props=${{
-                                    name: node.editorNode?.name,
-                                    schema,
-                                    uiSchema: Object.keys(
-                                        schema.properties || {}
-                                    ).reduce((uiSchema, key) => {
-                                        uiSchema[key] = {
-                                            "ui:widget": "password",
-                                        };
-                                        return uiSchema;
-                                    }, {}),
-                                    formData: stream.formData || keys,
-                                }}></bespeak-form>`
-                        )}
+                        <bespeak-keys></bespeak-keys>
                     </div>
                 </dile-pages>
             </div>

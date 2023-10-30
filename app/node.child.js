@@ -11,6 +11,7 @@ import {
 import { getProjectSource } from "./util.js";
 import { css, html } from "https://esm.sh/lit@2.8.0";
 import "./node.js";
+import { Keys } from "./keys.js";
 
 export class ReteNode extends Classic.Node {
     static globals = new Map();
@@ -427,6 +428,11 @@ export class LitNode extends LitPresets.classic.Node {
         this.componentSubs = [
             this.component.config$.subscribe((config) => {
                 this.requestUpdate();
+            }),
+            Keys.keysUpdated$.subscribe(async () => {
+                this.component.keys = await Keys.getKeys(
+                    this.reteNode.Component
+                );
             }),
         ];
         this.requestUpdate();
