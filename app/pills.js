@@ -160,7 +160,7 @@ class BespeakNodePill extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.title = this.definition.title;
+        this.title = this.definition?.Component.title;
     }
 
     handleDragStart(event) {

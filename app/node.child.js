@@ -26,7 +26,7 @@ export class ReteNode extends Classic.Node {
         existing.push(source);
         await this.componentsDB.setItem(key, existing);
 
-        this.updateComponents();
+        await this.updateComponents();
     }
 
     static async getComponent(key, version) {
