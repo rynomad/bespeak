@@ -160,7 +160,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     async process(force = !this.keysSchema) {
         if (this.processing) {
             this.shouldProcessAgain = true;
-            return;
+            return this.output;
         }
 
         this.processing = true;

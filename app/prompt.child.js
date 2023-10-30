@@ -36,7 +36,7 @@ class GPTPrompt extends BespeakComponent {
     };
 
     async _process(input, config) {
-        if (!config) return;
+        if (!config) return this.output;
         const { placement, history, join } = config;
 
         input = input?.find((input) => input.schema.title === "GPT") || {

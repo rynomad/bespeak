@@ -10,6 +10,7 @@ import {
 } from "https://esm.sh/rxjs";
 import { getProjectSource } from "./util.js";
 import { css, html } from "https://esm.sh/lit@2.8.0";
+import "./node.js";
 
 export class ReteNode extends Classic.Node {
     static globals = new Map();
@@ -242,6 +243,18 @@ export class LitNode extends LitPresets.classic.Node {
         return this.data;
     }
 
+    get ports() {
+        const ports = ["input"];
+
+        if (!this.component) return ports;
+
+        if (this.component.outputSchema) {
+            ports.push("output");
+        }
+
+        return ports;
+    }
+
     constructor() {
         super();
 
@@ -321,6 +334,7 @@ export class LitNode extends LitPresets.classic.Node {
             data: { type: Object },
             emit: { type: Function },
             Component: { type: Object },
+            component: { type: Object },
             selected: { type: Boolean },
         };
     }
@@ -410,7 +424,7 @@ export class LitNode extends LitPresets.classic.Node {
     onToggle() {}
 
     render() {
-        const owners = this.reteNode?.inputs?.parents || {};
+        const owners = this.reteNode?.inputs?.owners || {};
         const assets = this.reteNode?.outputs?.assets || {};
         const input = this.reteNode?.inputs?.input || {};
         const output = this.reteNode?.outputs?.output || {};
@@ -420,7 +434,7 @@ export class LitNode extends LitPresets.classic.Node {
                 <bespeak-compass>
                     ${this.ports?.includes("input")
                         ? html`<div slot="north">
-                              ${html`<ref-component
+                              ${html`<ref-element
                                   class="input-socket"
                                   .data=${{
                                       type: "socket",
@@ -430,12 +444,12 @@ export class LitNode extends LitPresets.classic.Node {
                                       payload: input.socket,
                                   }}
                                   .emit=${this.emit}
-                                  data-testid="input-socket"></ref-component>`}
+                                  data-testid="input-socket"></ref-element>`}
                           </div>`
                         : ""}
                     ${this.ports?.includes("output")
                         ? html`<div slot="south">
-                              ${html`<ref-component
+                              ${html`<ref-element
                                   class="output-socket"
                                   .data=${{
                                       type: "socket",
@@ -445,12 +459,12 @@ export class LitNode extends LitPresets.classic.Node {
                                       payload: output.socket,
                                   }}
                                   .emit=${this.emit}
-                                  data-testid="output-socket"></ref-component>`}
+                                  data-testid="output-socket"></ref-element>`}
                           </div>`
                         : ""}
                     ${this.ports?.includes("assets")
                         ? html`<div slot="east">
-                              ${html`<ref-component
+                              ${html`<ref-element
                                   class="output-socket"
                                   .data=${{
                                       type: "socket",
@@ -460,12 +474,12 @@ export class LitNode extends LitPresets.classic.Node {
                                       payload: assets.socket,
                                   }}
                                   .emit=${this.emit}
-                                  data-testid="output-socket"></ref-component>`}
+                                  data-testid="output-socket"></ref-element>`}
                           </div>`
                         : ""}
                     ${this.ports?.includes("owners")
                         ? html`<div slot="west">
-                              ${html`<ref-component
+                              ${html`<ref-element
                                   class="input-socket"
                                   .data=${{
                                       type: "socket",
@@ -475,7 +489,7 @@ export class LitNode extends LitPresets.classic.Node {
                                       payload: owners.socket,
                                   }}
                                   .emit=${this.emit}
-                                  data-testid="output-socket"></ref-component>`}
+                                  data-testid="output-socket"></ref-element>`}
                           </div>`
                         : ""}
                     <div>
