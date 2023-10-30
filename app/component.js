@@ -24,8 +24,31 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
     static styles = css``;
 
+    static get name() {
+        const baseName = this.toString().match(/\w+/g)[1];
+
+        return baseName !== "extends" ? baseName : "anonymous";
+    }
+
+    static get title() {
+        const words = this.name.split(
+            /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/
+        );
+
+        const titleCaseName = words
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+
+        return titleCaseName;
+    }
+
+    static get tagName() {
+        return this.title.toLowerCase().replace(/\s/g, "-");
+    }
+
     processing = false;
     shouldProcessAgain = false;
+    used = new Set();
 
     get keysSchema() {
         return this.constructor.keys || null;
@@ -66,28 +89,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         return this.constructor.description || null;
     }
 
-    static get name() {
-        const baseName = this.toString().match(/\w+/g)[1];
-
-        return baseName !== "extends" ? baseName : "anonymous";
-    }
-
-    static get title() {
-        const words = this.name.split(
-            /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/
-        );
-
-        const titleCaseName = words
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-
-        return titleCaseName;
-    }
-
-    static get tagName() {
-        return this.title.toLowerCase().replace(/\s/g, "-");
-    }
-
     get name() {
         return this.constructor.name;
     }
@@ -102,7 +103,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.reteId = id;
 
         this.cache = localForage.createInstance({
-            name: `bespeak-cache-${this.name}-${this.id}`,
+            name: `bespeak-cache-${this.name}-${this.reteId}`,
         });
 
         this.input = [];
@@ -142,7 +143,11 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
     async call({ input, config }) {
         try {
-            return await this._process(input, config, this.keys);
+            return await this._process(
+                input || this.input,
+                { ...this.config, ...config },
+                this.keys
+            );
         } catch (e) {
             console.warn("failed to validate call", e);
         }

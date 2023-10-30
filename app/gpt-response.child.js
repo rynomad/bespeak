@@ -14,7 +14,7 @@ export default class GPTRender extends BespeakComponent {
     `;
 
     get outputMessages() {
-        return this.output
+        return this.input
             .filter(
                 (output) =>
                     output.schema.title === "GPT" && output.value.threads.length
@@ -25,7 +25,7 @@ export default class GPTRender extends BespeakComponent {
     }
 
     get outputResponse() {
-        return this.output.find(
+        return this.input.find(
             (output) => output.schema.title === "GPT" && output.value.response
         )?.value?.response;
     }

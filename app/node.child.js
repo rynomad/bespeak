@@ -43,10 +43,14 @@ export class ReteNode extends Classic.Node {
             const url = URL.createObjectURL(blob);
             const module = await import(url);
             this.modules.set(`${key}-${version}`, module);
-            customElements.define(
-                `bespeak-component-${key}-${version}`,
-                module.default
-            );
+            try {
+                customElements.define(
+                    `bespeak-component-${key}-${version}`,
+                    module.default
+                );
+            } catch (e) {
+                console.warn(e);
+            }
         }
 
         const module = this.modules.get(`${key}-${version}`);
@@ -494,8 +498,17 @@ export class LitNode extends LitPresets.classic.Node {
 customElements.define("bespeak-lit-node", LitNode);
 
 (async () => {
-    ReteNode.registerComponent(
+    console.log("REGISTER HARD CODE");
+    await ReteNode.registerComponent(
         "gpt-prompt",
         await getProjectSource("./prompt.child.js")
+    );
+    await ReteNode.registerComponent(
+        "gpt-call",
+        await getProjectSource("./gpt.child.js")
+    );
+    await ReteNode.registerComponent(
+        "gpt-response",
+        await getProjectSource("./gpt-response.child.js")
     );
 })();
