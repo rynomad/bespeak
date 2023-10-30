@@ -412,12 +412,23 @@ export class LitNode extends LitPresets.classic.Node {
     }
 
     async updateComponent() {
+        if (this.componentSubs) {
+            for (const sub of this.componentSubs) {
+                sub.unsubscribe();
+            }
+        }
+
         // Get the source code from the editor
         this.component = new this.reteNode.Component(this.id);
         this.shadowRoot
             .querySelector(".container")
             .replaceChildren(this.component);
 
+        this.componentSubs = [
+            this.component.config$.subscribe((config) => {
+                this.requestUpdate();
+            }),
+        ];
         this.requestUpdate();
     }
 
@@ -501,7 +512,20 @@ export class LitNode extends LitPresets.classic.Node {
                                 class="container"
                                 slot="front"
                                 style="min-width: 20px; min-height: 20px; padding: 1.5rem;"></div>
-                            <div slot="back" style="padding: 1.5rem"></div>
+                            <div slot="back" style="padding: 1.5rem">
+                                ${this.component
+                                    ? html`<bespeak-form
+                                          .props=${{
+                                              schema: this.component
+                                                  .configSchema,
+                                              formData: this.component.config,
+                                          }}
+                                          .onChange=${({ formData }) => {
+                                              this.component.config = formData;
+                                              this.requestUpdate();
+                                          }}></bespeak-form>`
+                                    : ""}
+                            </div>
                         </bespeak-flipper>
                     </div>
                 </bespeak-compass>

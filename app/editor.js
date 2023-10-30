@@ -220,6 +220,10 @@ export class Editor extends LitElement {
             );
     }
 
+    getNode(id) {
+        return this.editor.getNodes().find((node) => node.id === id);
+    }
+
     async setupStorage() {
         this.hydrated$ = new Subject();
         this.storageSubscription = this.hydrated$

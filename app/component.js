@@ -6,9 +6,11 @@ import {
     generateSchemaFromValue,
 } from "./util.js";
 import { v4 as uuid } from "https://esm.sh/uuid";
-import { ReplaySubject, combineLatest } from "https://esm.sh/rxjs";
+import { ReplaySubject, combineLatest, map } from "https://esm.sh/rxjs";
 import { PropagationStopper } from "./mixins.js";
 import localForage from "https://esm.sh/localforage";
+import { deepEqual } from "https://esm.sh/fast-equals";
+
 export default class BespeakComponent extends PropagationStopper(LitElement) {
     static get properties() {
         return {
@@ -112,6 +114,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.keys = getDefaultValue(this.keysSchema);
 
         this.output$ = new ReplaySubject(1);
+        this.config$ = new ReplaySubject(1);
         this.load();
     }
 
@@ -124,10 +127,18 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             this.output = await this.process();
         }
 
+        if (changedProperties.has("config")) {
+            await this.save();
+            this.config$.next(this.config);
+        }
+
         if (changedProperties.has("output")) {
             await this.save();
             this.output$.next({
-                name: this.outputName,
+                nodeId: this.reteId,
+                nodeName: this.name,
+                config: this.config,
+                schema: this.outputSchema,
                 value: this.output,
             });
         }
@@ -207,7 +218,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             );
         }
 
-        if (this.config) {
+        if (!deepEqual(this.config, getDefaultValue(this.configSchema))) {
             await this.cache.setItem("config", this.config);
         }
     }

@@ -28,6 +28,14 @@ export function setSubmitButtonOptions(uiSchema, options, schema) {
             newUiSchema[key] = {
                 "ui:widget": "autocomplete",
             };
+        } else if (
+            schema.properties[key].type === "string" &&
+            !newUiSchema[key] &&
+            !schema.properties[key].enum
+        ) {
+            newUiSchema[key] = {
+                "ui:widget": "textarea",
+            };
         }
     });
 
@@ -43,6 +51,7 @@ export const RJSFComponent = CardStyleMixin(
                         display: block;
                         overflow: auto;
                         margin: 0;
+                        min-width: 35rem;
                     }
                 `,
             ];
