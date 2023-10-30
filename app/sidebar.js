@@ -307,11 +307,11 @@ class MySidebar extends LitElement {
     }
 
     get tabs() {
-        return ["Config", "Keys"];
+        return ["Keys"];
     }
 
     get openTab() {
-        return this.tabs[this.activeTabIndex] || "Config";
+        return this.tabs[this.activeTabIndex] || "Keys";
     }
 
     render() {
