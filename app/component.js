@@ -116,6 +116,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         this.output$ = new ReplaySubject(1);
         this.config$ = new ReplaySubject(1);
+        this.error$ = new ReplaySubject(1);
         this.load();
     }
 
@@ -153,7 +154,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         if (changedProperties.has("error")) {
             console.warn("error", this.error);
-            this.onError?.();
+            this.error$.next(this.error);
         }
 
         if (changedProperties.has("piped")) {
@@ -228,6 +229,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     async save() {
         if (
             this.output &&
+            !this.output instanceof Error &&
             !deepEqual(this.output, getDefaultValue(this.outputSchema))
         ) {
             await this.cache.setItem("output", this.output);
@@ -277,6 +279,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         ).subscribe((outputs) => {
             this.input = outputs.flat();
         });
+
+        if (this.piped.size == 0) {
+            this.input = [];
+        }
     }
 
     use(component) {

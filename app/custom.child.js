@@ -25,7 +25,7 @@ export default class NewNode extends BespeakComponent {
     constructor(id) {
         super(id);
         this.slotComponent = null;
-        this.slotSubscription = null;
+        this.subs = [];
     }
 
     render() {
@@ -37,10 +37,7 @@ export default class NewNode extends BespeakComponent {
 
     async _process(input, config, keys) {
         // Unsubscribe from previous component if exists
-        if (this.slotSubscription) {
-            this.slotSubscription.unsubscribe();
-            this.slotSubscription = null;
-        }
+        this.subs.forEach((sub) => sub.unsubscribe());
 
         // Find the schema with title 'javascript'
         const jsSchema = input.find(
@@ -63,12 +60,14 @@ export default class NewNode extends BespeakComponent {
             this.slotComponent = new Component();
             this.slotComponent.input = input;
 
-            // Subscribe to the component's output
-            this.slotSubscription = this.slotComponent.output$.subscribe(
-                (outputEvent) => {
-                    this.output = outputEvent.value;
-                }
-            );
+            this.subs = [
+                this.slotComponent.output$.subscribe((outputEvent) => {
+                    this.output = [outputEvent];
+                }),
+                this.slotComponent.error$.subscribe((error) => {
+                    this.output = error;
+                }),
+            ]; // Subscribe to the component's output
 
             // Insert the component into the slot
             this.shadowRoot
