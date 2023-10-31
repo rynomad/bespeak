@@ -41,7 +41,7 @@ class GPTPrompt extends BespeakComponent {
 
         const threads = input
             .filter((input) => input.schema.title === "GPT")
-            .map((input) => input.threads)
+            .map((input) => input.value.threads)
             .flat();
 
         let outputThreads = [];
@@ -56,15 +56,18 @@ class GPTPrompt extends BespeakComponent {
                 outputThreads = threads.map((thread) => thread.slice(-history));
                 break;
             case "zipper":
+                outputThreads = [[]];
                 const maxLength = Math.max(
                     ...threads
                         .map((thread) => thread.slice(-history))
                         .map((thread) => thread.length)
                 );
                 for (let i = 0; i < maxLength; i++) {
-                    for (let thread of input.threads) {
-                        if (thread[i]) {
-                            outputThreads.push(thread[i]);
+                    for (const input of this.input) {
+                        for (let thread of input.value.threads) {
+                            if (thread[i]) {
+                                outputThreads[0].push(thread[i]);
+                            }
                         }
                     }
                 }

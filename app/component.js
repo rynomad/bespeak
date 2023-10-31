@@ -145,6 +145,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         if (changedProperties.has("error")) {
+            console.warn("error", this.error);
             this.onError?.();
         }
 

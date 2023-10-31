@@ -27,6 +27,15 @@ export default class GPTRender extends BespeakComponent {
         return messages;
     }
 
+    async _process(input) {
+        return {
+            threads: input
+                .filter((e) => e.schema.title === "GPT")
+                .map((input) => input.value.threads)
+                .flat(),
+        };
+    }
+
     get outputResponse() {
         return this.input.find(
             (output) => output.schema.title === "GPT" && output.value.response
