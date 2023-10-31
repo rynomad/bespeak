@@ -37,7 +37,12 @@ export async function getProjectSource(relativeUrl) {
     const _baseUrl = baseUrl();
     const absoluteUrl = new URL(relativeUrl, _baseUrl).href;
     const text = await fetch(absoluteUrl).then((response) => response.text());
-    return text.replace(
+    return transformSource(text);
+}
+
+export function transformSource(source) {
+    const _baseUrl = baseUrl();
+    return source.replace(
         /import\s+(.*?)?\s+from\s+['"](.*?)['"]/g,
         (match, importList, importPath) => {
             if (importPath.startsWith(".")) {
@@ -130,7 +135,7 @@ export function extractCodeBlocks(text) {
 
 export async function hashObject(obj) {
     const hash = await sha256(obj, { deepSort: true });
-    console.log(hash, obj);
+    // console.log(hash, obj);
     return hash;
 }
 
@@ -294,6 +299,7 @@ export function getSource(url) {
 }
 
 export async function importFromString(source) {
+    source = transformSource(source);
     const blob = new Blob([source], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);
     const module = await import(url);
@@ -340,4 +346,19 @@ export function generateSchemaFromValue(value) {
     }
 
     return schema;
+}
+
+export function getMarkdownCodeBlocks(markdown) {
+    const regex = /```(\w+)\n([\s\S]*?)```/g;
+    let match;
+    const codeBlocks = [];
+
+    while ((match = regex.exec(markdown)) !== null) {
+        codeBlocks.push({
+            language: match[1],
+            code: match[2].trim(),
+        });
+    }
+
+    return codeBlocks;
 }

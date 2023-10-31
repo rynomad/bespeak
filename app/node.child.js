@@ -564,4 +564,12 @@ customElements.define("bespeak-lit-node", LitNode);
         "gpt-response",
         await getProjectSource("./gpt-response.child.js")
     );
+    await ReteNode.registerComponent(
+        "code-parser",
+        await getProjectSource("./code-parser.js")
+    );
+    await ReteNode.registerComponent(
+        "custom-node",
+        await getProjectSource("./custom.child.js")
+    );
 })();

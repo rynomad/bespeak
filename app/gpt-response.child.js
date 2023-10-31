@@ -33,6 +33,7 @@ export default class GPTRender extends BespeakComponent {
                 .filter((e) => e.schema.title === "GPT")
                 .map((input) => input.value.threads)
                 .flat(),
+            response: this.outputResponse,
         };
     }
 
