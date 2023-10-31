@@ -3,6 +3,12 @@ import { importFromString } from "./util.js";
 import { html, css } from "https://esm.sh/lit";
 
 export default class NewNode extends BespeakComponent {
+    static output = {
+        type: "object",
+
+        additionalProperties: true,
+    };
+
     static styles = css`
         :host {
             display: flex;

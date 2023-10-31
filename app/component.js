@@ -135,13 +135,20 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         if (changedProperties.has("output")) {
             await this.save();
-            this.output$.next({
-                nodeId: this.reteId,
-                nodeName: this.name,
-                config: this.config,
-                schema: this.outputSchema,
-                value: this.output,
-            });
+            if (
+                Array.isArray(this.output) &&
+                this.output.every((e) => e.nodeId)
+            ) {
+                this.output$.next(this.output);
+            } else {
+                this.output$.next({
+                    nodeId: this.reteId,
+                    nodeName: this.name,
+                    config: this.config,
+                    schema: this.outputSchema,
+                    value: this.output,
+                });
+            }
         }
 
         if (changedProperties.has("error")) {
@@ -192,10 +199,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             if (!force && cachedOutput) {
                 output = cachedOutput;
             } else {
-                output = await this._process(input, config, keys).catch((e) => {
-                    this.error = e;
-                    return this.output;
-                });
+                output = await this._process(input, config, keys)
+                    .then((r) => r || this.output)
+                    .catch((e) => {
+                        this.error = e;
+                        return this.output;
+                    });
             }
         } catch (e) {
             console.warn("failed to validate process", e);
@@ -217,7 +226,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     async save() {
-        if (this.output) {
+        if (
+            this.output &&
+            !deepEqual(this.output, getDefaultValue(this.outputSchema))
+        ) {
             await this.cache.setItem("output", this.output);
             await this.cache.setItem(
                 await hashObject([this.input, this.config]),
@@ -263,7 +275,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.pipeSubscription = combineLatest(
             Array.from(this.piped).map((component) => component.output$)
         ).subscribe((outputs) => {
-            this.input = outputs;
+            this.input = outputs.flat();
         });
     }
 

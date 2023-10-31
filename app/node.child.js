@@ -254,13 +254,7 @@ export class LitNode extends LitPresets.classic.Node {
     }
 
     get ports() {
-        const ports = ["input"];
-
-        if (!this.component) return ports;
-
-        if (this.component.outputSchema) {
-            ports.push("output");
-        }
+        const ports = ["input", "output"];
 
         return ports;
     }
@@ -571,5 +565,13 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "custom-node",
         await getProjectSource("./custom.child.js")
+    );
+    await ReteNode.registerComponent(
+        "debug",
+        await getProjectSource("./debug.js")
+    );
+    await ReteNode.registerComponent(
+        "gate",
+        await getProjectSource("./gate.js")
     );
 })();

@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import { sanitizeAndRenderYaml } from "./util.js";
-
-class Debug extends LitElement {
+import BespeakComponent from "./component.js";
+class Debug extends BespeakComponent {
     static properties = {
         input: { type: Object },
         inputSchema: { type: Object },
@@ -12,6 +12,7 @@ class Debug extends LitElement {
             display: block;
             padding: 16px;
             color: var(--my-element-text-color, black);
+            width: 40rem;
         }
         pre {
             background-color: #f5f5f5;
@@ -20,18 +21,10 @@ class Debug extends LitElement {
         }
     `;
 
-    constructor() {
-        super();
-        this.input = {};
-        this.inputSchema = {};
-    }
-
     render() {
         return html`
             <h2>Input</h2>
             <pre>${sanitizeAndRenderYaml(this.input)}</pre>
-            <h2>Input Schema</h2>
-            <pre>${sanitizeAndRenderYaml(this.inputSchema)}</pre>
         `;
     }
 }
