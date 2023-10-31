@@ -71,8 +71,8 @@ export default class GPTCall extends BespeakComponent {
 
     async _process(input, config, keys) {
         const threads = input
-            .filter((e) => e.type === "GPT")
-            .map((e) => e.threads)
+            .filter((e) => e.schema.title === "GPT")
+            .map((e) => e.value.threads)
             .flat();
 
         if (threads.length === 0) {
@@ -112,7 +112,7 @@ export default class GPTCall extends BespeakComponent {
 
         return {
             ...this.output,
-            threads: outputThreads,
+            threads: outputThreads.flat(),
         };
     }
 }

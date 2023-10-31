@@ -21,50 +21,59 @@ export class ReteNode extends Classic.Node {
     });
     static components$ = new Subject();
     static modules = new Map();
+    static promiseQueue = Promise.resolve();
 
     static async registerComponent(key, source) {
         const existing = (await this.componentsDB.getItem(key)) || [];
 
-        existing.push(source);
-        await this.componentsDB.setItem(key, existing);
+        if (
+            !(existing.length > 0 && existing[existing.length - 1] === source)
+        ) {
+            existing.push(source);
+            await this.componentsDB.setItem(key, existing);
+        }
 
         await this.updateComponents();
     }
 
     static async getComponent(key, version) {
-        const existing = (await this.componentsDB.getItem(key)) || [];
-        version ||= existing.length;
-        const source = existing[version - 1];
+        this.promiseQueue = this.promiseQueue.then(async () => {
+            const existing = (await this.componentsDB.getItem(key)) || [];
+            version ||= existing.length;
+            const source = existing[version - 1];
 
-        if (!source) {
-            throw new Error(`Component ${key} not found`);
-        }
-
-        if (!this.modules.has(`${key}-${version}`)) {
-            const blob = new Blob([source], { type: "text/javascript" });
-            const url = URL.createObjectURL(blob);
-            const module = await import(url);
-            this.modules.set(`${key}-${version}`, module);
-            try {
-                customElements.define(
-                    `bespeak-component-${key}-${version}`,
-                    module.default
-                );
-            } catch (e) {
-                console.warn(e);
+            if (!source) {
+                throw new Error(`Component ${key} not found`);
             }
-        }
 
-        const module = this.modules.get(`${key}-${version}`);
-        if (module) {
-            return {
-                key,
-                Component: module.default,
-                version,
-            };
-        } else {
-            throw new Error(`Component ${key} not found`);
-        }
+            if (!this.modules.has(`${key}-${version}`)) {
+                const blob = new Blob([source], { type: "text/javascript" });
+                const url = URL.createObjectURL(blob);
+                const module = await import(url);
+                this.modules.set(`${key}-${version}`, module);
+                try {
+                    customElements.define(
+                        `bespeak-component-${key}-${version}`,
+                        module.default
+                    );
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
+            const module = this.modules.get(`${key}-${version}`);
+            if (module) {
+                return {
+                    key,
+                    Component: module.default,
+                    version,
+                };
+            } else {
+                throw new Error(`Component ${key} not found`);
+            }
+        });
+
+        return this.promiseQueue;
     }
 
     static async updateComponents() {

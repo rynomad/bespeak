@@ -39,28 +39,27 @@ class GPTPrompt extends BespeakComponent {
         if (!config) return this.output;
         const { placement, history, join } = config;
 
-        input = input?.find((input) => input.schema.title === "GPT") || {
-            threads: [],
-        };
+        const threads = input
+            .filter((input) => input.schema.title === "GPT")
+            .map((input) => input.threads)
+            .flat();
 
         let outputThreads = [];
 
         switch (join) {
             case "sequential":
                 outputThreads = [
-                    input.threads
-                        .map((thread) => thread.slice(-history))
-                        .flat(),
+                    threads.map((thread) => thread.slice(-history)).flat(),
                 ];
                 break;
             case "parallel":
-                outputThreads = input.threads.map((thread) =>
-                    thread.slice(-history)
-                );
+                outputThreads = threads.map((thread) => thread.slice(-history));
                 break;
             case "zipper":
                 const maxLength = Math.max(
-                    ...input.threads.map((thread) => thread.length)
+                    ...threads
+                        .map((thread) => thread.slice(-history))
+                        .map((thread) => thread.length)
                 );
                 for (let i = 0; i < maxLength; i++) {
                     for (let thread of input.threads) {
@@ -72,13 +71,19 @@ class GPTPrompt extends BespeakComponent {
                 break;
         }
 
-        switch (placement) {
-            case "append":
-                outputThreads.push(this.output.prompt);
-                break;
-            case "prepend":
-                outputThreads.unshift(this.output.prompt);
-                break;
+        if (outputThreads.length === 0) {
+            outputThreads.push([]);
+        }
+
+        for (const thread of outputThreads) {
+            switch (placement) {
+                case "append":
+                    thread.push(this.output.prompt);
+                    break;
+                case "prepend":
+                    thread.unshift(this.output.prompt);
+                    break;
+            }
         }
 
         return {

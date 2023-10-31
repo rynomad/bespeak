@@ -14,14 +14,17 @@ export default class GPTRender extends BespeakComponent {
     `;
 
     get outputMessages() {
-        return this.input
-            .filter(
-                (output) =>
-                    output.schema.title === "GPT" && output.value.threads.length
-            )
-            .map((output) => output.threads)
-            .flat()
-            .map((thread) => thread[thread.length - 1]);
+        const messages = [];
+        for (const input of this.input) {
+            if (input.schema.title === "GPT") {
+                messages.push(
+                    ...input.value.threads.map(
+                        (thread) => thread[thread.length - 1]
+                    )
+                );
+            }
+        }
+        return messages;
     }
 
     get outputResponse() {
