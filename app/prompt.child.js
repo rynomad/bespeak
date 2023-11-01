@@ -87,6 +87,18 @@ class GPTPrompt extends BespeakComponent {
                     thread.unshift(this.output.prompt);
                     break;
             }
+
+            input
+                .filter((input) => input.schema.title !== "GPT")
+                .forEach((input) => {
+                    if (input.value instanceof Error) {
+                        input.value = `Error: ${input.value.message}\n\n${input.value.stack}`;
+                    }
+                    thread.push({
+                        role: "system",
+                        content: JSON.stringify(input.value, null, 2),
+                    });
+                });
         }
 
         return {

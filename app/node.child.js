@@ -574,4 +574,8 @@ customElements.define("bespeak-lit-node", LitNode);
         "gate",
         await getProjectSource("./gate.js")
     );
+    await ReteNode.registerComponent(
+        "types",
+        await getProjectSource("./types.child.js")
+    );
 })();

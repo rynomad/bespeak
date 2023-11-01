@@ -109,6 +109,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             name: `bespeak-cache-${this.name}-${this.reteId}`,
         });
 
+        this.isLoading = true;
         this.input = [];
         this.output = getDefaultValue(this.outputSchema);
         this.config = getDefaultValue(this.configSchema);
@@ -117,7 +118,15 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.output$ = new ReplaySubject(1);
         this.config$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
-        this.load();
+        this.load().then(() => (this.isLoading = false));
+    }
+
+    async load() {
+        const output = await this.cache.getItem("output");
+        const config = await this.cache.getItem("config");
+
+        if (output) this.output = output;
+        if (config) this.config = config;
     }
 
     async updated(changedProperties) {
@@ -127,6 +136,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             changedProperties.has("keys")
         ) {
             this.output = await this.process();
+            this.requestUpdate();
         }
 
         if (changedProperties.has("config")) {
@@ -227,9 +237,11 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     async save() {
+        if (this.isLoading) return;
+
         if (
             this.output &&
-            !this.output instanceof Error &&
+            !(this.output instanceof Error) &&
             !deepEqual(this.output, getDefaultValue(this.outputSchema))
         ) {
             await this.cache.setItem("output", this.output);
