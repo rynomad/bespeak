@@ -340,6 +340,7 @@ export class LitNode extends LitPresets.classic.Node {
             Component: { type: Object },
             component: { type: Object },
             selected: { type: Boolean },
+            back: { type: Object },
         };
     }
 
@@ -437,6 +438,9 @@ export class LitNode extends LitPresets.classic.Node {
                     this.reteNode.Component
                 );
             }),
+            this.component.back$.subscribe((back) => {
+                this.requestUpdate();
+            }),
         ];
         this.requestUpdate();
     }
@@ -520,32 +524,11 @@ export class LitNode extends LitPresets.classic.Node {
                             <div
                                 class="container"
                                 slot="front"
-                                style="min-width: 40rem; min-height: 20px; padding: 1.5rem;"></div>
+                                style="min-width: ${!this.component?.icon
+                                    ? "40rem"
+                                    : "20px"}; min-height: 20px; padding: 1.5rem;"></div>
                             <div slot="back" style="padding: 1.5rem">
-                                ${this.component
-                                    ? html`<bespeak-form
-                                          .props=${{
-                                              schema: this.component
-                                                  .configSchema,
-                                              formData: this.component.config,
-                                          }}
-                                          .onChange=${({ formData }) => {
-                                              this.component.config = formData;
-                                              this.requestUpdate();
-                                          }}></bespeak-form>`
-                                    : ""}
-                                ${this.component?.inputSchema
-                                    ? html`<bespeak-form
-                                          .props=${{
-                                              schema: this.component
-                                                  .inputSchema,
-                                              formData: this.component.input,
-                                          }}
-                                          .onChange=${({ formData }) => {
-                                              this.component.input = formData;
-                                              this.requestUpdate();
-                                          }}></bespeak-form>`
-                                    : ""}
+                                ${this.component?.renderBack() || ""}
                             </div>
                         </bespeak-flipper>
                     </div>
@@ -589,5 +572,9 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "types",
         await getProjectSource("./types.child.js")
+    );
+    await ReteNode.registerComponent(
+        "flow-input",
+        await getProjectSource("./flow-input.child.js")
     );
 })();

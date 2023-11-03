@@ -1,159 +1,62 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
-import { NextReteNode } from "./node.js";
+import BespeakComponent from "./component.js";
 import _ from "https://esm.sh/lodash";
 
-class FlowInput extends LitElement {
-    static properties = {
-        components: { type: Array },
-        dragOver: { type: Boolean },
-        mergedSchema: { type: Object }, // New property to store the merged schema
-    };
-
-    static ports = ["output"];
+class FlowInput extends BespeakComponent {
+    icon = "angle-down";
 
     static styles = css`
         :host {
+            max-width: 70vw;
             display: block;
-            padding: 16px;
-            border: 2px dashed #ccc;
-            text-align: center;
+            margin: auto;
         }
-        :host(.drag-over) {
-            border-color: #000;
-        }
-        .drag-over {
-            border-color: #000;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
+        .flex-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-start;
         }
-        button {
-            border: none;
-            background: none;
-            color: red;
-            cursor: pointer;
+        .flex-item {
+            flex-basis: calc(
+                25% - 10px
+            ); /* Adjusts the base width minus margin */
+            margin: 5px; /* Provides space between flex items */
+            box-sizing: border-box;
+        }
+        @media (max-width: 70vw) {
+            .flex-item {
+                flex-basis: calc(
+                    50% - 10px
+                ); /* Adjusts for fewer columns on smaller screens */
+            }
         }
     `;
 
-    constructor() {
-        super();
-        this.components = [];
-        this.dragOver = false;
-        this.output = {
-            components: [],
-            mergedSchema: {},
-        };
-    }
+    onPipe() {
+        super.onPipe();
 
-    handleDrop(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const componentName = event.dataTransfer.getData("text/plain");
-        if (componentName) {
-            const { Component } = NextReteNode.components.get(componentName);
-
-            this.output = {
-                ...this.output,
-                components: [...this.components, componentName],
-            };
-
-            // If the component has an outputSchema, merge it with the current mergedSchema
-            if (Component.outputSchema) {
-                this.output = {
-                    ...this.output,
-                    mergedSchema: _.merge(
-                        ...[
-                            {},
-                            ...this.output.components?.map(
-                                (component) =>
-                                    NextReteNode.components.get(component)
-                                        ?.Component.outputSchema
-                            ),
-                        ]
-                    ),
-                };
-            }
+        for (const sub of this.backSubs) {
+            sub.unsubscribe();
         }
-        this.dragOver = false;
-    }
-    handleDragOver(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.dragOver = true;
+
+        this.backSubs = Array.from(this.pipedTo).map((obj) =>
+            obj.back$.subscribe((val) => {
+                this.requestUpdate();
+            })
+        );
+
+        this.requestUpdate();
     }
 
-    handleDragLeave(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.dragOver = false;
-    }
-
-    removeComponent(index) {
-        this.output = {
-            ...this.output,
-            components: this.output.components.filter((_, i) => i !== index),
-            mergedSchema: _.merge(
-                ...[
-                    {},
-                    ...this.output.components
-                        .filter((_, i) => i !== index)
-                        .map(
-                            (component) =>
-                                NextReteNode.components.get(component).Component
-                                    .outputSchema
-                        ),
-                ]
-            ),
-        };
-    }
-
-    render() {
-        if (!this.output) {
-            return html``;
-        }
+    renderBack() {
         return html`
-            <div
-                class=${this.dragOver ? "drag-over" : ""}
-                @drop=${this.handleDrop}
-                @dragover=${this.handleDragOver}
-                @dragleave=${this.handleDragLeave}>
-                Drop your components here
-                <ul>
-                    ${this.output.components?.map(
-                        (component, index) => html`
-                            <li>
-                                <span>${component}</span>
-                                <button
-                                    @click=${() => this.removeComponent(index)}>
-                                    x
-                                </button>
-                            </li>
-                        `
-                    )}
-                </ul>
+            <div class="flex-container">
+                ${Array.from(this.pipedTo).map(
+                    (obj) => html`
+                        <div class="flex-item">${obj.renderBack()}</div>
+                    `
+                )}
             </div>
-            ${this.output.mergedSchema
-                ? html`<bespeak-form
-                      .props=${{
-                          schema: this.output.mergedSchema,
-                          formData: this.output,
-                      }}
-                      .onChange=${(e) => {
-                          this.output = {
-                              ...this.output,
-                              ...e.formData,
-                          };
-                      }}></bespeak-form>`
-                : ""}
         `;
     }
 }

@@ -130,6 +130,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.config$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
         this.process$ = new ReplaySubject(1);
+        this.back$ = new ReplaySubject(1);
 
         this.process$.pipe(debounceTime(1000)).subscribe(async () => {
             this.output = (await this.process()) || this.output;
@@ -195,6 +196,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         if (changedProperties.has("processing")) {
             this.requestUpdate();
         }
+
+        this.back$.next(this.renderBack());
     }
 
     async call({ input, config }) {
@@ -287,23 +290,23 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     pipe(component) {
-        const oldTo = component.pipedTo || new Set();
-        oldTo.add(this);
-        component.pipedTo = new Set(oldTo);
+        const oldTo = this.pipedTo || new Set();
+        oldTo.add(component);
+        this.pipedTo = new Set(oldTo);
 
-        const oldFrom = this.pipedFrom || new Set();
-        oldFrom.add(component);
-        this.pipedFrom = new Set(oldFrom);
+        const oldFrom = component.pipedFrom || new Set();
+        oldFrom.add(this);
+        component.pipedFrom = new Set(oldFrom);
     }
 
     unpipe(component) {
-        const old = component.pipedTo || new Set();
-        old.delete(this);
-        component.pipedTo = new Set(old);
+        const old = this.pipedTo || new Set();
+        old.delete(component);
+        this.pipedTo = new Set(old);
 
-        const oldFrom = this.pipedFrom || new Set();
-        oldFrom.delete(component);
-        this.pipedFrom = new Set(oldFrom);
+        const oldFrom = component.pipedFrom || new Set();
+        oldFrom.delete(this);
+        component.pipedFrom = new Set(oldFrom);
     }
 
     onPipe() {
@@ -339,10 +342,33 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         return this.icon
             ? html`
                   <fa-icon
-                      .icon=${this.icon}
                       .size=${"5rem"}
+                      .icon=${this.icon}
                       .animation=${this.processing ? "ripple" : ""}></fa-icon>
               `
             : html`<yaml-renderer .data=${this.output}></yaml-renderer>`;
+    }
+
+    renderBack() {
+        return html`
+            ${this.inputSchema
+                ? html`<bespeak-form
+                      .props=${{
+                          schema: this.inputSchema,
+                          formData: this.input,
+                      }}
+                      .onChange=${({ formData }) =>
+                          (this.input = formData)}></bespeak-form>`
+                : html``}
+            ${this.configSchema
+                ? html`<bespeak-form
+                      .props=${{
+                          schema: this.configSchema,
+                          formData: this.config,
+                      }}
+                      .onChange=${({ formData }) =>
+                          (this.config = formData)}></bespeak-form>`
+                : html``}
+        `;
     }
 }
