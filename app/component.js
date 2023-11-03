@@ -24,7 +24,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             config: { type: Object, hasChanged },
             keys: { type: Object, hasChanged },
             error: { type: Object },
-            piped: { type: Set },
+            pipedTo: { type: Set },
+            pipedFrom: { type: Set },
             processing: { type: Boolean },
         };
     }
@@ -56,6 +57,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     processing = false;
     shouldProcessAgain = false;
     used = new Set();
+    pipedTo = new Set();
+    pipedFrom = new Set();
 
     get inputSchema() {
         return this.constructor.input || null;
@@ -182,7 +185,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             this.error$.next(this.error);
         }
 
-        if (changedProperties.has("piped")) {
+        if (
+            changedProperties.has("pipedTo") ||
+            changedProperties.has("pipedFrom")
+        ) {
             this.onPipe();
         }
 
@@ -281,19 +287,23 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     pipe(component) {
-        const old = component.piped || new Set();
+        const oldTo = component.pipedTo || new Set();
+        oldTo.add(this);
+        component.pipedTo = new Set(oldTo);
 
-        old.add(this);
-
-        component.piped = new Set(old);
+        const oldFrom = this.pipedFrom || new Set();
+        oldFrom.add(component);
+        this.pipedFrom = new Set(oldFrom);
     }
 
     unpipe(component) {
-        const old = component.piped || new Set();
-
+        const old = component.pipedTo || new Set();
         old.delete(this);
+        component.pipedTo = new Set(old);
 
-        component.piped = new Set(old);
+        const oldFrom = this.pipedFrom || new Set();
+        oldFrom.delete(component);
+        this.pipedFrom = new Set(oldFrom);
     }
 
     onPipe() {
@@ -302,7 +312,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         this.pipeSubscription = combineLatest(
-            Array.from(this.piped).map((component) => component.output$)
+            Array.from(this.pipedFrom).map((component) => component.output$)
         ).subscribe((outputs) => {
             outputs = outputs.flat();
             if (this.inputSchema) {
@@ -312,7 +322,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             }
         });
 
-        if (this.piped.size == 0) {
+        if (this.pipedFrom.size == 0) {
             this.input = [];
         }
     }
