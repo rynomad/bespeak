@@ -1,36 +1,10 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
 import BespeakComponent from "./component.js";
 import _ from "https://esm.sh/lodash";
+import { FlexContainer } from "./flex.js";
 
 class FlowInput extends BespeakComponent {
     icon = "angle-down";
-
-    static styles = css`
-        :host {
-            max-width: 70vw;
-            display: block;
-            margin: auto;
-        }
-        .flex-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-        }
-        .flex-item {
-            flex-basis: calc(
-                25% - 10px
-            ); /* Adjusts the base width minus margin */
-            margin: 5px; /* Provides space between flex items */
-            box-sizing: border-box;
-        }
-        @media (max-width: 70vw) {
-            .flex-item {
-                flex-basis: calc(
-                    50% - 10px
-                ); /* Adjusts for fewer columns on smaller screens */
-            }
-        }
-    `;
 
     onPipe() {
         super.onPipe();
@@ -50,13 +24,8 @@ class FlowInput extends BespeakComponent {
 
     renderBack() {
         return html`
-            <div class="flex-container">
-                ${Array.from(this.pipedTo).map(
-                    (obj) => html`
-                        <div class="flex-item">${obj.renderBack()}</div>
-                    `
-                )}
-            </div>
+            <bespeak-flex-container
+                .objs=${Array.from(this.pipedTo)}></bespeak-flex-container>
         `;
     }
 }
