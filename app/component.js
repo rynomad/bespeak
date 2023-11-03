@@ -24,8 +24,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             config: { type: Object, hasChanged },
             keys: { type: Object, hasChanged },
             error: { type: Object },
-            pipedTo: { type: Set },
-            pipedFrom: { type: Set },
+            pipedTo: { type: Object },
+            pipedFrom: { type: Object },
             processing: { type: Boolean },
         };
     }
@@ -57,8 +57,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     processing = false;
     shouldProcessAgain = false;
     used = new Set();
-    pipedTo = new Set();
-    pipedFrom = new Set();
 
     get inputSchema() {
         return this.constructor.input || null;
@@ -131,6 +129,9 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.error$ = new ReplaySubject(1);
         this.process$ = new ReplaySubject(1);
         this.back$ = new ReplaySubject(1);
+
+        this.pipedTo = new Set();
+        this.pipedFrom = new Set();
 
         this.process$.pipe(debounceTime(1000)).subscribe(async () => {
             this.output = (await this.process()) || this.output;

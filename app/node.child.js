@@ -10,9 +10,12 @@ import {
 } from "https://esm.sh/rxjs";
 import { getProjectSource } from "./util.js";
 import { css, html } from "https://esm.sh/lit@2.8.0";
-import "./node.js";
 import { Keys } from "./keys.js";
 
+import "./flipper.js";
+import "./compass.js";
+import "./monaco.js";
+import "./mixins.js";
 export class ReteNode extends Classic.Node {
     static globals = new Map();
     static _sockets = {};
@@ -85,7 +88,9 @@ export class ReteNode extends Classic.Node {
     }
 
     static async deserialize(ide, editor, { key, version, id }) {
-        const { Component } = await this.getComponent(key, version);
+        const { Component } = await this.getComponent(key, version).catch(() =>
+            this.getComponent(key)
+        );
         const node = new this(ide, editor, { key, version, Component, id });
 
         return node;
@@ -576,5 +581,9 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "flow-input",
         await getProjectSource("./flow-input.child.js")
+    );
+    await ReteNode.registerComponent(
+        "flow-output",
+        await getProjectSource("./flow-output.child.js")
     );
 })();

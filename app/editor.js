@@ -35,13 +35,11 @@ import {
     tap,
     map,
 } from "https://esm.sh/rxjs";
-import { DevDefault } from "./dev-default.js";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
 
 import { ReteNode, LitNode } from "./node.child.js";
 import "./icons/nodes.js";
-import { getText } from "./util.js";
 
 export class Editor extends LitElement {
     static get properties() {

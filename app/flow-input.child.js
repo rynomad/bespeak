@@ -8,6 +8,7 @@ class FlowInput extends BespeakComponent {
 
     onPipe() {
         super.onPipe();
+        this.backSubs ||= [];
 
         for (const sub of this.backSubs) {
             sub.unsubscribe();

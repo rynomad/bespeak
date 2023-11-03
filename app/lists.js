@@ -4,7 +4,6 @@ import { debug } from "./operators.js";
 import { ReteNode } from "./node.child.js";
 import BespeakComponent from "./component.js";
 import "./pills.js";
-import NodeRegistry from "./node-registry.js";
 
 class BespeakList extends LitElement {
     static styles = css`
@@ -129,5 +128,3 @@ export class BespeakNodeList extends BespeakComponent {
 }
 
 customElements.define("bespeak-node-list", BespeakNodeList);
-
-customElements.define("bespeak-node-registry", NodeRegistry);
