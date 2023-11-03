@@ -2,7 +2,7 @@ import { Presets as LitPresets } from "https://esm.sh/gh/rynomad/rete-lit-plugin
 import { ClassicPreset as Classic } from "https://esm.sh/rete";
 import localForage from "https://esm.sh/localforage";
 import {
-    Subject,
+    ReplaySubject,
     filter,
     shareReplay,
     takeUntil,
@@ -19,7 +19,7 @@ export class ReteNode extends Classic.Node {
     static componentsDB = localForage.createInstance({
         name: "bespeak-components",
     });
-    static components$ = new Subject();
+    static components$ = new ReplaySubject(1);
     static modules = new Map();
     static promiseQueue = Promise.resolve();
 
@@ -520,7 +520,7 @@ export class LitNode extends LitPresets.classic.Node {
                             <div
                                 class="container"
                                 slot="front"
-                                style="min-width: 20px; min-height: 20px; padding: 1.5rem;"></div>
+                                style="min-width: 40rem; min-height: 20px; padding: 1.5rem;"></div>
                             <div slot="back" style="padding: 1.5rem">
                                 ${this.component
                                     ? html`<bespeak-form
@@ -531,6 +531,18 @@ export class LitNode extends LitPresets.classic.Node {
                                           }}
                                           .onChange=${({ formData }) => {
                                               this.component.config = formData;
+                                              this.requestUpdate();
+                                          }}></bespeak-form>`
+                                    : ""}
+                                ${this.component?.inputSchema
+                                    ? html`<bespeak-form
+                                          .props=${{
+                                              schema: this.component
+                                                  .inputSchema,
+                                              formData: this.component.input,
+                                          }}
+                                          .onChange=${({ formData }) => {
+                                              this.component.input = formData;
                                               this.requestUpdate();
                                           }}></bespeak-form>`
                                     : ""}

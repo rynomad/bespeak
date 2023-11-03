@@ -6,7 +6,11 @@ import {
     generateSchemaFromValue,
 } from "./util.js";
 import { v4 as uuid } from "https://esm.sh/uuid";
-import { ReplaySubject, combineLatest, map } from "https://esm.sh/rxjs";
+import {
+    ReplaySubject,
+    combineLatest,
+    debounceTime,
+} from "https://esm.sh/rxjs";
 import { PropagationStopper } from "./mixins.js";
 import localForage from "https://esm.sh/localforage";
 import { deepEqual } from "https://esm.sh/fast-equals";
@@ -52,6 +56,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     processing = false;
     shouldProcessAgain = false;
     used = new Set();
+
+    get inputSchema() {
+        return this.constructor.input || null;
+    }
 
     get keysSchema() {
         return this.constructor.keys || null;
@@ -118,6 +126,13 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.output$ = new ReplaySubject(1);
         this.config$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
+        this.process$ = new ReplaySubject(1);
+
+        this.process$.pipe(debounceTime(1000)).subscribe(async () => {
+            this.output = (await this.process()) || this.output;
+            this.requestUpdate();
+        });
+
         this.load().then(() => (this.isLoading = false));
     }
 
@@ -135,8 +150,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             changedProperties.has("config") ||
             changedProperties.has("keys")
         ) {
-            this.output = await this.process();
-            this.requestUpdate();
+            this.process$.next();
         }
 
         if (changedProperties.has("config")) {
@@ -157,6 +171,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                     nodeName: this.name,
                     config: this.config,
                     schema: this.outputSchema,
+                    input_schema: this.inputSchema,
                     value: this.output,
                 });
             }
@@ -289,7 +304,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.pipeSubscription = combineLatest(
             Array.from(this.piped).map((component) => component.output$)
         ).subscribe((outputs) => {
-            this.input = outputs.flat();
+            outputs = outputs.flat();
+            if (this.inputSchema) {
+                this.input = outputs[0]?.value;
+            } else {
+                this.input = outputs;
+            }
         });
 
         if (this.piped.size == 0) {
@@ -313,21 +333,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                       .size=${"5rem"}
                       .animation=${this.processing ? "ripple" : ""}></fa-icon>
               `
-            : this.outputSchema
-            ? html` <bespeak-form
-                  .props=${{
-                      schema: this.outputSchema,
-                      formData: this.output,
-                  }}
-                  .onChange=${(e) => {
-                      this.output = e.formData;
-                  }}></bespeak-form>`
-            : html`<yaml-renderer
-                  .preamble=${`#${this.title}\n\n${this.description}`}
-                  .data=${{
-                      input: this.input,
-                      config: this.config,
-                      output: this.output,
-                  }}></yaml-renderer>`;
+            : html`<yaml-renderer .data=${this.output}></yaml-renderer>`;
     }
 }

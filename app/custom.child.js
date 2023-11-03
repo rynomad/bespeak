@@ -1,6 +1,7 @@
 import BespeakComponent from "./component.js";
-import { importFromString } from "./util.js";
+import { importFromString, transformSource } from "./util.js";
 import { html, css } from "https://esm.sh/lit";
+import { ReteNode } from "./node.child.js";
 
 export default class NewNode extends BespeakComponent {
     static output = {
@@ -30,9 +31,47 @@ export default class NewNode extends BespeakComponent {
 
     render() {
         return html`
+            ${this.slotComponent?.inputSchema
+                ? html`<bespeak-form
+                      .props=${{
+                          schema: this.slotComponent.inputSchema,
+                          formData: this.slotComponent.input,
+                      }}
+                      .onChange=${({ formData }) => {
+                          this.slotComponent.input = formData;
+                          this.requestUpdate();
+                      }}></bespeak-form>`
+                : ""}
+            ${this.slotComponent
+                ? html`<bespeak-form
+                      .props=${{
+                          schema: this.slotComponent.configSchema,
+                          formData: this.slotComponent.config,
+                      }}
+                      .onChange=${({ formData }) => {
+                          this.slotComponent.config = formData;
+                          this.requestUpdate();
+                      }}></bespeak-form>`
+                : ""}
             <slot></slot>
-            <button>Save</button>
+            <button @click=${this.saveComponent}>Save</button>
         `;
+    }
+
+    saveComponent() {
+        if (this.slotComponent) {
+            const jsSchema = this.input.find(
+                (schema) =>
+                    schema.schema.title === "code" &&
+                    schema.config.language === "javascript"
+            );
+            const sourceCode = jsSchema.value;
+            const transformedSource = transformSource(sourceCode);
+            ReteNode.registerComponent(
+                this.slotComponent.constructor.tagName,
+                transformedSource
+            );
+        }
     }
 
     async _process(input, config, keys) {
@@ -73,6 +112,7 @@ export default class NewNode extends BespeakComponent {
             this.shadowRoot
                 .querySelector("slot")
                 .replaceChildren(this.slotComponent);
+            this.requestUpdate();
         }
 
         return this.output;

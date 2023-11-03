@@ -32,6 +32,21 @@ class GPTPrompt extends BespeakComponent {
                 enum: ["parallel", "sequential", "zipper"],
                 default: "sequential",
             },
+            context: {
+                title: "Context",
+                type: "string",
+                description:
+                    "The input context to use for the prompt. Schema will provide each unique input schema. Values will provide each unique input value.",
+                enum: ["none", "schemas", "values", "input_schemas"],
+                default: "none",
+            },
+            preamble: {
+                title: "Context Preamble",
+                type: "string",
+                description:
+                    "A custom message to be used as the preamble for the context.",
+                default: "",
+            },
         },
     };
 
@@ -63,11 +78,11 @@ class GPTPrompt extends BespeakComponent {
                         .map((thread) => thread.length)
                 );
                 for (let i = 0; i < maxLength; i++) {
-                    for (const input of this.input) {
-                        for (let thread of input.value.threads) {
-                            if (thread[i]) {
-                                outputThreads[0].push(thread[i]);
-                            }
+                    for (let thread of threads.map((thread) =>
+                        thread.slice(-history)
+                    )) {
+                        if (thread[i]) {
+                            outputThreads[0].push(thread[i]);
                         }
                     }
                 }
@@ -78,27 +93,71 @@ class GPTPrompt extends BespeakComponent {
             outputThreads.push([]);
         }
 
+        let preamble = config.context !== "none" ? config.preamble : "";
+        const seen = new Set();
+        switch (config.context) {
+            case "schemas":
+                preamble +=
+                    "\n\n" +
+                    input
+                        .filter((i) => {
+                            if (seen.has(i.schema.title)) {
+                                return false;
+                            }
+                            seen.add(i.schema.title);
+                            return true;
+                        })
+                        .map((i) => JSON.stringify(i.schema, null, 2))
+                        .join("\n");
+                break;
+            case "values":
+                preamble +=
+                    "\n\n" +
+                    input
+                        .map((i) => JSON.stringify(i.value, null, 2))
+                        .join("\n");
+                break;
+            case "input_schemas":
+                preamble +=
+                    "\n\n" +
+                    input
+                        .filter((i) => {
+                            if (!i.input_schema) {
+                                return false;
+                            }
+                            if (seen.has(i.input_schema.title)) {
+                                return false;
+                            }
+                            seen.add(i.input_schema.title);
+                            return true;
+                        })
+                        .map((i) => JSON.stringify(i.input_schema, null, 2))
+                        .join("\n");
+                break;
+            default:
+        }
+
         for (const thread of outputThreads) {
             switch (placement) {
                 case "append":
                     thread.push(this.output.prompt);
+                    if (preamble) {
+                        thread.push({
+                            role: "user",
+                            content: preamble,
+                        });
+                    }
                     break;
                 case "prepend":
                     thread.unshift(this.output.prompt);
+                    if (preamble) {
+                        thread.unshift({
+                            role: "user",
+                            content: preamble,
+                        });
+                    }
                     break;
             }
-
-            input
-                .filter((input) => input.schema.title !== "GPT")
-                .forEach((input) => {
-                    if (input.value instanceof Error) {
-                        input.value = `Error: ${input.value.message}\n\n${input.value.stack}`;
-                    }
-                    thread.push({
-                        role: "system",
-                        content: JSON.stringify(input.value, null, 2),
-                    });
-                });
         }
 
         return {
