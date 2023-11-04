@@ -430,6 +430,7 @@ export class LitNode extends LitPresets.classic.Node {
 
         // Get the source code from the editor
         this.component = new this.reteNode.Component(this.id);
+        this.component.removed$ = this.reteNode.removed$;
         this.shadowRoot
             .querySelector(".container")
             .replaceChildren(this.component);
