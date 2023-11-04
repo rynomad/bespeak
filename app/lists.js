@@ -3,6 +3,7 @@ import { merge, tap, map } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
 import { ReteNode } from "./node.child.js";
 import BespeakComponent from "./component.js";
+import { repeat } from "https://esm.sh/lit/directives/repeat.js";
 import "./pills.js";
 
 class BespeakList extends LitElement {
@@ -82,7 +83,9 @@ export class BespeakNodeList extends BespeakComponent {
         super();
         this.components = [];
         ReteNode.components$.subscribe((components) => {
-            this.components = components;
+            this.components = components.filter(
+                ({ Component }) => Component.title
+            );
         });
     }
 
@@ -112,16 +115,23 @@ export class BespeakNodeList extends BespeakComponent {
         return html`
             <bespeak-list>
                 <slot></slot>
-                ${this.components.map(
+                ${repeat(
+                    this.components,
+                    ({ key }) => key,
                     (definition) =>
                         html`<bespeak-node-pill
+                            id=${definition.key}
                             .definition=${definition}></bespeak-node-pill>`
                 )}
-                ${this.workspaces?.map(
-                    (workspace) =>
-                        html`<bespeak-node-pill
-                            .workspace=${workspace}></bespeak-node-pill>`
-                )}
+                ${
+                    ""
+                    //     this.workspaces?.map(
+                    //             (workspace) =>
+                    //                 html`<bespeak-node-pill
+                    //                     id=${definition.key}
+                    //                     .workspace=${workspace}></bespeak-node-pill>`
+                    // )
+                }
             </bespeak-list>
         `;
     }

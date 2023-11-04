@@ -575,10 +575,6 @@ customElements.define("bespeak-lit-node", LitNode);
         await getProjectSource("./gate.js")
     );
     await ReteNode.registerComponent(
-        "types",
-        await getProjectSource("./types.child.js")
-    );
-    await ReteNode.registerComponent(
         "flow-input",
         await getProjectSource("./flow-input.child.js")
     );
