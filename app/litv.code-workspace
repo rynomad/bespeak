@@ -5,6 +5,9 @@
         },
         {
             "path": "../../openai-queue"
+        },
+        {
+            "path": "../../puppeteer-extension-transport"
         }
     ]
 }

@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
-
+import { ReteNode } from "./node.child.js";
 import Swal from "https://esm.sh/sweetalert2";
 class BespeakWorkspacePill extends LitElement {
     static styles = css`
@@ -151,6 +151,7 @@ class BespeakNodePill extends LitElement {
     static properties = {
         title: { type: String },
         definition: { type: Object },
+        workspace: { type: Object },
     };
 
     constructor() {
@@ -161,6 +162,20 @@ class BespeakNodePill extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this.title = this.definition?.Component.title;
+    }
+
+    async updated(changedProperties) {
+        if (changedProperties.has("workspace")) {
+            setTimeout(async () => {
+                const def = await ReteNode.getComponent("subflow");
+                def.config = {
+                    workspace: this.workspace.id,
+                };
+
+                this.definition = def;
+                this.title = `SubFlow: ${this.workspace.name}`;
+            }, 1000);
+        }
     }
 
     handleDragStart(event) {

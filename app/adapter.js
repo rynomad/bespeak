@@ -2,35 +2,81 @@ import BespeakComponent from "./component.js";
 import { hashObject } from "./util.js";
 import * as yaml from "https://esm.sh/js-yaml";
 import SubFlow from "./subflow.js";
-
+import localForage from "https://esm.sh/localforage";
+import { combineLatest, map } from "https://esm.sh/rxjs";
+import { extractCodeBlocks } from "./util.js";
 export default class Adapter extends BespeakComponent {
     static adapterStore = localForage.createInstance({
         name: "bespeak-adapterStore",
     });
 
     static modules = new Map();
+    static config = {
+        type: "object",
+        properties: {
+            subflow: {
+                type: "string",
+                title: "Subflow",
+                description: "The subflow to use to create the adapter",
+            },
+            format: {
+                type: "string",
+                title: "Format",
+                description: "The format to use",
+                enum: ["yaml", "json"],
+                default: "yaml",
+            },
+        },
+    };
 
     get inputSchema() {
-        return Array.from(this.pipedFrom).map((node) => node.outputSchema);
+        if (!this.pipedFrom?.size) {
+            return null;
+        }
+        return {
+            type: "array",
+            items: Array.from(this.pipedFrom).map((node) => ({
+                type: "object",
+                properties: {
+                    schema: {
+                        $ref: "http://json-schema.org/draft-07/schema#",
+                        description: "The literal schema for the value",
+                    },
+                    value: node.outputSchema,
+                },
+            })),
+        };
     }
 
     get outputSchema() {
-        if (!this.pipedTo.size === 0) {
+        if (!this.pipedTo?.size) {
             return null;
         }
 
-        if (
-            Array.from(this.pipedTo).some((node) => !(node instanceof Adapter))
-        ) {
+        if (Array.from(this.pipedTo).some((node) => node instanceof Adapter)) {
             return this.inputSchema;
         }
 
-        return Array.from(this.pipedTo)
-            .map((node) => node.inputSchema)
-            .pop();
-    }
+        if (Array.from(this.pipedTo).every((node) => !node.inputSchema)) {
+            return null;
+        }
 
-    get configSchema() {}
+        return {
+            type: "array",
+            items: Array.from(this.pipedTo)
+                .map((node) => ({
+                    type: "object",
+                    properties: {
+                        schema: {
+                            $ref: "http://json-schema.org/draft-07/schema#",
+                            description: "The literal schema for the value",
+                        },
+                        value: node.inputSchema,
+                    },
+                }))
+                .pop(),
+        };
+    }
 
     get adapterFlow() {
         return new SubFlow(this.reteId);
@@ -52,8 +98,58 @@ export default class Adapter extends BespeakComponent {
         }
     }
 
+    updated(changedProperties) {
+        super.updated(changedProperties);
+        if (changedProperties.has("config") && this.config) {
+            if (
+                this.config.subflow !== changedProperties.get("config")?.subflow
+            ) {
+                this.subflow = new SubFlow(this.reteId);
+                this.subflow.ide = this.ide;
+                this.subflow.config = {
+                    workspace: this.config.subflow,
+                };
+            }
+        }
+
+        if (changedProperties.has("ide")) {
+            this.ide.workspaces$
+                .pipe(
+                    map((workspaces) =>
+                        workspaces.filter(({ nodes }) =>
+                            nodes.some((node) =>
+                                [
+                                    "flow-input",
+                                    "flow-output",
+                                    "flow-owners",
+                                    "flow-assets",
+                                ].some((name) => name === node.key)
+                            )
+                        )
+                    )
+                )
+                .subscribe((workspaces) => {
+                    this.constructor.config = {
+                        ...this.constructor.config,
+                        properties: {
+                            ...this.constructor.config.properties,
+                            subflow: {
+                                ...this.constructor.config.properties.subflow,
+                                oneOf: workspaces.map(({ id, name }) => ({
+                                    title: name,
+                                    const: id,
+                                })),
+                            },
+                        },
+                    };
+
+                    this.requestUpdate();
+                });
+        }
+    }
+
     async _process(input, config) {
-        if (Array.isArray(this.outputSchema)) {
+        if (Array.isArray(this.outputSchema) || !this.outputSchema) {
             // we're just a passthrough;
             return input;
         }
@@ -67,10 +163,12 @@ export default class Adapter extends BespeakComponent {
             config,
         });
 
-        const module = Adapter.modules.get(processorHash);
+        const module =
+            Adapter.modules.get(processorHash) ||
+            (await this.createAdapter(config));
 
         if (!module) {
-            module = await this.createAdapter(config);
+            return;
         }
 
         return await module.default(input);
@@ -80,8 +178,13 @@ export default class Adapter extends BespeakComponent {
         const inputSchema = this.inputSchema;
         const outputSchema = this.outputSchema;
 
+        if (!inputSchema || !outputSchema) {
+            return;
+        }
+
         let message = `# Input Schemas:\n\n`;
-        for (const schema of inputSchema) {
+        for (const item of inputSchema.items) {
+            const schema = item.properties.schema;
             message += `\`\`\`${
                 config.format === "yaml"
                     ? `yaml\n${yaml.dump(schema)}\n`
@@ -90,23 +193,29 @@ export default class Adapter extends BespeakComponent {
         }
 
         message += `# Output Schema:\n\n`;
+        const outputSchemaItem = outputSchema.items;
         message += `\`\`\`${
             config.format === "yaml"
-                ? `yaml\n${yaml.dump(outputSchema)}\n\`\`\``
-                : `json\n${JSON.stringify(outputSchema, null, 2)}\n`
+                ? `yaml\n${yaml.dump(outputSchemaItem)}\n\`\`\``
+                : `json\n${JSON.stringify(outputSchemaItem, null, 2)}\n`
         }\`\`\`\n\n`;
 
         // TODO: change this to schemas directly when we have proper prompt templating
 
         const [
             {
-                value: { response: source },
+                value: { response },
             },
         ] = await this.subflow.call({
             input: [
                 { value: { threads: [[{ role: "user", content: message }]] } },
             ],
+            config: {
+                workspace: this.config.subflow,
+            },
         });
+
+        const source = extractCodeBlocks(response).pop();
 
         const blob = new Blob([source], { type: "text/javascript" });
         const url = URL.createObjectURL(blob);
@@ -118,7 +227,7 @@ export default class Adapter extends BespeakComponent {
 }
 
 (async () => {
-    const keys = Adapter.adapterStore.keys();
+    const keys = await Adapter.adapterStore.keys();
 
     for (const key of keys) {
         const source = await Adapter.adapterStore.getItem(key);
@@ -128,3 +237,7 @@ export default class Adapter extends BespeakComponent {
         Adapter.modules.set(key, module);
     }
 })();
+
+if (!customElements.get("bespeak-adapter-hard-code")) {
+    customElements.define("bespeak-adapter-hard-code", Adapter);
+}

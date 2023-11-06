@@ -84,14 +84,22 @@ export class ReteNode extends Classic.Node {
         const components = await Promise.all(
             keys.map((key) => this.getComponent(key))
         );
-        this.components$.next(components);
+        this.components$.next(
+            components.filter(({ key }) => key !== "subflow")
+        );
     }
 
-    static async deserialize(ide, editor, { key, version, id }) {
+    static async deserialize(ide, editor, { key, version, config, id }) {
         const { Component } = await this.getComponent(key, version).catch(() =>
             this.getComponent(key)
         );
-        const node = new this(ide, editor, { key, version, Component, id });
+        const node = new this(ide, editor, {
+            key,
+            version,
+            Component,
+            config,
+            id,
+        });
 
         return node;
     }
@@ -132,7 +140,7 @@ export class ReteNode extends Classic.Node {
         this.litNode.requestUpdate();
     }
 
-    constructor(ide, editor, { key, version, Component, id }) {
+    constructor(ide, editor, { key, version, Component, config, id }) {
         super();
         this.id = id || this.id;
         this.key = key;
@@ -141,6 +149,7 @@ export class ReteNode extends Classic.Node {
         this.editor = editor;
         this.workspaceId = editor.id;
         this.Component = Component;
+        this.config = config;
 
         this.addInput("input", new Classic.Input(this.socket, "input", true));
         this.addOutput("output", new Classic.Output(this.socket, "output"));
@@ -431,6 +440,10 @@ export class LitNode extends LitPresets.classic.Node {
         // Get the source code from the editor
         this.component = new this.reteNode.Component(this.id);
         this.component.removed$ = this.reteNode.removed$;
+        this.component.ide = this.reteNode.ide;
+        if (this.reteNode.config) {
+            this.component.config = this.reteNode.config;
+        }
         this.shadowRoot
             .querySelector(".container")
             .replaceChildren(this.component);
@@ -582,5 +595,13 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "flow-output",
         await getProjectSource("./flow-output.child.js")
+    );
+    await ReteNode.registerComponent(
+        "adapter",
+        await getProjectSource("./adapter.js")
+    );
+    await ReteNode.registerComponent(
+        "subflow",
+        await getProjectSource("./subflow.js")
     );
 })();

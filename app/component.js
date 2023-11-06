@@ -14,6 +14,7 @@ import {
 import { PropagationStopper } from "./mixins.js";
 import localForage from "https://esm.sh/localforage";
 import { deepEqual } from "https://esm.sh/fast-equals";
+
 const hasChanged = (a, b) => !deepEqual(a, b);
 
 export default class BespeakComponent extends PropagationStopper(LitElement) {
@@ -134,9 +135,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         this.pipedTo = new Set();
         this.pipedFrom = new Set();
-
-        this.adapter = new Adapter(id);
-        this.adapter.pipedTo.add(this);
 
         this.process$.pipe(debounceTime(1000)).subscribe(async () => {
             this.output = (await this.process()) || this.output;
@@ -286,15 +284,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
     }
 
-    async load() {
-        this.output =
-            (await this.cache.getItem("output")) ||
-            getDefaultValue(this.outputSchema);
-        this.config =
-            (await this.cache.getItem("config")) ||
-            getDefaultValue(this.configSchema);
-    }
-
     pipe(component) {
         const oldTo = this.pipedTo || new Set();
         oldTo.add(component);
@@ -315,9 +304,15 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         component.pipedFrom = new Set(oldFrom);
     }
 
-    onPipe() {
+    async onPipe() {
         if (this.pipeSubscription) {
             this.pipeSubscription.unsubscribe();
+        }
+
+        if (!this.adapter) {
+            const { default: Adapter } = await import("./adapter.js");
+            this.adapter = new Adapter(this.reteId);
+            this.adapter.pipedTo.add(this);
         }
 
         this.adapter.pipedFrom = this.pipedFrom;

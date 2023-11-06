@@ -123,15 +123,12 @@ export class BespeakNodeList extends BespeakComponent {
                             id=${definition.key}
                             .definition=${definition}></bespeak-node-pill>`
                 )}
-                ${
-                    ""
-                    //     this.workspaces?.map(
-                    //             (workspace) =>
-                    //                 html`<bespeak-node-pill
-                    //                     id=${definition.key}
-                    //                     .workspace=${workspace}></bespeak-node-pill>`
-                    // )
-                }
+                ${this.workspaces?.map(
+                    (workspace) =>
+                        html`<bespeak-node-pill
+                            id=${workspace.id}
+                            .workspace=${workspace}></bespeak-node-pill>`
+                )}
             </bespeak-list>
         `;
     }

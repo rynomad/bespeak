@@ -23,7 +23,8 @@ export function setSubmitButtonOptions(uiSchema, options, schema) {
     Object.keys(schema.properties ? schema.properties : {}).forEach((key) => {
         if (
             schema.properties[key].enum &&
-            schema.properties[key].enum.length > 10
+            (schema.properties[key].enum?.length > 10 ||
+                schema.properties[key].oneOf?.length > 10)
         ) {
             newUiSchema[key] = {
                 "ui:widget": "autocomplete",
@@ -31,7 +32,8 @@ export function setSubmitButtonOptions(uiSchema, options, schema) {
         } else if (
             schema.properties[key].type === "string" &&
             !newUiSchema[key] &&
-            !schema.properties[key].enum
+            !schema.properties[key].enum &&
+            !schema.properties[key].oneOf
         ) {
             newUiSchema[key] = {
                 "ui:widget": "textarea",
