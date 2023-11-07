@@ -460,6 +460,9 @@ export class LitNode extends LitPresets.classic.Node {
             this.component.back$.subscribe((back) => {
                 this.requestUpdate();
             }),
+            this.reteNode.editor.hydrated$.subscribe(() => {
+                this.component.started = true;
+            }),
         ];
         this.requestUpdate();
     }

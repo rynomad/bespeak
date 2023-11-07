@@ -176,11 +176,12 @@ export default class Subflow extends BespeakComponent {
         );
 
         if (output) {
-            return new Promise((resolve) => {
+            let prom = new Promise((resolve) => {
                 let started = false;
                 const sub = output.output$
-                    .pipe(debounceTime(10000))
+                    .pipe(debounceTime(10000), takeUntil(this.removed$))
                     .subscribe((data) => {
+                        this.output = data;
                         console.log("subflow _process settled", data);
                         // this.processing = false;
                         if (inputNode && !started) {
@@ -193,6 +194,12 @@ export default class Subflow extends BespeakComponent {
                         }
                     });
             });
+
+            for (const node of this.nodeMap.values()) {
+                node.started = true;
+            }
+
+            return prom;
         }
     }
 

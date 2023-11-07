@@ -34,6 +34,7 @@ import {
     debounceTime,
     tap,
     map,
+    ReplaySubject,
 } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
@@ -223,7 +224,7 @@ export class Editor extends LitElement {
     }
 
     async setupStorage() {
-        this.hydrated$ = new Subject();
+        this.hydrated$ = new ReplaySubject();
         this.storageSubscription = this.hydrated$
             .pipe(
                 take(1),

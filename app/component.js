@@ -37,6 +37,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             processing: { type: Boolean },
             ide: { type: Object },
             removed$: { type: Object },
+            started: { type: Boolean },
         };
     }
 
@@ -169,14 +170,15 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         if (
             changedProperties.has("input") ||
             changedProperties.has("config") ||
-            changedProperties.has("keys")
+            changedProperties.has("keys") ||
+            changedProperties.has("started")
         ) {
-            console.log(
-                "UPDATED",
-                this.name,
-                this.reteId,
-                JSON.parse(JSON.stringify(this.input))
-            );
+            // console.log(
+            //     "UPDATED",
+            //     this.name,
+            //     this.reteId,
+            //     JSON.parse(JSON.stringify(this.input))
+            // );
             this.process$.next();
         }
 
@@ -414,7 +416,11 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     async process(force = !this.keysSchema) {
-        console.log("PROCESSING", Date.now(), this, this.name, this.reteId);
+        if (!this.started) {
+            return this.output;
+        }
+
+        // console.log("PROCESSING", Date.now(), this, this.name, this.reteId);
         if (this.processing) {
             this.shouldProcessAgain = true;
             return this.output;
