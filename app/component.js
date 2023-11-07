@@ -19,6 +19,12 @@ import { deepEqual } from "https://esm.sh/fast-equals";
 const hasChanged = (a, b) => !deepEqual(a, b);
 
 export default class BespeakComponent extends PropagationStopper(LitElement) {
+    static adapterCache = localForage.createInstance({
+        name: "bespeak-adapter-cache",
+    });
+
+    static moduleCache = new Map();
+
     static get properties() {
         return {
             input: { type: Object },
@@ -288,6 +294,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         message += `attempt id: ${Math.random()}\n\n`;
 
+        const cacheKey = await hashObject([
+            inputSchema,
+            outputSchema,
+            config.adapterFlow,
+        ]);
+
         const Subflow = (await import("./subflow.js")).default;
         const subflow = new Subflow(this.reteId);
         subflow.ide = this.ide;
@@ -316,12 +328,41 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         const blob = new Blob([source], { type: "text/javascript" });
         const url = URL.createObjectURL(blob);
         const module = await import(url);
-        // BespeakComponent.ada.modules.set(key, module);
+
+        BespeakComponent.moduleCache.set(cacheKey, module);
+        BespeakComponent.adapterCache.setItem(cacheKey, source);
 
         return module;
     }
 
+    async getCachedAdapter(inputSchema, outputSchema, config) {
+        const key = await hashObject([
+            inputSchema,
+            outputSchema,
+            config.adapterFlow,
+        ]);
+
+        if (BespeakComponent.moduleCache.has(key)) {
+            return BespeakComponent.moduleCache.get(key);
+        }
+
+        const source = await BespeakComponent.adapterCache.getItem(key);
+
+        if (!source) {
+            return null;
+        }
+
+        const blob = new Blob([source], { type: "text/javascript" });
+        const url = URL.createObjectURL(blob);
+        const module = await import(url);
+        BespeakComponent.moduleCache.set(key, module);
+        return module;
+    }
+
     async adaptInput(input, config) {
+        if (!Array.isArray(input)) {
+            return input;
+        }
         console.log("adapt input", input, config);
         if (!input || !input.length) {
             return getDefaultValue(this.inputSchema);
@@ -338,14 +379,18 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
         const outputSchema = this.inputSchema;
 
-        let module = await this.createAdapter(
+        let module = await this.getCachedAdapter(
             inputSchema,
             outputSchema,
             config
         );
 
         if (!module) {
-            return;
+            module = await this.createAdapter(
+                inputSchema,
+                outputSchema,
+                config
+            );
         }
 
         let transformed;

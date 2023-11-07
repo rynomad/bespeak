@@ -545,7 +545,7 @@ export class LitNode extends LitPresets.classic.Node {
                                 slot="front"
                                 style="min-width: ${!this.component?.icon
                                     ? "40rem"
-                                    : "20px"}; min-height: 20px; padding: 1.5rem;"></div>
+                                    : "20px"}; min-height: 20px; padding: 1.5rem; max-width: 50vw; max-height: 50vh; overflow: auto;"></div>
                             <div slot="back" style="padding: 1.5rem">
                                 ${this.component?.renderBack() || ""}
                             </div>
@@ -595,10 +595,6 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "flow-output",
         await getProjectSource("./flow-output.child.js")
-    );
-    await ReteNode.registerComponent(
-        "adapter",
-        await getProjectSource("./adapter.js")
     );
     await ReteNode.registerComponent(
         "subflow",
