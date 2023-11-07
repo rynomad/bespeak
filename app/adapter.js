@@ -3,7 +3,7 @@ import { hashObject } from "./util.js";
 import * as yaml from "https://esm.sh/js-yaml";
 import SubFlow from "./subflow.js";
 import localForage from "https://esm.sh/localforage";
-import { combineLatest, map } from "https://esm.sh/rxjs";
+import { combineLatest, map, debounceTime, take } from "https://esm.sh/rxjs";
 import { extractCodeBlocks } from "./util.js";
 export default class Adapter extends BespeakComponent {
     static adapterStore = localForage.createInstance({
@@ -18,6 +18,7 @@ export default class Adapter extends BespeakComponent {
                 type: "string",
                 title: "Subflow",
                 description: "The subflow to use to create the adapter",
+                default: "fc3e4476-b2ff-41e0-89fd-b58dfaa3dfda",
             },
             format: {
                 type: "string",
@@ -38,10 +39,6 @@ export default class Adapter extends BespeakComponent {
             items: Array.from(this.pipedFrom).map((node) => ({
                 type: "object",
                 properties: {
-                    schema: {
-                        $ref: "http://json-schema.org/draft-07/schema#",
-                        description: "The literal schema for the value",
-                    },
                     value: node.outputSchema,
                 },
             })),
@@ -61,25 +58,9 @@ export default class Adapter extends BespeakComponent {
             return null;
         }
 
-        return {
-            type: "array",
-            items: Array.from(this.pipedTo)
-                .map((node) => ({
-                    type: "object",
-                    properties: {
-                        schema: {
-                            $ref: "http://json-schema.org/draft-07/schema#",
-                            description: "The literal schema for the value",
-                        },
-                        value: node.inputSchema,
-                    },
-                }))
-                .pop(),
-        };
-    }
-
-    get adapterFlow() {
-        return new SubFlow(this.reteId);
+        return Array.from(this.pipedTo)
+            .map((node) => node.inputSchema)
+            .pop();
     }
 
     onPipe(changedProperties) {
@@ -104,8 +85,17 @@ export default class Adapter extends BespeakComponent {
             if (
                 this.config.subflow !== changedProperties.get("config")?.subflow
             ) {
+                console.log(
+                    "subflow adapter config changed",
+                    this.config.subflow,
+                    this,
+                    this.reteId
+                );
                 this.subflow = new SubFlow(this.reteId);
+                this.subflow.removed$ = this.removed$;
                 this.subflow.ide = this.ide;
+                this.subflow.style = "display: none;";
+                document.body.appendChild(this.subflow);
                 this.subflow.config = {
                     workspace: this.config.subflow,
                 };
@@ -144,6 +134,7 @@ export default class Adapter extends BespeakComponent {
                     };
 
                     this.requestUpdate();
+                    this.back$.next();
                 });
         }
     }
@@ -163,18 +154,31 @@ export default class Adapter extends BespeakComponent {
             config,
         });
 
-        const module =
-            Adapter.modules.get(processorHash) ||
-            (await this.createAdapter(config));
+        let module = await this.createAdapter(processorHash, config);
 
         if (!module) {
             return;
         }
 
-        return await module.default(input);
+        let transformed;
+        let tries = 0;
+
+        while (!transformed && ++tries < 10) {
+            try {
+                transformed = await module.default(input);
+            } catch (e) {
+                module = await this.createAdapter(processorHash, config);
+            }
+        }
+
+        if (transformed) {
+            return transformed;
+        } else {
+            throw new Error("Unable to create adapter");
+        }
     }
 
-    async createAdapter(config) {
+    async createAdapter(key, config) {
         const inputSchema = this.inputSchema;
         const outputSchema = this.outputSchema;
 
@@ -184,7 +188,7 @@ export default class Adapter extends BespeakComponent {
 
         let message = `# Input Schemas:\n\n`;
         for (const item of inputSchema.items) {
-            const schema = item.properties.schema;
+            const schema = item.properties.value;
             message += `\`\`\`${
                 config.format === "yaml"
                     ? `yaml\n${yaml.dump(schema)}\n`
@@ -193,27 +197,48 @@ export default class Adapter extends BespeakComponent {
         }
 
         message += `# Output Schema:\n\n`;
-        const outputSchemaItem = outputSchema.items;
         message += `\`\`\`${
             config.format === "yaml"
-                ? `yaml\n${yaml.dump(outputSchemaItem)}\n\`\`\``
-                : `json\n${JSON.stringify(outputSchemaItem, null, 2)}\n`
+                ? `yaml\n${yaml.dump(outputSchema)}\n`
+                : `json\n${JSON.stringify(outputSchema, null, 2)}\n`
         }\`\`\`\n\n`;
 
+        message += `attempt id: ${Math.random()}\n\n`;
+
         // TODO: change this to schemas directly when we have proper prompt templating
+
+        const res = await new Promise((resolve, reject) => {
+            this.subflow.output$
+                .pipe(debounceTime(10000), take(1))
+                .subscribe((data) => {
+                    resolve(data);
+                });
+
+            this.subflow
+                .call({
+                    input: [
+                        {
+                            nodeId: this.reteId,
+                            schema: { title: "GPT" },
+                            value: {
+                                threads: [[{ role: "user", content: message }]],
+                            },
+                        },
+                    ],
+                    config: {
+                        workspace: this.config.subflow,
+                    },
+                })
+                .catch(reject);
+        });
+
+        console.log("CREATE ADAPTER SUBFLOW RES", res);
 
         const [
             {
                 value: { response },
             },
-        ] = await this.subflow.call({
-            input: [
-                { value: { threads: [[{ role: "user", content: message }]] } },
-            ],
-            config: {
-                workspace: this.config.subflow,
-            },
-        });
+        ] = res;
 
         const source = extractCodeBlocks(response).pop();
 

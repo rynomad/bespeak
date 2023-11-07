@@ -10,11 +10,12 @@ import {
     ReplaySubject,
     combineLatest,
     debounceTime,
+    map,
+    take,
 } from "https://esm.sh/rxjs";
 import { PropagationStopper } from "./mixins.js";
 import localForage from "https://esm.sh/localforage";
 import { deepEqual } from "https://esm.sh/fast-equals";
-
 const hasChanged = (a, b) => !deepEqual(a, b);
 
 export default class BespeakComponent extends PropagationStopper(LitElement) {
@@ -81,6 +82,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                     type: "string",
                     description: "A description of this node.",
                 },
+                adapterFlow: {
+                    type: "string",
+                    title: "Adapter Flow",
+                    description: "Which flow to use to create the data adapter",
+                    default: "fc3e4476-b2ff-41e0-89fd-b58dfaa3dfda",
+                },
                 ...base.properties,
             },
         };
@@ -109,7 +116,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     get title() {
-        this.constructor.title;
+        return this.constructor.title;
     }
 
     constructor(id) {
@@ -158,6 +165,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             changedProperties.has("config") ||
             changedProperties.has("keys")
         ) {
+            console.log(
+                "UPDATED",
+                this.name,
+                this.reteId,
+                JSON.parse(JSON.stringify(this.input))
+            );
             this.process$.next();
         }
 
@@ -194,11 +207,46 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             changedProperties.has("pipedTo") ||
             changedProperties.has("pipedFrom")
         ) {
-            this.onPipe();
+            await this.onPipe();
         }
 
         if (changedProperties.has("processing")) {
             this.requestUpdate();
+        }
+        if (changedProperties.has("ide")) {
+            this.ide.workspaces$
+                .pipe(
+                    map((workspaces) =>
+                        workspaces.filter(({ nodes }) =>
+                            nodes.some((node) =>
+                                [
+                                    "flow-input",
+                                    "flow-output",
+                                    "flow-owners",
+                                    "flow-assets",
+                                ].some((name) => name === node.key)
+                            )
+                        )
+                    )
+                )
+                .subscribe((workspaces) => {
+                    this.constructor.config = {
+                        ...this.configSchema,
+                        properties: {
+                            ...this.configSchema.properties,
+                            adapterFlow: {
+                                ...this.configSchema.properties.adapterFlow,
+                                oneOf: workspaces.map(({ id, name }) => ({
+                                    title: name,
+                                    const: id,
+                                })),
+                            },
+                        },
+                    };
+
+                    this.requestUpdate();
+                    this.back$.next();
+                });
         }
 
         this.back$.next(this.renderBack());
@@ -220,7 +268,108 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         console.warn("API not implemented for", this.name);
     }
 
+    async createAdapter(inputSchema, outputSchema, config) {
+        if (!config.adapterFlow) {
+            return;
+        }
+        let message = `# Input Schema:\n\n`;
+        message += `\`\`\`${`json\n${JSON.stringify(
+            inputSchema,
+            null,
+            2
+        )}\n`}\`\`\`\n\n`;
+
+        message += `# Output Schema:\n\n`;
+        message += `\`\`\`${`json\n${JSON.stringify(
+            outputSchema,
+            null,
+            2
+        )}\n`}\`\`\`\n\n`;
+
+        message += `attempt id: ${Math.random()}\n\n`;
+
+        const Subflow = (await import("./subflow.js")).default;
+        const subflow = new Subflow(this.reteId);
+        subflow.ide = this.ide;
+        subflow.removed$ = this.removed$;
+        // TODO: change this to schemas directly when we have proper prompt templating
+
+        const res = await subflow.call({
+            input: [
+                {
+                    nodeId: this.reteId,
+                    schema: { title: "GPT" },
+                    value: {
+                        threads: [[{ role: "user", content: message }]],
+                    },
+                },
+            ],
+            config: {
+                workspace: config.adapterFlow,
+            },
+        });
+
+        console.log("CREATE ADAPTER SUBFLOW RES", res);
+
+        const [{ value: source }] = res;
+
+        const blob = new Blob([source], { type: "text/javascript" });
+        const url = URL.createObjectURL(blob);
+        const module = await import(url);
+        // BespeakComponent.ada.modules.set(key, module);
+
+        return module;
+    }
+
+    async adaptInput(input, config) {
+        console.log("adapt input", input, config);
+        if (!input || !input.length) {
+            return getDefaultValue(this.inputSchema);
+        }
+        const inputSchema = {
+            type: "array",
+            items: input.map((item) => ({
+                type: "object",
+                properties: {
+                    value: item.schema,
+                },
+            })),
+        };
+
+        const outputSchema = this.inputSchema;
+
+        let module = await this.createAdapter(
+            inputSchema,
+            outputSchema,
+            config
+        );
+
+        if (!module) {
+            return;
+        }
+
+        let transformed;
+        let tries = 0;
+
+        while (!transformed && ++tries < 10) {
+            try {
+                transformed = await module.default(input);
+            } catch (e) {
+                module = await this.createAdapter(
+                    inputSchema,
+                    outputSchema,
+                    config
+                );
+            }
+        }
+
+        if (transformed) {
+            return transformed;
+        }
+    }
+
     async process(force = !this.keysSchema) {
+        console.log("PROCESSING", Date.now(), this, this.name, this.reteId);
         if (this.processing) {
             this.shouldProcessAgain = true;
             return this.output;
@@ -238,12 +387,27 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             if (!force && cachedOutput) {
                 output = cachedOutput;
             } else {
-                output = await this._process(input, config, keys)
-                    .then((r) => r || this.output)
-                    .catch((e) => {
-                        this.error = e;
-                        return this.output;
-                    });
+                let passInput = input;
+
+                if (this.inputSchema) {
+                    passInput = await this.adaptInput(input, config);
+                }
+
+                if (passInput) {
+                    let passConfig = config;
+
+                    if (passConfig) {
+                        passConfig = JSON.parse(JSON.stringify(passConfig));
+                        delete passConfig.adapterFlow;
+                    }
+
+                    output = await this._process(passInput, passConfig, keys)
+                        .then((r) => r || this.output)
+                        .catch((e) => {
+                            this.error = e;
+                            return this.output;
+                        });
+                }
             }
         } catch (e) {
             console.warn("failed to validate process", e);
@@ -308,20 +472,11 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         if (this.pipeSubscription) {
             this.pipeSubscription.unsubscribe();
         }
-
-        if (!this.adapter) {
-            const { default: Adapter } = await import("./adapter.js");
-            this.adapter = new Adapter(this.reteId);
-            this.adapter.pipedTo.add(this);
-        }
-
-        this.adapter.pipedFrom = this.pipedFrom;
-
         this.pipeSubscription = combineLatest(
             Array.from(this.pipedFrom).map((component) => component.output$)
         ).subscribe(async (outputs) => {
             outputs = outputs.flat();
-            this.input = await this.adapter.call({ input: outputs });
+            this.input = outputs;
         });
 
         if (this.pipedFrom.size == 0) {
@@ -367,6 +522,15 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                       }}
                       .onChange=${({ formData }) =>
                           (this.config = formData)}></bespeak-form>`
+                : html``}
+            ${this.adapter
+                ? html`<bespeak-form
+                      .props=${{
+                          schema: this.adapter.configSchema,
+                          formData: this.adapter.config,
+                      }}
+                      .onChange=${({ formData }) =>
+                          (this.adapter.config = formData)}></bespeak-form>`
                 : html``}
         `;
     }

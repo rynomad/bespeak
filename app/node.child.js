@@ -60,7 +60,7 @@ export class ReteNode extends Classic.Node {
                         module.default
                     );
                 } catch (e) {
-                    console.warn(e);
+                    console.warn(e, key, version);
                 }
             }
 

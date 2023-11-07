@@ -1,7 +1,14 @@
 import BespeakComponent from "./component.js";
 import { ReteNode } from "./node.child.js";
-import { takeUntil, map } from "https://esm.sh/rxjs";
+import {
+    takeUntil,
+    map,
+    combineLatest,
+    debounceTime,
+} from "https://esm.sh/rxjs";
+import { html } from "https://esm.sh/lit";
 import { Keys } from "./keys.js";
+import { getDefaultValue } from "./util.js";
 
 export default class Subflow extends BespeakComponent {
     static config = {
@@ -18,6 +25,16 @@ export default class Subflow extends BespeakComponent {
     constructor(id) {
         super(id);
         this.workspaces = [];
+    }
+
+    firstUpdated() {
+        this.removed$.subscribe(() => {
+            for (const node of this.nodeMap.values()) {
+                try {
+                    document.body.removeChild(node);
+                } catch (e) {}
+            }
+        });
     }
 
     updated(changes) {
@@ -57,12 +74,20 @@ export default class Subflow extends BespeakComponent {
                     this.requestUpdate();
                 });
         }
-        if (changes.has("config")) {
-            this.updateDaemon();
-        }
     }
 
-    async updateDaemon() {
+    async _process(input, config) {
+        console.log(
+            "subflow _process",
+            input,
+            config,
+            this.reteId,
+            Date.now(),
+            this.connectionMap,
+            this.nodeMap,
+            this.config,
+            this
+        );
         if (this.connectionMap) {
             for (const { source, target } of this.connectionMap) {
                 this.nodeMap.get(source).unpipe(this.nodeMap.get(target));
@@ -75,9 +100,19 @@ export default class Subflow extends BespeakComponent {
             }
         }
 
-        const workspace = this.workspaces.find(
-            (w) => w.id === this.config.workspace
-        );
+        const workspace = await new Promise((resolve) => {
+            const sub = this.ide.workspaces$.subscribe((workspaces) => {
+                const workspace = workspaces.find(
+                    (w) => w.id === config.workspace
+                );
+                if (workspace) {
+                    setTimeout(() => {
+                        sub.unsubscribe();
+                    }, 0);
+                    resolve(workspace);
+                }
+            });
+        });
 
         if (!workspace) {
             return;
@@ -95,7 +130,9 @@ export default class Subflow extends BespeakComponent {
             );
 
             const master = new Component(node.id);
-            const config = await master.cache.getItem("config");
+            const config =
+                (await master.cache.getItem("config")) ||
+                getDefaultValue(Component.config);
 
             const slave = new Component(`${this.reteId}-${node.id}`);
 
@@ -103,6 +140,7 @@ export default class Subflow extends BespeakComponent {
             slave.keys = await Keys.getKeys(Component);
             slave.ide = this.ide;
             slave.removed$ = this.removed$;
+            slave.style = "display: none;";
 
             document.body.appendChild(slave);
             slave.output = await master.cache.getItem("output");
@@ -112,8 +150,10 @@ export default class Subflow extends BespeakComponent {
             slave.output$.subscribe((data) => {
                 console.log(
                     "SUBFLOW NODE OUTPUT",
+                    slave.title,
                     slave.id,
                     slave.reteId,
+                    slave.input,
                     data
                 );
             });
@@ -131,34 +171,53 @@ export default class Subflow extends BespeakComponent {
             nodes.find((n) => n.key === "flow-output")?.id
         );
 
-        if (output) {
-            output.output$.pipe(takeUntil(this.removed$)).subscribe((data) => {
-                console.log("SUBFLOW OUTPUT", data);
-                // this.processing = false;
-                this.output = data;
-            });
-        }
-
-        const input = this.nodeMap.get(
+        const inputNode = this.nodeMap.get(
             nodes.find((n) => n.key === "flow-input")?.id
         );
 
-        if (input) {
-            input.input = this.input;
+        if (output) {
+            return new Promise((resolve) => {
+                let started = false;
+                const sub = output.output$
+                    .pipe(debounceTime(10000))
+                    .subscribe((data) => {
+                        console.log("subflow _process settled", data);
+                        // this.processing = false;
+                        if (inputNode && !started) {
+                            started = true;
+                            inputNode.input = input;
+                        } else {
+                            console.log("subflow _process resolve", data);
+                            sub.unsubscribe();
+                            resolve(data);
+                        }
+                    });
+            });
         }
     }
 
-    async _process(input, config) {
-        const inputNode = this.nodeMap.get(
-            this.workspaces
-                .find((w) => w.id === config.workspace)
-                .nodes.find((n) => n.key === "flow-input")?.id
-        );
-
-        if (inputNode) {
-            console.log("SUBFLOW INPUT", inputNode.id, inputNode.reteId, input);
-            inputNode.input = input;
+    async onPipe() {
+        if (this.pipeSubscription) {
+            this.pipeSubscription.unsubscribe();
         }
+
+        this.pipeSubscription = combineLatest(
+            Array.from(this.pipedFrom).map((component) => component.output$)
+        ).subscribe(async (outputs) => {
+            outputs = outputs.flat();
+            this.input = outputs;
+        });
+
+        if (this.pipedFrom.size == 0) {
+            this.input = [];
+        }
+    }
+
+    render() {
+        return html`<div>
+            Subflow:
+            ${this.workspaces.find((w) => w.id === this.config.workspace)?.name}
+        </div>`;
     }
 }
 

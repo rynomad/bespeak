@@ -37,23 +37,23 @@ async function hashBody(body) {
     return hashHex;
 }
 
-window.fetch = async (input, init = {}) => {
-    const error = new Error();
-    const stack = error.stack || "";
-    const blobUrlMatch = stack.match(/blob:[^\s]+/);
-    const blobUrl = blobUrlMatch ? blobUrlMatch[0] : "no-blob-url";
+// window.fetch = async (input, init = {}) => {
+//     const error = new Error();
+//     const stack = error.stack || "";
+//     const blobUrlMatch = stack.match(/blob:[^\s]+/);
+//     const blobUrl = blobUrlMatch ? blobUrlMatch[0] : "no-blob-url";
 
-    if (input instanceof Request) {
-        input = new Request(input, init);
-        init = {};
-    }
+//     if (input instanceof Request) {
+//         input = new Request(input, init);
+//         init = {};
+//     }
 
-    init.headers = new Headers(init.headers || {});
+//     init.headers = new Headers(init.headers || {});
 
-    const bodyHash = await hashBody(await init.body);
-    init.headers.append("x-body-hash", bodyHash);
-    init.headers.append("x-element-cache", blobUrl);
-    init.headers.append("Vary", "x-element-cache, x-body-hash");
+//     const bodyHash = await hashBody(await init.body);
+//     init.headers.append("x-body-hash", bodyHash);
+//     init.headers.append("x-element-cache", blobUrl);
+//     init.headers.append("Vary", "x-element-cache, x-body-hash");
 
-    return originalFetch(input, init);
-};
+//     return originalFetch(input, init);
+// };
