@@ -183,12 +183,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         }
 
         if (changedProperties.has("config")) {
-            await this.save();
+            await this.saveConfig();
             this.config$.next(this.config);
         }
 
         if (changedProperties.has("output")) {
-            await this.save();
+            await this.saveOutput();
             if (
                 Array.isArray(this.output) &&
                 this.output.every((e) => e.nodeId)
@@ -306,6 +306,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         const subflow = new Subflow(this.reteId);
         subflow.ide = this.ide;
         subflow.removed$ = this.removed$;
+        subflow.style = "display: none;";
+        document.body.appendChild(subflow);
         // TODO: change this to schemas directly when we have proper prompt templating
 
         const res = await subflow.call({
@@ -322,6 +324,8 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                 workspace: config.adapterFlow,
             },
         });
+
+        document.body.removeChild(subflow);
 
         console.log("CREATE ADAPTER SUBFLOW RES", res);
 
@@ -431,10 +435,9 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         try {
             const { input, config, keys } = this;
 
-            const cachedOutput = await this.cache.getItem(
-                await hashObject([input, config])
-            );
-
+            const cacheKey = await hashObject([input, config]);
+            const cachedOutput = await this.cache.getItem(cacheKey);
+            console.log("cache", cacheKey, cachedOutput);
             if (!force && cachedOutput) {
                 output = cachedOutput;
             } else {
@@ -479,7 +482,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         return this.outputSchema ? this.output : this.input;
     }
 
-    async save() {
+    async saveOutput() {
         if (this.isLoading) return;
 
         if (
@@ -493,6 +496,10 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                 this.output
             );
         }
+    }
+
+    async saveConfig() {
+        if (this.isLoading) return;
 
         if (!deepEqual(this.config, getDefaultValue(this.configSchema))) {
             await this.cache.setItem("config", this.config);
@@ -526,11 +533,13 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         this.pipeSubscription = combineLatest(
             Array.from(this.pipedFrom).map((component) => component.output$)
         ).subscribe(async (outputs) => {
+            console.log("PIPE INPUTS", outputs);
             outputs = outputs.flat();
             this.input = outputs;
         });
 
         if (this.pipedFrom.size == 0) {
+            console.log("SET INPUTS");
             this.input = [];
         }
     }

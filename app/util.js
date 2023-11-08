@@ -67,8 +67,19 @@ export function getDefaultValue(schema) {
         const validate = ajv.compile(augmentedSchema);
 
         // Create an object that will be populated with default values
-        const defaultData = {};
+        let defaultData;
 
+        switch (schema.type) {
+            case "object":
+                defaultData = {};
+                break;
+            case "array":
+                defaultData = [];
+                break;
+            case "string":
+                defaultData = "";
+                break;
+        }
         // Apply default values to the object based on schema
         validate(defaultData);
 

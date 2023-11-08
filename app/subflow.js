@@ -96,7 +96,7 @@ export default class Subflow extends BespeakComponent {
 
         if (this.nodeMap) {
             for (const node of this.nodeMap.values()) {
-                document.body.removeChild(node);
+                this.removeChild(node);
             }
         }
 
@@ -142,8 +142,7 @@ export default class Subflow extends BespeakComponent {
             slave.removed$ = this.removed$;
             slave.style = "display: none;";
 
-            document.body.appendChild(slave);
-            slave.output = await master.cache.getItem("output");
+            this.appendChild(slave);
 
             this.nodeMap.set(node.id, slave);
 
@@ -175,29 +174,38 @@ export default class Subflow extends BespeakComponent {
             nodes.find((n) => n.key === "flow-input")?.id
         );
 
+        const pipedToOutput = this.nodeMap.values().filter((node) => {
+            return node.pipedTo.has(output);
+        });
+
         if (output) {
             let prom = new Promise((resolve) => {
-                let started = false;
                 const sub = output.output$
-                    .pipe(debounceTime(10000), takeUntil(this.removed$))
+                    .pipe(debounceTime(1000), takeUntil(this.removed$))
                     .subscribe((data) => {
                         this.output = data;
-                        console.log("subflow _process settled", data);
-                        // this.processing = false;
-                        if (inputNode && !started) {
-                            started = true;
-                            inputNode.input = input;
-                        } else {
-                            console.log("subflow _process resolve", data);
-                            sub.unsubscribe();
-                            resolve(data);
-                        }
+                        resolve(data);
                     });
             });
 
             for (const node of this.nodeMap.values()) {
                 node.started = true;
             }
+
+            this.nodeMap
+                .values()
+                .filter((node) => {
+                    return node.pipedTo.has(output);
+                })
+                .forEach((node) => {
+                    node.style = "";
+                });
+
+            setTimeout(() => {
+                if (inputNode) {
+                    inputNode.input = input;
+                }
+            }, 0);
 
             return prom;
         }
@@ -224,6 +232,7 @@ export default class Subflow extends BespeakComponent {
         return html`<div>
             Subflow:
             ${this.workspaces.find((w) => w.id === this.config.workspace)?.name}
+            <slot> </slot>
         </div>`;
     }
 }

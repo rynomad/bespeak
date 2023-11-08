@@ -443,6 +443,7 @@ export class LitNode extends LitPresets.classic.Node {
         this.component.ide = this.reteNode.ide;
         if (this.reteNode.config) {
             this.component.config = this.reteNode.config;
+            await this.component.saveConfig();
         }
         this.shadowRoot
             .querySelector(".container")
@@ -602,5 +603,9 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "subflow",
         await getProjectSource("./subflow.js")
+    );
+    await ReteNode.registerComponent(
+        "chat-gpt",
+        await getProjectSource("./chatgpt.js")
     );
 })();

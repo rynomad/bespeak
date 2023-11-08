@@ -89,6 +89,10 @@ export const RJSFComponent = CardStyleMixin(
                     // Add onFocus and onBlur handlers
                     onFocus: (id, value) => {
                         const path = id.replace("root_", "").split("_");
+                        if (path.length === 1) {
+                            this.focused = true;
+                        }
+
                         let schemaPart =
                             this.reactWrapper?.props?.uiSchema || {};
                         for (let part of path) {
@@ -105,6 +109,10 @@ export const RJSFComponent = CardStyleMixin(
                     },
                     onBlur: (id, value) => {
                         const path = id.replace("root_", "").split("_");
+                        if (path.length === 1) {
+                            this.focused = false;
+                            this.onChange({ formData: this.formData });
+                        }
                         let schemaPart =
                             this.reactWrapper?.props?.uiSchema || {};
                         for (let part of path) {
