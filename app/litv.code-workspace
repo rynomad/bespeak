@@ -8,6 +8,9 @@
         },
         {
             "path": "../../puppeteer-extension-transport"
+        },
+        {
+            "path": "../../cors-anywhere"
         }
     ]
 }

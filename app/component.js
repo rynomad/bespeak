@@ -315,9 +315,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
                 {
                     nodeId: this.reteId,
                     schema: { title: "GPT" },
-                    value: {
-                        threads: [[{ role: "user", content: message }]],
-                    },
+                    value: [[{ role: "user", content: message }]],
                 },
             ],
             config: {
@@ -499,8 +497,6 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
     }
 
     async saveConfig() {
-        if (this.isLoading) return;
-
         if (!deepEqual(this.config, getDefaultValue(this.configSchema))) {
             await this.cache.setItem("config", this.config);
         }

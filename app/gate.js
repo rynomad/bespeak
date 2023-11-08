@@ -24,7 +24,7 @@ class Gate extends BespeakComponent {
 
     async _process(input, config, keys) {
         if (config.stop) {
-            return;
+            return [];
         }
 
         const fn = new Function("input", "return " + config.expression);
@@ -35,7 +35,7 @@ class Gate extends BespeakComponent {
             return input;
         }
 
-        return;
+        return [];
     }
 }
 

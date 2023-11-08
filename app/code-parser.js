@@ -36,9 +36,11 @@ export default class CodeParser extends BespeakComponent {
 
     async _process(input, config, keys) {
         const gptInput = input
-            .find((schema) => schema.schema.title === "GPT")
+            .filter((schema) => schema.schema.title === "GPT")
             .map((schema) => schema.value)
+            .flat()
             .shift()
+            ?.concat?.([])
             ?.pop?.()?.content;
 
         if (!gptInput) {

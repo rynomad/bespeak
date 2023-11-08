@@ -192,16 +192,17 @@ export default class Subflow extends BespeakComponent {
                 node.started = true;
             }
 
-            this.nodeMap
-                .values()
-                .filter((node) => {
-                    return node.pipedTo.has(output);
-                })
-                .forEach((node) => {
-                    node.style = "";
-                });
+            // this.nodeMap
+            //     .values()
+            //     .filter((node) => {
+            //         return node.pipedTo.has(output);
+            //     })
+            //     .forEach((node) => {
+            //         node.style = "";
+            //     });
 
             setTimeout(() => {
+                console.log("INPUT NODE", inputNode);
                 if (inputNode) {
                     inputNode.input = input;
                 }

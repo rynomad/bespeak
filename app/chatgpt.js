@@ -189,7 +189,11 @@ export default class ChatGPT extends BespeakComponent {
                     content: JSON.stringify(
                         input
                             .filter(({ schema }) => schema.title !== "GPT")
-                            .map(({ value }) => value),
+                            .map(({ value }) =>
+                                value instanceof Error
+                                    ? `Error: ${value.message}\n\nStack: ${value.stack}`
+                                    : value
+                            ),
                         null,
                         4
                     ),

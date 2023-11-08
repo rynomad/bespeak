@@ -2,13 +2,12 @@ const originalFetch = window.fetch;
 
 window.fetch = async (input, init = {}) => {
     try {
-        // Try the original fetch first
         return await originalFetch(input, init);
     } catch (error) {
         // If it fails due to CORS, use the CORS proxy
-        if (error.name === "TypeError" && error.message.includes("CORS")) {
+        if (error.name === "TypeError") {
             let url = typeof input === "string" ? input : input.url;
-            url = `http://localhost:8080/${url}`;
+            url = `https://thawing-plains-21424-06b99718f4d6.herokuapp.com/${url}`;
 
             // If input is a Request object, clone it and change the url
             if (input instanceof Request) {

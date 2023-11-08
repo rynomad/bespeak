@@ -18,9 +18,21 @@ export async function getText(url) {
     return await response.text();
 }
 export const sanitizeAndRenderYaml = (object) => {
+    if (Array.isArray(object)) {
+        object = object.map((o) =>
+            o.value instanceof Error
+                ? {
+                      ...o,
+                      value: `Error: ${o.value.message}\n\nStack: ${e.value.stack}`,
+                  }
+                : o
+        );
+    }
+
     const sanitizedObject = safeStringify(object);
     if (!sanitizedObject) return;
     const parsedObject = JSON.parse(sanitizedObject);
+
     return yaml.dump(parsedObject);
 };
 

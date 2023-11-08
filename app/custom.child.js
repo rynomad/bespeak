@@ -96,8 +96,11 @@ export default class NewNode extends BespeakComponent {
             customElements.define(id, Component);
 
             // Construct the component and set its input
-            this.slotComponent = new Component();
-            this.slotComponent.input = input;
+            this.slotComponent = new Component(this.reteId);
+
+            this.slotComponent.ide = this.ide;
+            this.slotComponent.removed$ = this.removed$;
+            this.slotComponent.started = true;
 
             this.subs = [
                 this.slotComponent.output$.subscribe((outputEvent) => {
@@ -112,6 +115,10 @@ export default class NewNode extends BespeakComponent {
             this.shadowRoot
                 .querySelector("slot")
                 .replaceChildren(this.slotComponent);
+
+            this.slotComponent.input = Component.input?.examples
+                ? Component.input.examples[0]
+                : input;
             this.requestUpdate();
         }
 

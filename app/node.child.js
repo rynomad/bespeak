@@ -39,10 +39,10 @@ export class ReteNode extends Classic.Node {
         await this.updateComponents();
     }
 
-    static async getComponent(key, version) {
+    static async getComponent(key) {
         this.promiseQueue = this.promiseQueue.then(async () => {
             const existing = (await this.componentsDB.getItem(key)) || [];
-            version ||= existing.length;
+            const version = existing.length;
             const source = existing[version - 1];
 
             if (!source) {
@@ -564,18 +564,6 @@ customElements.define("bespeak-lit-node", LitNode);
 
 (async () => {
     console.log("REGISTER HARD CODE");
-    await ReteNode.registerComponent(
-        "gpt-prompt",
-        await getProjectSource("./prompt.child.js")
-    );
-    await ReteNode.registerComponent(
-        "gpt-call",
-        await getProjectSource("./gpt.child.js")
-    );
-    await ReteNode.registerComponent(
-        "gpt-response",
-        await getProjectSource("./gpt-response.child.js")
-    );
     await ReteNode.registerComponent(
         "code-parser",
         await getProjectSource("./code-parser.js")
