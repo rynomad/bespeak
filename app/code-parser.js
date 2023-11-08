@@ -35,12 +35,17 @@ export default class CodeParser extends BespeakComponent {
     icon = "code";
 
     async _process(input, config, keys) {
-        const gptInput = input.find((schema) => schema.schema.title === "GPT");
+        const gptInput = input
+            .find((schema) => schema.schema.title === "GPT")
+            .map((schema) => schema.value)
+            .shift()
+            ?.pop?.()?.content;
+
         if (!gptInput) {
             return this.output;
         }
 
-        const codeBlocks = getMarkdownCodeBlocks(gptInput.value.response);
+        const codeBlocks = getMarkdownCodeBlocks(gptInput);
         const matchingBlocks = codeBlocks.filter(
             (block) => block.language === config.language
         );
