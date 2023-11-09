@@ -54,14 +54,35 @@ class IDEElement extends LitElement {
     async connectedCallback() {
         super.connectedCallback();
         await this.updateComplete;
-        const workspaces = (await this.db.getAll("workspaces")).filter(
+        let workspaces = (await this.db.getAll("workspaces")).filter(
             ({ id }) => !id.endsWith("dev")
         );
+
         this.workspaces$.next(workspaces);
         if (workspaces.length > 0) {
-            this.loadWorkspace(workspaces[0].id);
+            await this.loadWorkspace(workspaces[0].id);
         } else {
-            this.newWorkspace();
+            await this.newWorkspace();
+        }
+
+        if (
+            !workspaces.find(
+                ({ id }) => id === "fc3e4476-b2ff-41e0-89fd-b58dfaa3dfda"
+            )
+        ) {
+            await this.db.put(
+                "workspaces",
+                (
+                    await import("./basic-adapter-builder.js")
+                ).default
+            );
+            await this.db.put(
+                "workspaces",
+                (
+                    await import("./basic-node-builder.js")
+                ).default
+            );
+            this.workspaces$.next(await this.db.getAll("workspaces"));
         }
     }
 

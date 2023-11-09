@@ -39,7 +39,8 @@ class BespeakWorkspacePill extends LitElement {
         }
 
         .edit-icon,
-        .trash-icon {
+        .trash-icon,
+        .download-icon {
             margin-left: 5px;
             cursor: pointer;
         }
@@ -80,6 +81,25 @@ class BespeakWorkspacePill extends LitElement {
         }
     }
 
+    handleDownload(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const dataStr =
+            "data:text/json;charset=utf-8," +
+            encodeURIComponent(
+                `export default ${JSON.stringify(this.workspace, null, 2)};`
+            );
+        const downloadAnchorNode = document.createElement("a");
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute(
+            "download",
+            this.workspace.name + ".js"
+        );
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
     connectedCallback() {
         super.connectedCallback();
         this.name = this.workspace.name;
@@ -91,7 +111,9 @@ class BespeakWorkspacePill extends LitElement {
         }
     }
 
-    async handleEdit() {
+    async handleEdit(e) {
+        e.stopPropagation();
+        e.preventDefault();
         this.editable = true;
         this.requestUpdate();
         await this.updateComplete;
@@ -101,7 +123,9 @@ class BespeakWorkspacePill extends LitElement {
         inputElement.select();
     }
 
-    handleDelete() {
+    handleDelete(e) {
+        e.stopPropagation();
+        e.preventDefault();
         Swal.fire({
             title: "Are you sure?",
             text: "You won't be able to revert this!",
@@ -137,6 +161,9 @@ class BespeakWorkspacePill extends LitElement {
                 <div class="icons">
                     <div class="edit-icon" @click=${this.handleEdit}>✏️</div>
                     <div class="trash-icon" @click=${this.handleDelete}>🗑️</div>
+                    <div class="download-icon" @click=${this.handleDownload}>
+                        ⬇️
+                    </div>
                 </div>
             </div>
         `;

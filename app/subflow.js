@@ -129,14 +129,9 @@ export default class Subflow extends BespeakComponent {
                 node.version
             );
 
-            const master = new Component(node.id);
-            const config =
-                (await master.cache.getItem("config")) ||
-                getDefaultValue(Component.config);
-
             const slave = new Component(`${this.reteId}-${node.id}`);
 
-            slave.config = config;
+            slave.config = node.config;
             slave.keys = await Keys.getKeys(Component);
             slave.ide = this.ide;
             slave.removed$ = this.removed$;

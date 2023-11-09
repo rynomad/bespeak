@@ -35,6 +35,7 @@ import {
     tap,
     map,
     ReplaySubject,
+    merge,
 } from "https://esm.sh/rxjs";
 import { debug } from "./operators.js";
 import { Stream } from "./stream.js";
@@ -229,15 +230,19 @@ export class Editor extends LitElement {
             .pipe(
                 take(1),
                 switchMap(() => {
-                    return this.events$;
+                    return merge(
+                        this.events$.pipe(
+                            filter(
+                                (event) =>
+                                    event.type === "connectioncreated" ||
+                                    event.type === "connectionremoved" ||
+                                    event.type === "noderemoved" ||
+                                    event.type === "nodecreated"
+                            )
+                        ),
+                        ...this.editor.getNodes().map((n) => n.config$)
+                    );
                 }),
-                filter(
-                    (event) =>
-                        event.type === "connectioncreated" ||
-                        event.type === "connectionremoved" ||
-                        event.type === "noderemoved" ||
-                        event.type === "nodecreated"
-                ),
                 debounceTime(1000),
                 tap(() => {
                     this.saveToStorage();

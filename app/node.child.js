@@ -150,6 +150,7 @@ export class ReteNode extends Classic.Node {
         this.workspaceId = editor.id;
         this.Component = Component;
         this.config = config;
+        this.config$ = new ReplaySubject(1);
 
         this.addInput("input", new Classic.Input(this.socket, "input", true));
         this.addOutput("output", new Classic.Output(this.socket, "output"));
@@ -163,6 +164,10 @@ export class ReteNode extends Classic.Node {
             ),
             shareReplay(1)
         );
+
+        this.config$.pipe(takeUntil(this.removed$)).subscribe((config) => {
+            this.config = config;
+        });
 
         this.editor.events$
             .pipe(
@@ -204,6 +209,7 @@ export class ReteNode extends Classic.Node {
             id: this.id,
             key: this.key,
             version: this.version,
+            config: this.config,
             x: this.x,
             y: this.y,
         };
@@ -451,6 +457,7 @@ export class LitNode extends LitPresets.classic.Node {
 
         this.componentSubs = [
             this.component.config$.subscribe((config) => {
+                this.reteNode.config$.next(config);
                 this.requestUpdate();
             }),
             Keys.keysUpdated$.subscribe(async () => {
