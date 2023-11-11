@@ -24,6 +24,10 @@ export default class CodeParser extends BespeakComponent {
                 enum: ["javascript", "json"],
                 default: "javascript",
             },
+            parse: {
+                type: "boolean",
+                default: false,
+            },
         },
     };
 
@@ -52,10 +56,25 @@ export default class CodeParser extends BespeakComponent {
             (block) => block.language === config.language
         );
 
-        if (matchingBlocks.length === 0) {
-            return "";
+        let codeString = matchingBlocks.pop()?.code || "";
+
+        if (!codeString && config.language === "json") {
+            try {
+                codeString = JSON.stringify(JSON.parse(gptInput), null, 2);
+            } catch (e) {
+                return "";
+            }
         }
 
-        return matchingBlocks.pop().code;
+        if (config.language == "json" && config.parse) {
+            try {
+                const json = JSON.parse(codeString);
+                return json;
+            } catch (e) {
+                return "";
+            }
+        }
+
+        return codeString;
     }
 }

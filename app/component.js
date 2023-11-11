@@ -27,7 +27,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
 
     static get properties() {
         return {
-            input: { type: Object },
+            input: { type: Object, hasChanged },
             output: { type: Object, hasChanged },
             config: { type: Object, hasChanged },
             keys: { type: Object, hasChanged },
@@ -173,12 +173,12 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             changedProperties.has("keys") ||
             changedProperties.has("started")
         ) {
-            // console.log(
-            //     "UPDATED",
-            //     this.name,
-            //     this.reteId,
-            //     JSON.parse(JSON.stringify(this.input))
-            // );
+            console.log(
+                "UPDATED",
+                this.name,
+                this.reteId,
+                JSON.parse(JSON.stringify(this.input))
+            );
             this.process$.next();
         }
 
@@ -191,7 +191,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
             await this.saveOutput();
             if (
                 Array.isArray(this.output) &&
-                this.output.every((e) => e.nodeId)
+                this.output.every((e) => e?.nodeId)
             ) {
                 this.output$.next(this.output);
             } else {
@@ -433,7 +433,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         try {
             const { input, config, keys } = this;
 
-            const cacheKey = await hashObject([input, config]);
+            const cacheKey = await hashObject([input, config, this.toString()]);
             const cachedOutput = await this.cache.getItem(cacheKey);
             console.log("cache", cacheKey, cachedOutput);
             if (!force && cachedOutput) {
@@ -490,7 +490,7 @@ export default class BespeakComponent extends PropagationStopper(LitElement) {
         ) {
             await this.cache.setItem("output", this.output);
             await this.cache.setItem(
-                await hashObject([this.input, this.config]),
+                await hashObject([this.input, this.config, this.toString()]),
                 this.output
             );
         }

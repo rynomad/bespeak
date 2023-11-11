@@ -232,7 +232,5 @@ export default class Subflow extends BespeakComponent {
         </div>`;
     }
 }
-
-if (!customElements.get("bespeak-subflow-hard-code")) {
-    customElements.define("bespeak-subflow-hard-code", Subflow);
-}
+const randomId = Math.random().toString(36).substring(2, 15);
+customElements.define(`bespeak-subflow-hard-code-${randomId}`, Subflow);

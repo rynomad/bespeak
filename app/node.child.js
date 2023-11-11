@@ -180,7 +180,12 @@ export class ReteNode extends Classic.Node {
                 tap((value) => {
                     const target = this.editor.getNode(value.data.target)
                         .litNode.component;
-                    this.litNode.component.pipe(target);
+
+                    if (value.data.targetInput === "owners") {
+                        this.litNode.component.use(target);
+                    } else {
+                        this.litNode.component.pipe(target);
+                    }
                 })
             )
             .subscribe();
@@ -196,7 +201,12 @@ export class ReteNode extends Classic.Node {
                 tap((value) => {
                     const target = this.editor.getNode(value.data.target)
                         .litNode.component;
-                    this.litNode.component.unpipe(target);
+
+                    if (value.data.targetInput === "owners") {
+                        this.litNode.component.unuse(target);
+                    } else {
+                        this.litNode.component.unpipe(target);
+                    }
                 })
             )
             .subscribe();
@@ -274,7 +284,7 @@ export class LitNode extends LitPresets.classic.Node {
     }
 
     get ports() {
-        const ports = ["input", "output"];
+        const ports = ["input", "output", "assets", "owners"];
 
         return ports;
     }
@@ -602,5 +612,17 @@ customElements.define("bespeak-lit-node", LitNode);
     await ReteNode.registerComponent(
         "chat-gpt",
         await getProjectSource("./chatgpt.js")
+    );
+    await ReteNode.registerComponent(
+        "fetch",
+        await getProjectSource("./fetch.urls.js")
+    );
+    await ReteNode.registerComponent(
+        "readability",
+        await getProjectSource("./htmlparser.js")
+    );
+    await ReteNode.registerComponent(
+        "dall-e",
+        await getProjectSource("./dall-e.js")
     );
 })();

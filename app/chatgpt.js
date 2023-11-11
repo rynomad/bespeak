@@ -1,5 +1,6 @@
 import { html } from "https://esm.sh/lit";
-import OpenAI from "https://esm.sh/openai@4.11.0";
+import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.17.1/+esm";
+import safeStringify from "https://esm.sh/json-stringify-safe";
 
 import BespeakComponent from "./component.js";
 import { CONFIG, API_KEY, PAYLOAD } from "./types/gpt.js";
@@ -15,6 +16,18 @@ export default class ChatGPT extends BespeakComponent {
         properties: {
             prompt: {
                 type: "string",
+            },
+            model: {
+                type: "string",
+                title: "Model",
+                description: "which model should be used?",
+                default: "gpt-3.5-turbo-1106",
+                enum: [
+                    "gpt-4",
+                    "gpt-3.5-turbo-0613",
+                    "gpt-4-1106-preview",
+                    "gpt-3.5-turbo-1106",
+                ],
             },
             role: {
                 type: "string",
@@ -46,13 +59,6 @@ export default class ChatGPT extends BespeakComponent {
                 description: "how creative should the responses be?",
                 default: 0.3,
             },
-            model: {
-                type: "string",
-                title: "Model",
-                description: "which model should be used?",
-                default: "gpt-3.5-turbo-0613",
-                enum: ["gpt-4", "gpt-3.5-turbo-0613"],
-            },
             history: {
                 type: "number",
                 title: "History",
@@ -73,6 +79,34 @@ export default class ChatGPT extends BespeakComponent {
                     "The input context to use for the prompt. Values will provide each unique input value.",
                 enum: ["none", "values"],
                 default: "none",
+            },
+        },
+        dependencies: {
+            model: {
+                oneOf: [
+                    {
+                        properties: {
+                            model: {
+                                enum: [
+                                    "gpt-4-1106-preview",
+                                    "gpt-3.5-turbo-1106",
+                                ],
+                            },
+                            response_format: {
+                                type: "object",
+                                properties: {
+                                    type: { enum: ["json_object"] },
+                                },
+                            },
+                        },
+                    },
+                    {
+                        properties: {
+                            model: { enum: ["gpt-4", "gpt-3.5-turbo-0613"] },
+                            response_format: { type: "null" },
+                        },
+                    },
+                ],
             },
         },
     };
@@ -111,7 +145,9 @@ export default class ChatGPT extends BespeakComponent {
             this.streamResponse =
                 this.output[0][this.output[0].length - 1].content;
             console.log("revive streamResponse", this.streamResponse);
-            this.requestUpdate();
+            if (this.streamResponse) {
+                this.requestUpdate();
+            }
         }
     }
 
@@ -128,10 +164,24 @@ export default class ChatGPT extends BespeakComponent {
         const context = config.context;
 
         let threads = input
-            .filter((e) => e.schema.title === "GPT")
+            .filter(
+                (e) =>
+                    Array.isArray(e.value) &&
+                    e.value.every((v) => Array.isArray(v))
+            )
             .map((e) => e.value)
+            .flat()
             .filter((e) => e)
-            .flat();
+            .map((thread) =>
+                thread.every(
+                    (msg) => msg.role && (msg.content || msg.tool_calls)
+                )
+                    ? thread
+                    : thread.map((v) => ({
+                          role: "user",
+                          content: JSON.stringify(v),
+                      }))
+            );
 
         threads = threads.map((thread) => {
             if (!history) {
@@ -141,7 +191,12 @@ export default class ChatGPT extends BespeakComponent {
             }
         });
 
-        if (threads.length === 0 && this.pipedFrom.size) {
+        if (
+            threads.length === 0 &&
+            Array.from(this.pipedFrom).some(
+                (e) => e.outputSchema.title === "GPT"
+            )
+        ) {
             return [];
         }
 
@@ -233,13 +288,31 @@ export default class ChatGPT extends BespeakComponent {
     }
 
     async callOpenAI(options, cb) {
+        if (this.used.size) {
+            const tools = Array.from(this.used).map((n) => ({
+                type: "function",
+                function: {
+                    name: n.name,
+                    description: n.description,
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            input: n.inputSchema,
+                            config: n.configSchema,
+                        },
+                    },
+                },
+            }));
+            options.tools = tools;
+        }
+
         const openai = new OpenAI({
             apiKey: options.apiKey,
             dangerouslyAllowBrowser: true,
         });
         delete options.apiKey;
 
-        const remainder = (options.n || 1) - 1;
+        const remainder = (options.n || 1) - (options.tools ? 0 : 1);
         const streamOptions = {
             ...options,
             stream: true,
@@ -247,7 +320,20 @@ export default class ChatGPT extends BespeakComponent {
             user: `stream`,
         };
 
-        const stream = await openai.chat.completions.create(streamOptions);
+        const stream = options.tools
+            ? [
+                  {
+                      choices: [
+                          {
+                              delta: {
+                                  content:
+                                      "no streaming response when using tools",
+                              },
+                          },
+                      ],
+                  },
+              ]
+            : await openai.chat.completions.create(streamOptions);
 
         let streamContent = "";
 
@@ -264,7 +350,7 @@ export default class ChatGPT extends BespeakComponent {
             );
         }
 
-        const messagesOutput = (
+        let messagesOutput = (
             await Promise.all([
                 (async () => {
                     for await (const part of stream) {
@@ -286,6 +372,50 @@ export default class ChatGPT extends BespeakComponent {
         )
             .flat()
             .map((msg) => options.messages.concat([msg]));
+
+        messagesOutput = messagesOutput.slice(options.tools ? 1 : 0);
+
+        if (options.tools) {
+            cb?.(
+                JSON.stringify(
+                    messagesOutput[0][messagesOutput[0].length - 1],
+                    null,
+                    4
+                )
+            );
+            let response = messagesOutput[0][messagesOutput[0].length - 1];
+            if (response.tool_calls) {
+                for (const toolCall of response.tool_calls) {
+                    const functionName = toolCall.function.name;
+                    const functionToCall = Array.from(this.used).find(
+                        (n) => n.name === functionName
+                    );
+
+                    const functionArgs = JSON.parse(
+                        toolCall.function.arguments
+                    );
+                    const functionResponse = await functionToCall.call(
+                        functionArgs
+                    );
+                    messagesOutput[0].push({
+                        tool_call_id: toolCall.id,
+                        role: "tool",
+                        name: functionName,
+                        content: safeStringify(functionResponse),
+                    }); // extend conversation with function response
+                }
+
+                cb?.(
+                    JSON.stringify(
+                        messagesOutput[0].slice(
+                            0 - (response.tool_calls.length + 1)
+                        ),
+                        null,
+                        4
+                    )
+                );
+            }
+        }
 
         return messagesOutput;
     }
