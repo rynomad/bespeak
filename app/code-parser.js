@@ -1,6 +1,6 @@
 import BespeakComponent from "./component.js";
 import { html, css } from "https://esm.sh/lit";
-import { getMarkdownCodeBlocks } from "./util.js";
+import { getMarkdownCodeBlocks, generateSchemaFromValue } from "./util.js";
 
 export default class CodeParser extends BespeakComponent {
     static styles = css`
@@ -37,6 +37,13 @@ export default class CodeParser extends BespeakComponent {
     };
 
     icon = "code";
+
+    get outputSchema() {
+        if (this.config?.parse) {
+            return generateSchemaFromValue(this.output);
+        }
+        return this.constructor.output;
+    }
 
     async _process(input, config, keys) {
         const gptInput = input

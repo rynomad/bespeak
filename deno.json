@@ -1,0 +1,8 @@
+{
+    "imports": {
+        "openai": "https://deno.land/x/openai/mod.ts",
+        "rxdb": "npm:rxdb@15.0.0-beta.29",
+        "rxdb/plugins/dev-mode": "npm:rxdb@15.0.0-beta.29/plugins/dev-mode",
+        "rxdb/plugins/storage-memory": "npm:rxdb@15.0.0-beta.29/plugins/storage-memory"
+    }
+}

@@ -27,6 +27,7 @@ export default class ChatGPT extends BespeakComponent {
                     "gpt-3.5-turbo-0613",
                     "gpt-4-1106-preview",
                     "gpt-3.5-turbo-1106",
+                    "gpt-4-vision-preview",
                 ],
             },
             role: {
@@ -64,6 +65,42 @@ export default class ChatGPT extends BespeakComponent {
                 title: "History",
                 description: "how many messages should be included? 0 for all.",
                 default: 0,
+            },
+            chunking: {
+                title: "chunking",
+                type: "object",
+                properties: {
+                    enabled: {
+                        type: "boolean",
+                        default: false,
+                    },
+                    mode: {
+                        type: "string",
+                        enum: ["size", "separator"],
+                        default: "size",
+                    },
+                    size: {
+                        type: "number",
+                        default: 1000,
+                    },
+                    separator: {
+                        type: "string",
+                    },
+                },
+            },
+            filter: {
+                type: "string",
+                title: "Filter",
+                description:
+                    "a function that filters the generated responses. The function should return true if the response should be kept, and false otherwise. The function is passed a thread as an argument.",
+                default: "return true",
+            },
+            map: {
+                type: "string",
+                title: "Map",
+                description:
+                    "a function that maps the generated responses. The function is passed a thread as an argument.",
+                default: "return thread",
             },
             call: {
                 type: "boolean",
@@ -162,6 +199,9 @@ export default class ChatGPT extends BespeakComponent {
         const history = config.history;
         const call = config.call;
         const context = config.context;
+        const response_format = config.response_format?.type
+            ? config.response_format
+            : undefined;
 
         let threads = input
             .filter(
@@ -231,14 +271,6 @@ export default class ChatGPT extends BespeakComponent {
         }
 
         threads = threads.map((thread) => {
-            if (placement === "append") {
-                return thread.concat({ content: prompt, role });
-            } else {
-                return [{ content: prompt, role }].concat(thread);
-            }
-        });
-
-        threads = threads.map((thread) => {
             if (context === "values") {
                 return thread.concat({
                     content: JSON.stringify(
@@ -259,30 +291,125 @@ export default class ChatGPT extends BespeakComponent {
             return thread;
         });
 
-        if (!call) {
-            return threads;
+        if (
+            threads.length === 1 &&
+            threads[0].length &&
+            config.chunking.enabled
+        ) {
+            if (config.chunking.mode === "size") {
+                threads = threads[0]
+                    .pop()
+                    .content.match(
+                        new RegExp(`.{1,${config.chunking.size}}`, "g")
+                    )
+                    .map((e) => [{ role: "user", content: e }]);
+            } else {
+                threads = threads[0]
+                    .pop()
+                    .content.split(config.chunking.separator)
+                    .filter((chunk) => chunk.split("\\n").length > 2)
+                    .map((e) => [{ role: "user", content: e }]);
+                console.log(threads);
+            }
         }
 
-        threads = await Promise.all(
-            threads.map((thread, i) => {
-                const cb =
-                    i === 0
-                        ? (response) => (this.streamResponse = response)
-                        : undefined;
-                return this.callOpenAI(
-                    {
-                        n,
-                        temperature,
-                        model,
-                        messages: thread,
-                        ...keys,
-                    },
-                    cb
-                );
-            })
-        );
+        threads = threads.map((thread) => {
+            if (placement === "append") {
+                return thread.concat({ content: prompt, role });
+            } else {
+                return [{ content: prompt, role }].concat(thread);
+            }
+        });
 
-        threads = threads.flat();
+        if (call) {
+            threads = await Promise.all(
+                threads.map((thread, i) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            const cb =
+                                i === 0
+                                    ? (response) =>
+                                          (this.streamResponse = response)
+                                    : undefined;
+
+                            const t = setTimeout(
+                                () =>
+                                    resolve([
+                                        { role: "system", content: `Timeout` },
+                                    ]),
+                                60000
+                            );
+
+                            this.callOpenAI(
+                                {
+                                    n,
+                                    temperature,
+                                    model,
+                                    response_format,
+                                    messages: thread,
+                                    ...keys,
+                                },
+                                cb
+                            )
+                                .then(resolve)
+                                .catch((e) =>
+                                    resolve([
+                                        {
+                                            content: `Error: ${e.message}\n\nStack: ${e.stack}`,
+                                            role: "system",
+                                        },
+                                    ])
+                                )
+                                .then(() => {
+                                    clearTimeout(t);
+                                });
+                        }, i * (config.model === "gpt-4-vision-preview" ? 3000 : 100)); // Delay each call by .1 second
+                    });
+                })
+            );
+            threads = threads.flat();
+        }
+
+        if (config.filter) {
+            const filter = new Function("thread", config.filter);
+            for (const thread of threads) {
+                try {
+                    if (!filter(JSON.parse(JSON.stringify(thread)))) {
+                        threads.splice(threads.indexOf(thread), 1);
+                    }
+                } catch (e) {
+                    threads.splice(threads.indexOf(thread), 1);
+                }
+            }
+        }
+
+        if (config.map) {
+            const map = new Function("thread", config.map);
+            let flatten = false;
+            threads = threads
+                .map((thread) => {
+                    try {
+                        let newThread = map(thread);
+                        if (
+                            Array.isArray(newThread) &&
+                            Array.isArray(newThread[0])
+                        ) {
+                            flatten = true;
+                        }
+                        console.log("newThread", newThread);
+                        return newThread;
+                    } catch (e) {
+                        console.warn(e);
+                        return null;
+                    }
+                })
+                .filter((e) => e);
+            if (flatten) {
+                console.log("thread flat pre", threads);
+                threads = threads.flat();
+                console.log("thread flat post", threads);
+            }
+        }
 
         return threads;
     }
@@ -358,6 +485,7 @@ export default class ChatGPT extends BespeakComponent {
                         streamContent += delta;
                         cb?.(streamContent);
                     }
+                    console.log("streamContent", streamContent);
                     return {
                         content: streamContent,
                         role: "assistant",

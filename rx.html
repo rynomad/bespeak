@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>Editor</title>
+        <script type="importmap">
+            {
+                "imports": {
+                    "rxdb": "https://esm.sh/gh/pubkey/rxdb@15.0.0-beta.29",
+                    "rxdb/plugins/storage-memory": "https://esm.sh/gh/pubkey/rxdb@15.0.0-beta.29/plugins/storage-memory",
+                    "rxdb/plugins/dev-mode": "https://esm.sh/gh/pubkey/rxdb@15.0.0-beta.29/plugins/dev-mode",
+                    "openai": "https://cdn.jsdelivr.net/npm/openai/+esm"
+                }
+            }
+        </script>
+        <script type="module" src="/demo.mjs"></script>
+    </head>
+    <body style="margin: 0px; font-family: sans-serif">
+        <style>
+            @font-face {
+                font-family: "Font Awesome 5 Brands";
+                font-style: normal;
+                font-weight: 400;
+                font-display: block;
+                src: url("./app/webfonts/fa-brands-400.eot");
+                src: url("./app/webfonts/fa-brands-400.eot?#iefix")
+                        format("embedded-opentype"),
+                    url("./app/webfonts/fa-brands-400.woff2") format("woff2"),
+                    url("./app/webfonts/fa-brands-400.woff") format("woff"),
+                    url("./app/webfonts/fa-brands-400.ttf") format("truetype"),
+                    url("./app/webfonts/fa-brands-400.svg#fontawesome")
+                        format("svg");
+            }
+            @font-face {
+                font-family: "Font Awesome 5 Free";
+                font-style: normal;
+                font-weight: 400;
+                font-display: block;
+                src: url("./app/webfonts/fa-regular-400.eot");
+                src: url("./app/webfonts/fa-regular-400.eot?#iefix")
+                        format("embedded-opentype"),
+                    url("./app/webfonts/fa-regular-400.woff2") format("woff2"),
+                    url("./app/webfonts/fa-regular-400.woff") format("woff"),
+                    url("./app/webfonts/fa-regular-400.ttf") format("truetype"),
+                    url("./app/webfonts/fa-regular-400.svg#fontawesome")
+                        format("svg");
+            }
+            @font-face {
+                font-family: "Font Awesome 5 Free";
+                font-style: normal;
+                font-weight: 900;
+                font-display: block;
+                src: url("./app/webfonts/fa-solid-900.eot");
+                src: url("./app/webfonts/fa-solid-900.eot?#iefix")
+                        format("embedded-opentype"),
+                    url("./app/webfonts/fa-solid-900.woff2") format("woff2"),
+                    url("./app/webfonts/fa-solid-900.woff") format("woff"),
+                    url("./app/webfonts/fa-solid-900.ttf") format("truetype"),
+                    url("./app/webfonts/fa-solid-900.svg#fontawesome")
+                        format("svg");
+            }
+        </style>
+        <bespeak-ide></bespeak-ide>
+        <script>
+            // if ("serviceWorker" in navigator) {
+            //     window.addEventListener("load", function () {
+            //         navigator.serviceWorker.register("/service-worker.js").then(
+            //             function (registration) {
+            //                 console.log(
+            //                     "ServiceWorker registration successful with scope: ",
+            //                     registration.scope
+            //                 );
+            //             },
+            //             function (err) {
+            //                 console.log(
+            //                     "ServiceWorker registration failed: ",
+            //                     err
+            //                 );
+            //             }
+            //         );
+            //     });
+            // }
+        </script>
+    </body>
+</html>

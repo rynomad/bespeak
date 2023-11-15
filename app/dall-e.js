@@ -28,11 +28,13 @@ export default class ImageGenerator extends BespeakComponent {
                 title: "Model",
                 description: "The model to use for generating the image",
                 default: "dall-e-3",
+                enum: ["dall-e-3"],
             },
             size: {
                 type: "string",
                 title: "Image Size",
                 description: "The size of the generated image",
+                enum: ["1024x1024"],
                 default: "1024x1024",
             },
             n: {
@@ -90,12 +92,25 @@ export default class ImageGenerator extends BespeakComponent {
             apiKey: keys.apiKey,
             dangerouslyAllowBrowser: true,
         });
-        const response = await openai.images.generate({
-            model: config.model,
-            prompt: input.prompt,
-            n: config.n,
-            size: config.size,
-        });
+        let response;
+        for (let i = 0; i < 5; i++) {
+            try {
+                response = await openai.images.generate({
+                    model: config.model,
+                    prompt: input.prompt,
+                    n: config.n,
+                    size: config.size,
+                });
+                if (response) break;
+            } catch (error) {
+                console.error(
+                    `Attempt ${i + 1} failed. Retrying in 20 seconds...`
+                );
+                await new Promise((resolve) => setTimeout(resolve, 20000));
+            }
+        }
+        if (!response)
+            throw new Error("Image generation failed after 5 attempts");
         return { url: response.data[0].url };
     }
 

@@ -28,6 +28,30 @@ export default class Readability extends BespeakComponent {
                 description:
                     "a comma-separated list of strings to remove from the parsed content",
             },
+            clean: {
+                type: "boolean",
+                description:
+                    "whether or not to clean the parsed content of HTML tags",
+                default: true,
+            },
+            regex: {
+                type: "string",
+                description:
+                    "a regular expression to apply to the parsed content",
+            },
+            trim_whitespace: {
+                type: "boolean",
+                title: "Trim Whitespace",
+                description:
+                    "whether or not to trim whitespace from the parsed content",
+                default: true,
+            },
+            replace: {
+                type: "string",
+                default: "",
+                description:
+                    "the string to replace matches from the regex with",
+            },
         },
     };
 
@@ -50,10 +74,9 @@ export default class Readability extends BespeakComponent {
         const doc = parser.parseFromString(input, "text/html");
         const reader = new _Readability(doc);
         const article = reader.parse();
-        let textContent = article.textContent.substring(
-            0,
-            config.maxChars || undefined
-        );
+        let textContent = article[
+            config.clean ? "textContent" : "content"
+        ].substring(0, config.maxChars || undefined);
         if (config.redact) {
             const termsToRedact = config.redact.split(",");
             termsToRedact.forEach((term) => {
@@ -61,13 +84,20 @@ export default class Readability extends BespeakComponent {
                 textContent = textContent.replace(regex, "[REDACTED]");
             });
         }
+        if (config.regex) {
+            const regex = new RegExp(config.regex, "g");
+            textContent = textContent.replace(regex, config.replace);
+        }
+        if (config.trim_whitespace) {
+            textContent = textContent.replace(/[ \t]{2,}/g, " ");
+        }
         return textContent;
     }
 
     render() {
         return html`
             <h1>Parsed Content</h1>
-            <p>${this.output}</p>
+            <pre>${this.output}</pre>
         `;
     }
 }
