@@ -1,4 +1,5 @@
 import * as GPT from "./modules/gpt.mjs";
+import * as DefaultIngress from "./modules/ingress.mjs";
 // import schinquirer from "https://esm.sh/@luismayo/schinquirer";
 import {
     ReplaySubject,
@@ -17,6 +18,7 @@ import {
     takeUntil,
     concatMap,
     tap,
+    of,
     switchMap,
 } from "https://esm.sh/rxjs";
 import Ajv from "https://esm.sh/ajv";
@@ -97,11 +99,12 @@ const systemSchema = {
             type: "string",
             maxLength: 255,
             final: true,
+            default: `${GPT.key}@${GPT.version}`,
         },
-        version: {
+        ingress: {
             type: "string",
             maxLength: 255,
-            final: true,
+            default: `${DefaultIngress.key}@${DefaultIngress.version}`,
         },
         name: {
             type: "string",
@@ -111,8 +114,8 @@ const systemSchema = {
             type: "string",
         },
     },
-    required: ["module", "version"],
-    indexes: ["module", "version"],
+    required: ["module", "ingress"],
+    indexes: ["module", "ingress"],
 };
 
 const moduleSchema = {
@@ -129,6 +132,11 @@ const moduleSchema = {
         version: {
             type: "string",
             maxLength: 255,
+        },
+        type: {
+            type: "string",
+            maxLength: 255,
+            final: true,
         },
         name: {
             type: "string",
@@ -193,10 +201,11 @@ class Modules {
             log(this, "module and source received"),
             mergeMap(({ module, source }) => {
                 const { key, version } = module;
+                const id = `${key}@${version}`;
 
                 return Modules.db.modules
                     .findOne({
-                        selector: { id: "chat-gpt", version: "0.0.1" },
+                        selector: { id },
                     })
                     .$.pipe(
                         log(this, "module entry event"),
@@ -210,14 +219,14 @@ class Modules {
                                 const _source = moduleEntry.get$("data");
                                 if (source !== _source) {
                                     throw new Error(
-                                        `Module ${id} already exists with different source code. you must update the version number.`
+                                        `Module ${key} already exists with different source code. you must update the version number.`
                                     );
                                 }
                             }
 
-                            console.log("moduleEntry null");
                             return Modules.db.modules.insert({
-                                id: key,
+                                id,
+                                key,
                                 version,
                                 data: source,
                             });
@@ -236,26 +245,22 @@ class Modules {
         );
     }
 
-    static get({ key, module, version }) {
-        const id = `${key || module}@${version}`;
+    static get(id) {
         return Modules.modules.get(id);
     }
 
-    static set({ key, module, version }, module$) {
-        const id = `${key || module}@${version}`;
+    static set(id, module$) {
         Modules.modules.set(id, module$);
     }
 
-    static get$(system) {
-        const { module, version } = system;
-        const module$ = Modules.get(system);
-        console.log("got module$?", module$);
+    static get$(id) {
+        const module$ = Modules.get(id);
         if (module$) {
             return module$;
         }
         const newModule$ = Modules.db.modules
             .findOne({
-                selector: { id: module, version },
+                selector: { id },
             })
             .$.pipe(
                 filter((e) => e !== null),
@@ -273,14 +278,14 @@ class Modules {
                 shareReplay(1)
             );
 
-        Modules.set(system, newModule$);
+        Modules.set(id, newModule$);
         return newModule$;
     }
 }
 
-Modules.register("./modules/gpt.mjs");
+Modules.register("./modules/gpt.mjs", "./modules/ingress.mjs");
 
-Modules.log$.subscribe((log) => console.log("Modules log", log.message));
+// Modules.log$.subscribe((log) => console.log("Modules log", log.message));
 
 class Storage {
     static db = db;
@@ -305,6 +310,7 @@ class Storage {
         this.setupConfigPipeline();
         this.setupKeysPipeline();
         this.setupReadPipeline();
+        this.setupIngressPipeline();
     }
 
     setupConfigPipeline() {
@@ -412,7 +418,12 @@ class Storage {
                 switchMap((system) =>
                     this.db.system.upsert({ id: this.node.id, ...system })
                 ),
-                log(this, "system upserted")
+                log(this, "system upserted"),
+                takeUntil(this.node.destroy$),
+                catchError((err) => {
+                    console.error(err);
+                    return EMPTY;
+                })
             )
             .subscribe();
     }
@@ -420,16 +431,56 @@ class Storage {
     setupModulePipeline() {
         this.node.system$
             .pipe(
-                filter((system) => system?.module && system?.version),
-                log(this, "system received from node"),
-                distinctUntilChanged(
-                    (a, b) => a.module === b.module && a.version === b.version
-                ),
-                switchMap((system) => Modules.get$(system)),
+                filter((system) => system?.module),
+                log(this, "system.module received from node"),
+                distinctUntilChanged((a, b) => a.module === b.module),
+                switchMap(({ module }) => Modules.get$(module)),
                 log(this, "module received from modules"),
                 takeUntil(this.node.destroy$)
             )
             .subscribe(this.node.module$);
+    }
+
+    setupIngressPipeline() {
+        this.node.system$
+            .pipe(
+                log(this, "system received in ingress pipeline"),
+                filter((system) => system?.ingress),
+                log(this, "system.ingress received from node"),
+                distinctUntilChanged((a, b) => a.ingress === b.ingress),
+                switchMap(({ ingress }) => Modules.get$(ingress)),
+                log(this, "ingress received from modules"),
+                switchMap((module) =>
+                    this.db.config
+                        .findOne({
+                            selector: {
+                                node: this.node.id,
+                                module: `${module.key}@${module.version}`,
+                            },
+                        })
+                        .$.pipe(
+                            switchMap((config) => {
+                                if (!config) {
+                                    return this.node.$.pipe(
+                                        module.configSchema(),
+                                        map((schema) => jsonPreset(schema, {}))
+                                    );
+                                }
+
+                                return config.get$("data");
+                            }),
+                            map((config) => ({ module, config }))
+                        )
+                ),
+                log(this, "ingress received from Modules"),
+                takeUntil(this.node.destroy$),
+                catchError((err) => {
+                    console.error(err);
+                    this.node.error$.next(err);
+                    return EMPTY;
+                })
+            )
+            .subscribe(this.node.ingress$);
     }
 
     setupReadPipeline() {
@@ -456,8 +507,9 @@ class Node {
         this.destroy$ = new ReplaySubject(1);
         this.context$ = new ReplaySubject(1);
         this.schemas$ = new ReplaySubject(1);
-        this.storage$ = new ReplaySubject(1);
         this.system$ = new ReplaySubject(1);
+        this.ingress$ = new ReplaySubject(1);
+        this.upstream$ = new ReplaySubject(1);
         this.log$ = new ReplaySubject(100);
         this.$ = new ReplaySubject(1);
         this.$.next(this);
@@ -467,7 +519,31 @@ class Node {
 
     setupPipelines() {
         this.setupSchemaPipeline();
+        this.setupOperatorPipeline();
         this.setupInputPipeline();
+    }
+
+    setupInputPipeline() {
+        combineLatest(this.$, this.upstream$, this.ingress$)
+            .pipe(
+                log(this, "input pipeline reset"),
+                switchMap(([node, upstreams, ingress]) => {
+                    return of(upstreams).pipe(
+                        ingress.module.default({
+                            node,
+                            config: ingress.config,
+                        })
+                    );
+                }),
+                log(this, "input ingress ran"),
+                takeUntil(this.destroy$),
+                catchError((err) => {
+                    console.error(err);
+                    this.error$.next(err);
+                    return EMPTY;
+                })
+            )
+            .subscribe(this.input$);
     }
 
     setupSchemaPipeline() {
@@ -517,7 +593,7 @@ class Node {
             .subscribe(this.schemas$);
     }
 
-    setupInputPipeline() {
+    setupOperatorPipeline() {
         combineLatest({
             module: this.module$,
             config: this.config$,
@@ -587,13 +663,12 @@ function log(node, message) {
 const node = new Node();
 const storage = new Storage(node);
 // storage.keys$.subscribe((k) => console.log("storage keys got keys", k));
-node.storage$.next(storage);
 
 // node.module$.subscribe((m) => console.log("NODE GOT MODULE"));
 // node.$.subscribe(() => console.log("NODE GOT SELF"));
-storage.system$.next({ module: GPT.key, version: GPT.version });
+storage.system$.next({});
 storage.config$.next({
-    basic: { prompt: "write me a short story about space" },
+    basic: { prompt: "write me a haiku about space" },
 });
 storage.keys$.next(keys);
 // storage.read$.subscribe((read) => console.log("read", read));
@@ -608,6 +683,21 @@ node.output$.subscribe((output) => console.log("Output:", output));
 window.node = node;
 window.storage = storage;
 
+const node2 = new Node("second");
+const storage2 = new Storage(node2);
+storage2.system$.next({});
+storage2.config$.next({
+    basic: { prompt: "write me a sonnet about the same subject" },
+});
+node2.upstream$.next([node]);
+
+storage2.log$.subscribe((log) => console.log("storage2 log", log.message));
+node2.keys$.subscribe((k) => console.log("node2 got keys", k));
+node2.ingress$.subscribe((i) => console.log("node2 got ingress", i));
+node2.input$.subscribe((i) => console.log("node2 got input", i));
+node2.log$.subscribe((log) => console.log("node2 log:", log.message));
+node2.output$.subscribe((output) => console.log("Output 2:", output));
+node2.status$.subscribe((status) => console.log("node2 status", status.chunk));
 // node.keys$
 //     .pipe(
 //         timeout({
