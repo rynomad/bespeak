@@ -34,7 +34,7 @@ const getModels = async ({ apiKey }) => {
 };
 
 // ChatGPT Operator Configuration Schema
-export const configSchema = async (context, keys) => {
+export const configSchema = async ({ node, keys }) => {
     const models = keys
         ? await getModels(keys)
         : [
@@ -45,7 +45,7 @@ export const configSchema = async (context, keys) => {
               "gpt-4-vision-preview",
           ];
 
-    return {
+    return of({
         $schema: "http://json-schema.org/draft-07/schema#",
         title: "ChatGPT Operator Configuration",
         description:
@@ -98,7 +98,7 @@ export const configSchema = async (context, keys) => {
             },
         },
         required: ["basic", "advanced"],
-    };
+    });
 };
 
 // ChatGPT Streaming Status Schema

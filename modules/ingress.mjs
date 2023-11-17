@@ -7,11 +7,10 @@ import {
     pipe,
     switchMap,
     combineLatest,
-    tap,
     merge,
 } from "rxjs";
 
-export const type = "ingress";
+export const role = "ingress";
 export const key = "default-ingress";
 export const version = "0.0.1";
 
@@ -46,28 +45,21 @@ export const configSchema = () =>
         return schema;
     });
 
-function log(node, message) {
-    return tap((value) => node.log$.next({ message, value }));
-}
-
 const DefaultIngress = ({ config, node }) => {
     return pipe(
-        log(node, "DefaultIngress got upstream"),
+        node.log("DefaultIngress got upstream"),
         switchMap((upstream) => {
             return combineLatest(
-                upstream.map((node) =>
-                    node.schemas$.pipe(map((schemas) => ({ node, schemas })))
-                )
+                upstream.map((node) => node.schema$$("operator:output"))
             ).pipe(
-                log(node, "DefaultIngress got upstreams with schemas"),
-                withLatestFrom(node.schemas$),
-                log(
-                    node,
+                node.log("DefaultIngress got upstreams with schemas"),
+                withLatestFrom(node.schema$$("operator:input")),
+                node.log(
                     "DefaultIngress got upstreams with schemas and self schema"
                 ),
-                switchMap(([inputNodeSchemas, { inputSchema }]) => {
+                switchMap(([inputNodeSchemas, inputSchema]) => {
                     const matchedInput = inputNodeSchemas.filter(
-                        ({ schemas: { outputSchema } }) => {
+                        (outputSchema) => {
                             const test = jsonPreset(
                                 outputSchema,
                                 empty(outputSchema)
@@ -102,13 +94,10 @@ const DefaultIngress = ({ config, node }) => {
                             joinOperator = merge;
                     }
 
-                    console.log("matched", matchedInput.length);
-                    console.log("unmatched", unmatchedInput.length);
-
                     return merge(
                         ...matchedInput.map(({ node }) => node.output$)
                     ).pipe(
-                        log(node, "DefaultIngress got matched upstream event"),
+                        node.log("DefaultIngress got matched upstream event"),
                         ...(unmatchedInput.length > 0
                             ? [
                                   withLatestFrom(
@@ -118,10 +107,7 @@ const DefaultIngress = ({ config, node }) => {
                                   ),
                               ]
                             : []),
-                        log(
-                            node,
-                            "DefaultIngress got unmatched upstream event"
-                        ),
+                        node.log("DefaultIngress got unmatched upstream event"),
                         map((args) => {
                             let matched, unmatched;
                             if (unmatchedInput.length === 0) {
