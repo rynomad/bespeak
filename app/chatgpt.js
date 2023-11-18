@@ -54,6 +54,12 @@ export default class ChatGPT extends BespeakComponent {
                 description: "how many responses should be generated?",
                 default: 1,
             },
+            max_tokens: {
+                type: "number",
+                title: "Max Tokens",
+                description:
+                    "how many tokens should be generated for each response?",
+            },
             temperature: {
                 type: "number",
                 title: "Temperature",
@@ -199,6 +205,7 @@ export default class ChatGPT extends BespeakComponent {
         const history = config.history;
         const call = config.call;
         const context = config.context;
+        const max_tokens = config.max_tokens;
         const response_format = config.response_format?.type
             ? config.response_format
             : undefined;
@@ -294,7 +301,7 @@ export default class ChatGPT extends BespeakComponent {
         if (
             threads.length === 1 &&
             threads[0].length &&
-            config.chunking.enabled
+            config.chunking?.enabled
         ) {
             if (config.chunking.mode === "size") {
                 threads = threads[0]
@@ -345,6 +352,7 @@ export default class ChatGPT extends BespeakComponent {
                                     n,
                                     temperature,
                                     model,
+                                    max_tokens,
                                     response_format,
                                     messages: thread,
                                     ...keys,
