@@ -63,6 +63,7 @@ export default function validator({
     return pipe(
         node.log(`validator: start ${role}`),
         mergeMap((doc) => {
+            console.log("VALIDATOR DOC??", doc);
             if (!doc) {
                 if (role.endsWith(":keys")) {
                     return of(null);
