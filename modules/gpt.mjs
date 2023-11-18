@@ -199,7 +199,6 @@ export const inputSchema = (context) => {
                             "gpt-3.5-turbo-1106",
                             "gpt-4-vision-preview",
                         ],
-                        default: "gpt-3.5-turbo-1106",
                         description:
                             "The model to override the configured model.",
                     },
