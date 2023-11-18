@@ -228,7 +228,8 @@ export const keysSchema = (context) => {
 };
 
 // Implementation of the custom RxJS operator
-export const chatGPTOperator = (config, keys, node) => {
+export const chatGPTOperator = ({ config, keys, node }) => {
+    console.log("chatGPTOperator", config, keys, node.id);
     const openai = new OpenAI({
         apiKey: keys.apiKey,
         dangerouslyAllowBrowser: true,
@@ -279,6 +280,7 @@ export const chatGPTOperator = (config, keys, node) => {
                             await openai.beta.chat.completions.stream(
                                 apiParams
                             );
+
                         abortController = stream; // Store the AbortController
                         let accumulatedResponse = "";
 
@@ -293,19 +295,29 @@ export const chatGPTOperator = (config, keys, node) => {
                             // Emit status update
                             node.status$.next({
                                 status: "in-progress",
-                                chunk: chunk.choices[0]?.delta.content || "",
-                                accumulatedResponse,
-                                isFinalChunk: false,
-                                messages: apiParams.messages.concat({
-                                    role: "assistant",
-                                    content,
-                                }),
+                                message: accumulatedResponse,
+                                detail: {
+                                    chunk: chunk.choices[0]?.delta.content,
+                                    isFinalChunk: false,
+                                },
                             });
                         }
 
                         // Once the stream is complete, get the final chat completion
-                        const finalChatCompletion =
-                            await stream.finalChatCompletion();
+                        const finalChatCompletion = await stream
+                            .finalChatCompletion()
+                            .catch((e) => {
+                                console.warn(e);
+                                return {
+                                    choices: [
+                                        {
+                                            message: {
+                                                content: "Error",
+                                            },
+                                        },
+                                    ],
+                                };
+                            });
                         const finalMessages = apiParams.messages.concat(
                             finalChatCompletion.choices.map((choice) => ({
                                 role: "assistant",
@@ -338,13 +350,18 @@ export const chatGPTOperator = (config, keys, node) => {
                 // Return the teardown logic for cancellation
                 return () => {
                     if (abortController?.controller) {
-                        abortController.controller.abort();
+                        try {
+                            // abortController.controller.abort();
+                        } catch (e) {
+                            console.warn(e);
+                        }
                     }
                 };
             });
         }),
         catchError((error) => {
             // Emit error status
+            console.error(error);
             node.status$.next({
                 status: "error",
                 error: error.message || "An error occurred",

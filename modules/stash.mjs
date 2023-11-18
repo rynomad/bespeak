@@ -55,7 +55,14 @@ const configSchema = {
     title: "config schema",
     version: 0,
     type: "object",
-    primaryKey: "id",
+    primaryKey: {
+        // where should the composed string be stored
+        key: "id",
+        // fields that will be used to create the composed key
+        fields: ["node", "module"],
+        // separator which is used to concat the fields values.
+        separator: "|",
+    },
     properties: {
         id: {
             type: "string",
@@ -237,9 +244,18 @@ const applyModule = ({
     node,
     config: { module$, stream$, role, strict, skipValidation, skipPresets },
 }) => {
-    return combineLatest(node.$, module$).pipe(
+    return combineLatest(
+        node.$,
+        module$.pipe(distinctUntilChanged(deepEqual))
+    ).pipe(
         withLatestFrom(node.tool$$("system:validator")),
         switchMap(([[node, { module, config, keys }], validator]) => {
+            console.log(
+                "applyModule got module",
+                role,
+                skipValidation,
+                skipPresets
+            );
             return stream$.pipe(
                 node.log(`${role} input received`),
                 validator.operator({
@@ -289,11 +305,13 @@ const systemToConfiguredModule =
             node.log(`systemToConfiguredModule got system.${role}`),
             node.log(`systemToConfiguredModule got db$ and imports$`),
             switchMap(([system, imports, db, validator]) => {
+                // console.log("re-getting module", system);
                 return of(system[role]).pipe(
                     node.log("systemToConfiguredModule importing module"),
                     imports.operator({ node: this }),
                     node.log(`systemToConfiguredModule imported module`),
                     switchMap((module) => {
+                        // console.log("re-getting config and keys");
                         // TODO make this configurable
                         return of([
                             {
@@ -436,6 +454,7 @@ class NodeWrapper {
                     node: this,
                     config: { role: "ingress" },
                 }),
+                distinctUntilChanged(deepEqual),
                 takeTillDone({ node: this })
             )
             .subscribe(this.ingress$);
@@ -446,6 +465,7 @@ class NodeWrapper {
                     node: this,
                     config: { role: "operator" },
                 }),
+                distinctUntilChanged(deepEqual),
                 takeTillDone({ node: this })
             )
             .subscribe(this.operator$);
@@ -505,6 +525,9 @@ class NodeWrapper {
             config: {
                 module$: this.ingress$,
                 stream$: this.upstream$,
+                skipValidation: true,
+                skipPresets: true,
+                role: "ingress",
             },
         })
             .pipe(takeTillDone({ node: this }))
@@ -515,6 +538,7 @@ class NodeWrapper {
             config: {
                 module$: this.operator$,
                 stream$: this.input$,
+                role: "operator",
             },
         })
             .pipe(takeTillDone({ node: this }))
@@ -523,7 +547,6 @@ class NodeWrapper {
 
     tool$$(toolId) {
         if (this.id === toolId) {
-            console.log("tool$$: self", this.id);
             const sub = new ReplaySubject(1);
             sub.next(this);
             return sub;
@@ -541,20 +564,17 @@ class NodeWrapper {
     }
 
     schema$$(role) {
+        const nonce = Math.random().toString(36).slice(2);
         if (role === "system") {
             return of(systemSchema);
         }
 
         const [functionRole, dataRole] = role.split(":");
+        // console.log("schema$$", role, nonce, functionRole, dataRole);
         return this[`${functionRole}$`].pipe(
             timeout({
                 each: 1000,
                 with: () => {
-                    console.log(
-                        "timeout recovery",
-                        this.id,
-                        this.system$.closed
-                    );
                     return combineLatest({
                         system: this.system$,
                         imports: this.tool$$("system:imports"),
@@ -580,14 +600,14 @@ class NodeWrapper {
                     return of(null);
                 }
 
-                console.log("got schemaOp", role, schemaOp, config, keys);
                 return schemaOp({
                     node: this,
                     config,
                     keys,
                 });
             }),
-            this.log(`got schema for ${role}`)
+            distinctUntilChanged(deepEqual),
+            this.log(`got schema for ${role} ${nonce}`)
         );
     }
 
@@ -600,7 +620,6 @@ class NodeWrapper {
             );
         }
 
-        console.log("write$$ get system, validator, db");
         return combineLatest(
             this.system$,
             this.tool$$("system:validator"),
@@ -608,19 +627,16 @@ class NodeWrapper {
         ).pipe(
             this.log(`got system, validator, and db for role: ${role}`),
             switchMap(([system, validator, db]) => {
-                console.log("write$$ got system, validator, db", data);
                 return of(data).pipe(
                     this.log(`validating write$$ data for role: ${role}`),
                     validator.operator({
                         node: this,
                         config: {
                             role,
-                            skipPresets: true,
                         },
                     }),
                     this.log(`validated write$$ data for role: ${role}`),
                     map((data) => {
-                        console.log("validated", data);
                         const params = {
                             module: system[functionRole],
                             data,
@@ -706,14 +722,14 @@ class NodeWrapper {
                     this.log$.next({
                         message,
                         value,
-                        callSite: error.stack.split("\n")[2].trim(),
+                        callSite: error.stack.split("\n")[2]?.trim(),
                     });
                 },
                 (error) => {
                     this.log$.next({
                         message: `tap error at message: ${message}, error: ${error}`,
                         value: error,
-                        callSite: error.stack.split("\n")[2].trim(),
+                        callSite: error.stack.split("\n")[2]?.trim(),
                     });
                 },
                 () => {
@@ -749,7 +765,6 @@ combineLatest(
 )
     .pipe(
         concatMap(([paths, tools]) => {
-            console.log("paths", paths);
             return from(paths).pipe(
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 tools.find(({ id }) => id === "system:db").operator(),
@@ -788,6 +803,49 @@ NodeWrapper.$.pipe(
 ).subscribe();
 setTimeout(() => {
     const gpt = new NodeWrapper("test");
+    const gpt2 = new NodeWrapper("test2");
+
+    gpt.write$$("operator:config", {
+        basic: {
+            prompt: "write me a haiku about space",
+        },
+    }).subscribe(() => {
+        console.log("\ngpt test write operator config document");
+    });
+
+    let first = true;
+    gpt2.output$.subscribe((output) => {
+        if (first) {
+            first = false;
+            gpt.input$.next({
+                override: { prompt: "write me a sonnet about egypt" },
+            });
+            return;
+        }
+    });
+
+    gpt2.write$$("operator:config", {
+        basic: {
+            prompt: "write me a limmerick about the same subject",
+        },
+    }).subscribe(() => {
+        console.log("gpt2 wrote config");
+    });
+
+    gpt2.upstream$.next([gpt]);
+
+    gpt2.log$.subscribe(({ message, value, callSite }) => {
+        return console.log(gpt2.id, message, callSite);
+        const text = new TextEncoder().encode(".");
+        Deno.writeAllSync(Deno.stdout, text);
+    });
+
+    [gpt, gpt2].forEach((node) => {
+        node.status$.subscribe((status) => {
+            const text = new TextEncoder().encode(status.detail?.chunk);
+            Deno.writeAllSync(Deno.stdout, text);
+        });
+    });
 
     gpt.read$$("system").subscribe((system) => {
         console.log("\ngpt test read system document", system);
@@ -813,14 +871,6 @@ setTimeout(() => {
         console.log("\ngpt test write operator keys document");
     });
 
-    gpt.write$$("operator:config", {
-        basic: {
-            prompt: "hello world",
-        },
-    }).subscribe(() => {
-        console.log("\ngpt test write operator config document");
-    });
-
     gpt.output$.subscribe((output) => {
         console.log("\ngpt test output", output);
     });
@@ -829,12 +879,8 @@ setTimeout(() => {
         console.log("\nASSET operator", operator);
     });
 
-    gpt.input$.next({
-        override: {
-            prompt: "hello world",
-        },
-    });
-    gpt.log$.subscribe(({ message, value, callSite }) =>
-        console.log("\ngpt test:", message, callSite)
-    );
+    gpt.input$.next({});
+    // gpt.log$.subscribe(({ message, value, callSite }) =>
+    //     console.log("\ngpt test:", message, callSite)
+    // );
 });

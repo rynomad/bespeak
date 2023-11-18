@@ -11,6 +11,7 @@ import {
     map,
     mergeMap,
     tap,
+    combineLatest,
 } from "rxjs";
 
 export const key = "validator";
@@ -50,72 +51,53 @@ export const configSchema = () => {
     });
 };
 
-export default function validator({
-    node,
-    config: {
-        role = "operator:input",
-        ajv: ajvConfig,
-        strict,
-        skipPresets,
-        skipValidation,
-    },
-}) {
-    return pipe(
-        node.log(`validator: start ${role}`),
-        mergeMap((doc) => {
-            console.log("VALIDATOR DOC??", doc);
-            if (!doc) {
-                if (role.endsWith(":keys")) {
-                    return of(null);
+export const validator =
+    ({
+        node,
+        config: {
+            role = "operator:input",
+            ajv: ajvConfig,
+            strict,
+            skipPresets,
+            skipValidation,
+        },
+    }) =>
+    (source$) => {
+        return combineLatest(source$, node.schema$$(role)).pipe(
+            node.log(`validator: start ${role}`),
+            switchMap(([doc, schema]) => {
+                if (!doc) {
+                    if (role.endsWith(":keys")) {
+                        return of(null).pipe(filter(() => !schema));
+                    }
+                    doc = schema ? empty(schema) : {};
                 }
-                return node.schema$$(role).pipe(
-                    node.log(`validator: got schema for role: ${role}`),
-                    map((schema) => {
-                        return schema ? empty(schema) : {};
-                    }),
-                    node.log(
-                        `validator: got empty data from schema for role: ${role}`
-                    )
-                );
-            }
 
-            return doc?.get$ ? doc.get$("data") : of(doc);
-        }),
-        filter((data) => !!data),
-        tap((d) =>
-            console.log("got data to validate, get schema", node.id, role, d)
-        ),
-        withLatestFrom(node.schema$$(role)),
-        tap(([d, schema]) =>
-            console.log("got schema to validate data", node.id, role, d)
-        ),
-        node.log("validator: got data"),
-        map(([data, schema]) => [
-            !schema || skipPresets ? data : jsonPreset(schema, data),
-            schema,
-        ]),
-        filter(([data, schema]) => {
-            console.log(
-                "validator filter data",
-                node.id,
-                role,
-                data,
-                JSON.stringify(schema)
-            );
-            if (skipValidation || !schema) return true;
-            if (!data) return false;
+                const doc$ = doc?.get$ ? doc.get$("data") : of(doc);
 
-            const ajv = new Ajv(ajvConfig);
-            const validate = ajv.compile(schema);
-            const valid = validate(data);
-            if (!valid && strict) {
-                throw new Error(
-                    `Input does not match schema: ${ajv.errorsText()}`
+                return doc$.pipe(
+                    map((data) =>
+                        !schema || skipPresets ? data : jsonPreset(schema, data)
+                    ),
+                    filter((data) => {
+                        console.log("filter data from validator");
+                        if (skipValidation || !schema) return true;
+                        if (!data) return false;
+
+                        const ajv = new Ajv(ajvConfig);
+                        const validate = ajv.compile(schema);
+                        const valid = validate(data);
+                        if (!valid && strict) {
+                            throw new Error(
+                                `Input does not match schema: ${ajv.errorsText()}`
+                            );
+                        }
+                        return valid;
+                    })
                 );
-            }
-            return valid;
-        }),
-        map(([data]) => data),
-        node.log("validator: validated data")
-    );
-}
+            }),
+            node.log("validator: validated data")
+        );
+    };
+
+export default validator;

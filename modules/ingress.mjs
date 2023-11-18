@@ -42,21 +42,23 @@ export const configSchema = () =>
         required: ["ajv"],
     });
 
-const DefaultIngress = ({ config, node }) => {
-    return pipe(
-        node.log("DefaultIngress got upstream"),
-        switchMap((upstream) => {
-            return combineLatest(
-                upstream.map((node) => node.schema$$("operator:output"))
-            ).pipe(
-                node.log("DefaultIngress got upstreams with schemas"),
-                withLatestFrom(node.schema$$("operator:input")),
-                node.log(
-                    "DefaultIngress got upstreams with schemas and self schema"
-                ),
-                switchMap(([inputNodeSchemas, inputSchema]) => {
-                    const matchedInput = inputNodeSchemas.filter(
-                        (outputSchema) => {
+const DefaultIngress =
+    ({ config, node }) =>
+    (source$) => {
+        return combineLatest(source$, node.schema$$("operator:input")).pipe(
+            node.log("DefaultIngress got upstream"),
+            switchMap(([upstream, inputSchema]) => {
+                console.log("got new upstream", upstream.length, upstream);
+                return combineLatest(
+                    ...upstream.map((node) => node.schema$$("operator:output"))
+                ).pipe(
+                    node.log(
+                        "DefaultIngress got upstreams with schemas and self schema"
+                    ),
+                    switchMap((inputNodeSchemas) => {
+                        const matchedInput = [];
+                        const unmatchedInput = [];
+                        inputNodeSchemas.forEach((outputSchema, i) => {
                             const test = jsonPreset(
                                 outputSchema,
                                 empty(outputSchema)
@@ -64,75 +66,79 @@ const DefaultIngress = ({ config, node }) => {
 
                             const ajv = new Ajv(config.ajv);
                             const valid = ajv.validate(inputSchema, test);
-                            return valid;
-                        }
-                    );
-
-                    const unmatchedInput = inputNodeSchemas.filter((obj) => {
-                        !matchedInput.includes(obj);
-                    });
-
-                    let joinOperator;
-
-                    switch (config.joinOperator) {
-                        // case "merge":
-                        //     joinOperator = merge;
-                        //     break;
-                        // case "combineLatest":
-                        //     joinOperator = combineLatest;
-                        //     break;
-                        // case "forkJoin":
-                        //     joinOperator = forkJoin;
-                        //     break;
-                        // case "zip":
-                        //     joinOperator = zip;
-                        //     break;
-                        default:
-                            joinOperator = merge;
-                    }
-
-                    return merge(
-                        ...matchedInput.map(({ node }) => node.output$)
-                    ).pipe(
-                        node.log("DefaultIngress got matched upstream event"),
-                        ...(unmatchedInput.length > 0
-                            ? [
-                                  withLatestFrom(
-                                      ...unmatchedInput.map(
-                                          ({ node }) => node.output$
-                                      )
-                                  ),
-                              ]
-                            : []),
-                        node.log("DefaultIngress got unmatched upstream event"),
-                        map((args) => {
-                            let matched, unmatched;
-                            if (unmatchedInput.length === 0) {
-                                matched = args;
-                                unmatched = [];
+                            if (valid) {
+                                matchedInput.push(upstream[i]);
                             } else {
-                                matched = args.slice(0, 1);
-                                unmatched = args.slice(matchedInput.length);
+                                unmatchedInput.push(upstream[i]);
                             }
-                            return {
-                                ...matched,
-                                context: unmatched.reduce(
-                                    (acc, curr, index) => {
-                                        return {
-                                            ...acc,
-                                            [unmatchedInput[index].node.id]:
-                                                curr,
-                                        };
-                                    },
-                                    {}
-                                ),
-                            };
-                        })
-                    );
-                })
-            );
-        })
-    );
-};
+                        });
+
+                        let joinOperator;
+                        console.log("INGRESS CONFIG", config);
+                        switch (config.joinOperator) {
+                            // case "merge":
+                            //     joinOperator = merge;
+                            //     break;
+                            // case "combineLatest":
+                            //     joinOperator = combineLatest;
+                            //     break;
+                            // case "forkJoin":
+                            //     joinOperator = forkJoin;
+                            //     break;
+                            // case "zip":
+                            //     joinOperator = zip;
+                            //     break;
+                            default:
+                                joinOperator = merge;
+                        }
+
+                        console.log("MATCHED INPUT", matchedInput.length);
+                        return merge(
+                            ...matchedInput.map((node) => node.output$)
+                        ).pipe(
+                            node.log(
+                                "DefaultIngress got matched upstream event"
+                            ),
+                            ...(unmatchedInput.length > 0
+                                ? [
+                                      withLatestFrom(
+                                          ...unmatchedInput.map(
+                                              ({ node }) => node.output$
+                                          )
+                                      ),
+                                  ]
+                                : []),
+                            node.log(
+                                "DefaultIngress got unmatched upstream event"
+                            ),
+                            map((args) => {
+                                let matched, unmatched;
+                                if (unmatchedInput.length === 0) {
+                                    matched = args;
+                                    unmatched = [];
+                                } else {
+                                    matched = args.slice(0, 1);
+                                    unmatched = args.slice(matchedInput.length);
+                                }
+                                return {
+                                    ...matched,
+                                    context: unmatched.reduce(
+                                        (acc, curr, index) => {
+                                            return {
+                                                ...acc,
+                                                [unmatchedInput[index].node.id]:
+                                                    curr,
+                                            };
+                                        },
+                                        {}
+                                    ),
+                                };
+                            })
+                        );
+                    })
+                );
+            })
+        );
+    };
 
 export default DefaultIngress;

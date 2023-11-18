@@ -10,13 +10,17 @@ import {
     from,
 } from "rxjs";
 
-import { getText } from "../util.mjs";
-
+const getText = async (path) => {
+    try {
+        return Deno.readTextFile(path);
+    } catch (e) {
+        return fetch(path).then((res) => res.text());
+    }
+};
 export default function registerModule({ node }) {
     return pipe(
         node.log("registrar: got module path"),
         mergeMap((path) => {
-            console.log("registrar: got module path", path);
             return combineLatest({
                 module: from(import(path)),
                 source: from(getText(path)),
