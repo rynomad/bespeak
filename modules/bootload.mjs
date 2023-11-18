@@ -1,7 +1,9 @@
 import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
+import slash from "https://deno.land/x/slash/mod.ts";
 import NodeWrapper from "./node.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { config as dbConfig } from "./db.schemas.mjs";
+
 import {
     combineLatest,
     EMPTY,
@@ -86,9 +88,7 @@ combineLatest(
     .pipe(
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
-                map((p) =>
-                    path.resolve(__dirname, p).replace("c:", "file:///C:")
-                ),
+                map((p) => slash(path.resolve(__dirname, p))),
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 tools.find(({ id }) => id === "system:db").operator(),
                 catchError((error) => {
