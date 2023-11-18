@@ -21,8 +21,17 @@ export default function registerModule({ node }) {
     return pipe(
         node.log("registrar: got module path"),
         mergeMap((path) => {
+            const source$ = from(getText(path));
             return combineLatest({
-                module: from(import(path)),
+                module: source$.pipe(
+                    switchMap((source) => {
+                        const blob = new Blob([source], {
+                            type: "application/javascript",
+                        });
+                        const url = URL.createObjectURL(blob);
+                        return import(url);
+                    })
+                ),
                 source: from(getText(path)),
             }).pipe(
                 node.log("registrar: module and source received"),
