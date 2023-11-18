@@ -48,7 +48,6 @@ const DefaultIngress =
         return combineLatest(source$, node.schema$$("operator:input")).pipe(
             node.log("DefaultIngress got upstream"),
             switchMap(([upstream, inputSchema]) => {
-                console.log("got new upstream", upstream.length, upstream);
                 return combineLatest(
                     ...upstream.map((node) => node.schema$$("operator:output"))
                 ).pipe(
@@ -74,7 +73,6 @@ const DefaultIngress =
                         });
 
                         let joinOperator;
-                        console.log("INGRESS CONFIG", config);
                         switch (config.joinOperator) {
                             // case "merge":
                             //     joinOperator = merge;
@@ -92,7 +90,6 @@ const DefaultIngress =
                                 joinOperator = merge;
                         }
 
-                        console.log("MATCHED INPUT", matchedInput.length);
                         return merge(
                             ...matchedInput.map((node) => node.output$)
                         ).pipe(

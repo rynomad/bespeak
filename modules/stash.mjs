@@ -250,12 +250,6 @@ const applyModule = ({
     ).pipe(
         withLatestFrom(node.tool$$("system:validator")),
         switchMap(([[node, { module, config, keys }], validator]) => {
-            console.log(
-                "applyModule got module",
-                role,
-                skipValidation,
-                skipPresets
-            );
             return stream$.pipe(
                 node.log(`${role} input received`),
                 validator.operator({

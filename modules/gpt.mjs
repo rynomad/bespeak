@@ -229,7 +229,6 @@ export const keysSchema = (context) => {
 
 // Implementation of the custom RxJS operator
 export const chatGPTOperator = ({ config, keys, node }) => {
-    console.log("chatGPTOperator", config, keys, node.id);
     const openai = new OpenAI({
         apiKey: keys.apiKey,
         dangerouslyAllowBrowser: true,

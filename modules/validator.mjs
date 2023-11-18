@@ -80,7 +80,6 @@ export const validator =
                         !schema || skipPresets ? data : jsonPreset(schema, data)
                     ),
                     filter((data) => {
-                        console.log("filter data from validator");
                         if (skipValidation || !schema) return true;
                         if (!data) return false;
 

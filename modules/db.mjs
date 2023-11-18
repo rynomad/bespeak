@@ -104,7 +104,6 @@ function dbOperation({ config, node }) {
         memos.get(config.dbName) || getDB(config.dbName, config.collections);
     memos.set(config.dbName, db);
     return pipe(
-        node.log("dbOperation: got operations"),
         mergeMap((operations) => {
             return combineLatest({
                 operations: of(operations),
