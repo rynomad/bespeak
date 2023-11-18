@@ -13,15 +13,21 @@ import {
     distinctUntilChanged,
     shareReplay,
     takeUntil,
+    timeout,
     concatMap,
     tap,
     pipe,
     of,
     switchMap,
 } from "https://esm.sh/rxjs";
-import * as GPT from "./gpt.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { deepEqual } from "https://esm.sh/fast-equals";
+
+const GPT = await import("./gpt.mjs");
+const Imports = await import("./imports.mjs");
+const Registrar = await import("./registrar.mjs");
+const Validator = await import("./validator.mjs");
+const DB = await import("./db.mjs");
 
 // Replace 'your-api-key' with your actual OpenAI API key
 const keys = {
@@ -105,8 +111,8 @@ const systemSchema = {
             type: "string",
         },
     },
-    required: ["module", "ingress"],
-    indexes: ["module", "ingress"],
+    required: ["operator", "ingress"],
+    indexes: ["operator", "ingress"],
 };
 
 const moduleSchema = {
@@ -168,24 +174,39 @@ const systemTools = [
                 },
             },
         },
+        system: {
+            operator: `${DB.key}@${DB.version}`,
+            ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
+        },
     },
     {
         id: "validator",
         operator: {
-            module: await import("./validator.mjs"),
+            module: Validator,
             config: {},
+        },
+        system: {
+            ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
+            operator: `${Validator.key}@${Validator.version}`,
         },
     },
     {
         id: "imports",
         operator: {
-            module: await import("./imports.mjs"),
+            module: Imports,
+        },
+        system: {
+            ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
+            operator: `${Imports.key}@${Imports.version}`,
         },
     },
     {
         id: "registrar",
         operator: {
-            module: await import("./registrar.mjs"),
+            module: Registrar,
+        },
+        system: {
+            operator: `${Registrar.key}@${Registrar.version}`,
         },
     },
 ];
@@ -201,7 +222,14 @@ const takeTillDone = ({ node }) => {
             });
             node.error$.next(error);
             return EMPTY;
-        })
+        }),
+        tap(
+            () => {},
+            (error) => {},
+            () => {
+                console.log(node.id, "takeTillDone complete");
+            }
+        )
     );
 };
 
@@ -244,96 +272,104 @@ const applyModule = ({
     );
 };
 
-const systemToConfiguredModule = ({ node, config }) => {
-    return pipe(
-        node.log("systemToConfiguredModule start"),
-        filter((system) => system?.[config.role]),
-        map((system) => system[config.role]),
-        distinctUntilChanged(),
-        node.log(`systemToConfiguredModule got system.${config.role}`),
-        withLatestFrom(node.tool$$("system:imports")),
-        node.log(`systemToConfiguredModule got db$ and imports$`),
-        switchMap(([moduleId, imports]) => {
-            return of(moduleId).pipe(
-                imports.operator(),
-                node.log(`systemToConfiguredModule got module`),
-                withLatestFrom(
-                    node.tool$$("system:db"),
-                    node.tool$$("system:validator")
-                ),
-                switchMap(([module, db, validator]) => {
-                    // TODO make this configurable
-                    return of([
-                        {
-                            operation: "findOne",
-                            collection: "config",
-                            params: {
-                                selector: {
-                                    node: this.node.id,
-                                    module: moduleId,
+const systemToConfiguredModule =
+    ({ node, config: { role = "operator" } }) =>
+    (system$) => {
+        return combineLatest(
+            system$,
+            node.tool$$("system:imports"),
+            node.tool$$("system:db"),
+            node.tool$$("system:validator")
+        ).pipe(
+            node.log("systemToConfiguredModule start"),
+            filter(([system]) => system?.[role]),
+            distinctUntilChanged(
+                ([systemA], [systemB]) => systemA[role] === systemB[role]
+            ),
+            node.log(`systemToConfiguredModule got system.${role}`),
+            node.log(`systemToConfiguredModule got db$ and imports$`),
+            switchMap(([system, imports, db, validator]) => {
+                return of(system[role]).pipe(
+                    node.log("systemToConfiguredModule importing module"),
+                    imports.operator({ node: this }),
+                    node.log(`systemToConfiguredModule imported module`),
+                    switchMap((module) => {
+                        // TODO make this configurable
+                        return of([
+                            {
+                                operation: "findOne",
+                                collection: "config",
+                                params: {
+                                    selector: {
+                                        node: node.id,
+                                        module: system[role],
+                                    },
                                 },
                             },
-                        },
-                        {
-                            operation: "findOne",
-                            collection: "keys",
-                            params: {
-                                selector: {
-                                    module: moduleId,
+                            {
+                                operation: "findOne",
+                                collection: "keys",
+                                params: {
+                                    selector: {
+                                        module: system[role],
+                                    },
                                 },
                             },
-                        },
-                    ]).pipe(
-                        db.operator(),
-                        node.log(
-                            `systemToConfiguredModule got config$ and keys$`
-                        ),
-                        switchMap(([config$, keys$]) => {
-                            return combineLatest([
-                                config$.pipe(
-                                    node.log(
-                                        `systemToConfiguredModule got config document`
+                        ]).pipe(
+                            db.operator({ node }),
+                            node.log(
+                                `systemToConfiguredModule got config$ and keys$`
+                            ),
+                            switchMap(([config$, keys$]) => {
+                                return combineLatest([
+                                    config$.pipe(
+                                        node.log(
+                                            `systemToConfiguredModule got config document`
+                                        ),
+                                        validator.operator({
+                                            node,
+                                            config: {
+                                                role: `${role}:config`,
+                                            },
+                                        }),
+                                        node.log(
+                                            `systemToConfiguredModule validated config document`
+                                        )
                                     ),
-                                    validator.operator({
-                                        node,
-                                        config: {
-                                            module,
-                                            schema: "config",
-                                        },
-                                    })
-                                ),
-                                keys$.pipe(
-                                    node.log(
-                                        `systemToConfiguredModule got keys document`
+                                    keys$.pipe(
+                                        node.log(
+                                            `systemToConfiguredModule got keys document`
+                                        ),
+                                        validator.operator({
+                                            node,
+                                            config: {
+                                                role: `${role}:keys`,
+                                            },
+                                        }),
+                                        node.log(
+                                            `systemToConfiguredModule validated keys document`
+                                        )
                                     ),
-                                    validator.operator({
-                                        node,
-                                        config: {
+                                ]).pipe(
+                                    map(([config, keys]) => {
+                                        return {
                                             module,
-                                            schema: "keys",
-                                        },
+                                            config,
+                                            keys,
+                                        };
                                     })
-                                ),
-                            ]).pipe(
-                                map(([config, keys]) => {
-                                    return {
-                                        module,
-                                        config,
-                                        keys,
-                                    };
-                                })
-                            );
-                        }),
-                        node.log(
-                            `systemToConfiguredModule got module, config, and keys`
-                        )
-                    );
-                })
-            );
-        }),
-        node.log(`systemToConfiguredModule completed`)
-    );
-};
+                                );
+                            }),
+                            node.log(
+                                `systemToConfiguredModule got module, config, and keys`
+                            )
+                        );
+                    })
+                );
+            }),
+            node.log(`systemToConfiguredModule completed`)
+        );
+    };
 
 class NodeWrapper {
     static $ = new ReplaySubject(systemTools.length);
@@ -367,7 +403,6 @@ class NodeWrapper {
         this.setupPipelines();
 
         this.$.next(this);
-        this.system$.next(system);
         this.reset$.next();
 
         NodeWrapper.$.next(this);
@@ -376,19 +411,19 @@ class NodeWrapper {
     setupPipelines() {
         this.setupToolsPipelines();
         this.setupSystemPipelines();
-        this.setupConfigPipelines();
-        this.setupKeysPipeline();
         this.setupMainPipeline();
     }
 
     setupToolsPipelines() {
-        this.flowTools$
+        combineLatest(
+            this.flowTools$.pipe(startWith([])),
+            NodeWrapper.systemTools$
+        )
             .pipe(
-                startWith([]),
-                withLatestFrom(NodeWrapper.systemTools$),
                 map(([flowTools, systemTools]) => {
                     return flowTools.concat(systemTools);
                 }),
+                this.log("register tools"),
                 takeTillDone({ node: this })
             )
             .subscribe(this.tools$);
@@ -420,17 +455,19 @@ class NodeWrapper {
                 startWith({}),
                 distinctUntilChanged(deepEqual),
                 this.log("got fresh system data"),
-                map((data) => ({
-                    operation: "upsert",
-                    collection: "system",
-                    params: {
-                        ...data,
-                        id: this.id,
+                map((data) => [
+                    {
+                        operation: "upsert",
+                        collection: "system",
+                        params: {
+                            ...data,
+                            id: this.id,
+                        },
                     },
-                })),
+                ]),
                 withLatestFrom(this.tool$$("system:db")),
                 switchMap(([op, db]) => {
-                    return of(op).pipe(db.operator());
+                    return of(op).pipe(db.operator({ node: this }));
                 }),
                 takeTillDone({ node: this })
             )
@@ -440,25 +477,27 @@ class NodeWrapper {
             .pipe(
                 this.log("got system:db"),
                 switchMap((db) => {
-                    return of({
-                        operator: "findOne",
-                        collection: "system",
-                        params: {
-                            selector: {
-                                id: this.id,
+                    return of([
+                        {
+                            operation: "findOne",
+                            collection: "system",
+                            params: {
+                                selector: {
+                                    id: this.id,
+                                },
                             },
                         },
-                    }).pipe(db.operator());
+                    ]).pipe(db.operator({ node: this }));
                 }),
+                switchMap(([system$]) => system$),
+                filter((doc) => !!doc),
+                map((doc) => doc.toJSON()),
+                distinctUntilChanged(deepEqual),
                 this.log("found system data"),
                 takeTillDone({ node: this })
             )
             .subscribe(this.system$);
     }
-
-    setupConfigPipelines() {}
-
-    setupKeysPipeline() {}
 
     setupMainPipeline() {
         applyModule({
@@ -484,7 +523,10 @@ class NodeWrapper {
 
     tool$$(toolId) {
         if (this.id === toolId) {
-            return of(this);
+            console.log("tool$$: self", this.id);
+            const sub = new ReplaySubject(1);
+            sub.next(this);
+            return sub;
         }
 
         return this.tools$.pipe(
@@ -493,27 +535,147 @@ class NodeWrapper {
                 return tools.find((node) => node.id === toolId);
             }),
             filter((tool) => !!tool),
-            take(1),
             takeTillDone({ node: this }),
             this.log(`found tool ${toolId}`)
         );
     }
 
     schema$$(role) {
+        if (role === "system") {
+            return of(systemSchema);
+        }
+
         const [functionRole, dataRole] = role.split(":");
         return this[`${functionRole}$`].pipe(
+            timeout({
+                each: 1000,
+                with: () => {
+                    console.log(
+                        "timeout recovery",
+                        this.id,
+                        this.system$.closed
+                    );
+                    return combineLatest({
+                        system: this.system$,
+                        imports: this.tool$$("system:imports"),
+                    }).pipe(
+                        this.log(
+                            `schema$$(${role}) (timeout recovery): got system json and system:imports tool.`
+                        ),
+                        switchMap(({ system, imports }) => {
+                            return of(system[`${functionRole}`]).pipe(
+                                imports.operator({ node: this }),
+                                map((module) => ({ module })),
+                                this.log(
+                                    `schema$$(${role}) (timeout recovery): got module`
+                                )
+                            );
+                        })
+                    );
+                },
+            }),
             switchMap(({ module, config, keys }) => {
                 const schemaOp = module[`${dataRole}Schema`];
                 if (!schemaOp) {
                     return of(null);
                 }
 
+                console.log("got schemaOp", role, schemaOp, config, keys);
                 return schemaOp({
                     node: this,
                     config,
                     keys,
                 });
-            })
+            }),
+            this.log(`got schema for ${role}`)
+        );
+    }
+
+    write$$(role, data) {
+        const [functionRole, collection] = role.split(":");
+        if (functionRole === "system") {
+            return of(data).pipe(
+                tap((data) => this.system$.next(data)),
+                this.log(`write$$(${role}): wrote system data`)
+            );
+        }
+
+        console.log("write$$ get system, validator, db");
+        return combineLatest(
+            this.system$,
+            this.tool$$("system:validator"),
+            this.tool$$("system:db")
+        ).pipe(
+            this.log(`got system, validator, and db for role: ${role}`),
+            switchMap(([system, validator, db]) => {
+                console.log("write$$ got system, validator, db", data);
+                return of(data).pipe(
+                    this.log(`validating write$$ data for role: ${role}`),
+                    validator.operator({
+                        node: this,
+                        config: {
+                            role,
+                            skipPresets: true,
+                        },
+                    }),
+                    this.log(`validated write$$ data for role: ${role}`),
+                    map((data) => {
+                        console.log("validated", data);
+                        const params = {
+                            module: system[functionRole],
+                            data,
+                        };
+                        if (collection !== "keys") {
+                            params.node = this.id;
+                        }
+                        return [
+                            {
+                                operation: "upsert",
+                                collection,
+                                params,
+                            },
+                        ];
+                    }),
+                    db.operator({ node: this })
+                );
+            }),
+            this.log(`write$$(${role}): wrote document`)
+        );
+    }
+
+    read$$(role) {
+        const [functionRole, collection] = role.split(":");
+
+        if (functionRole === "system") {
+            return this.system$.pipe(
+                this.log(`read$$(${role}): got system data`)
+            );
+        }
+
+        return combineLatest(this.system$, this.tool$$("system:db")).pipe(
+            this.log(`read$$(${role}): got system data and db tool.`),
+            switchMap(([system, db]) => {
+                const selector = {
+                    module: system[functionRole],
+                };
+
+                if (collection !== "keys") {
+                    selector.node = this.id;
+                }
+                return of([
+                    {
+                        operation: "findOne",
+                        collection,
+                        params: {
+                            selector,
+                        },
+                    },
+                ]).pipe(db.operator({ node: this }));
+            }),
+            switchMap(([doc$]) => doc$),
+            filter((doc) => !!doc),
+            map((doc) => doc.toJSON()),
+            this.log(`read$$(${role}): got document`)
         );
     }
 
@@ -523,7 +685,7 @@ class NodeWrapper {
             this.log(`invoked as operator: ${node.id}`),
             withLatestFrom(this.operator$),
             this.log(`invoked as operator: ${node.id}: got operator`),
-            switchMap(([input, { module, config: _config, keys: _keys }]) => {
+            mergeMap(([input, { module, config: _config, keys: _keys }]) => {
                 return of(input).pipe(
                     module.default({
                         node,
@@ -538,20 +700,38 @@ class NodeWrapper {
     log(message) {
         // construct a new error and use its stack property to get the line where the log was called
         const error = new Error();
-        return tap((value) => {
-            this.log$.next({
-                message,
-                value,
-                callSite: error.stack.split("\n")[2].trim(),
-            });
-        });
+        return pipe(
+            tap(
+                (value) => {
+                    this.log$.next({
+                        message,
+                        value,
+                        callSite: error.stack.split("\n")[2].trim(),
+                    });
+                },
+                (error) => {
+                    this.log$.next({
+                        message: `tap error at message: ${message}, error: ${error}`,
+                        value: error,
+                        callSite: error.stack.split("\n")[2].trim(),
+                    });
+                },
+                () => {
+                    // this.log$.next({
+                    //     message: `tap complete: ${message}`,
+                    //     callSite: error.stack.split("\n")[2].trim(),
+                    // });
+                }
+            )
+        );
     }
 }
 
 NodeWrapper.systemTools$.next(
-    systemTools.map(({ id, operator }) => {
+    systemTools.map(({ id, operator, system }) => {
         const node = new NodeWrapper(`system:${id}`);
         node.operator$.next(operator);
+        node.system$.next(system);
         return node;
     })
 );
@@ -568,9 +748,18 @@ combineLatest(
     NodeWrapper.systemTools$
 )
     .pipe(
-        switchMap(([paths, tools]) => {
+        concatMap(([paths, tools]) => {
+            console.log("paths", paths);
             return from(paths).pipe(
-                tools.find(({ id }) => id === "system:registrar").operator()
+                tools.find(({ id }) => id === "system:registrar").operator(),
+                tools.find(({ id }) => id === "system:db").operator(),
+                catchError((error) => {
+                    console.error(
+                        "Catastrophic Error In Registration: ",
+                        error.stack
+                    );
+                    return EMPTY;
+                })
             );
         })
     )
@@ -578,15 +767,74 @@ combineLatest(
 
 NodeWrapper.$.pipe(
     tap((node) => {
-        node.log$.subscribe(({ message, value, callSite }) =>
-            console.log(node.id, message, callSite)
-        );
+        // node.operator$.subscribe(
+        //     (operator) => {
+        //         console.log(node.id, "got operator", operator);
+        //     },
+        //     (error) => {
+        //         console.error(node.id, "operator$ error", error);
+        //     },
+        //     () => {
+        //         console.log(node.id, "operator$ complete");
+        //     }
+        // );
+        node.log$.subscribe(({ message, value, callSite }) => {
+            // return console.log(node.id, message, callSite);
+            const text = new TextEncoder().encode(".");
+            Deno.writeAllSync(Deno.stdout, text);
+        });
+        node.error$.subscribe((error) => console.error(node.id, error));
     })
 ).subscribe();
 setTimeout(() => {
     const gpt = new NodeWrapper("test");
 
-    gpt.system$.subscribe((system) => {
-        console.log("gpt test system value", system);
+    gpt.read$$("system").subscribe((system) => {
+        console.log("\ngpt test read system document", system);
     });
+
+    gpt.read$$("operator:config").subscribe((data) => {
+        console.log("\ngpt test read operator config document", data);
+    });
+
+    gpt.read$$("operator:keys").subscribe((data) => {
+        console.log("\ngpt test read operator keys document", data);
+    });
+
+    gpt.read$$("ingress:config").subscribe((data) => {
+        console.log("\ngpt test read ingress config document", data);
+    });
+
+    gpt.read$$("ingress:keys").subscribe((data) => {
+        console.log("\ngpt test read ingress keys document", data);
+    });
+
+    gpt.write$$("operator:keys", keys).subscribe(() => {
+        console.log("\ngpt test write operator keys document");
+    });
+
+    gpt.write$$("operator:config", {
+        basic: {
+            prompt: "hello world",
+        },
+    }).subscribe(() => {
+        console.log("\ngpt test write operator config document");
+    });
+
+    gpt.output$.subscribe((output) => {
+        console.log("\ngpt test output", output);
+    });
+
+    gpt.operator$.subscribe((operator) => {
+        console.log("\nASSET operator", operator);
+    });
+
+    gpt.input$.next({
+        override: {
+            prompt: "hello world",
+        },
+    });
+    gpt.log$.subscribe(({ message, value, callSite }) =>
+        console.log("\ngpt test:", message, callSite)
+    );
 });

@@ -1,4 +1,11 @@
-import { from, pipe, switchMap } from "https://esm.sh/rxjs";
+import {
+    from,
+    pipe,
+    switchMap,
+    withLatestFrom,
+    filter,
+    of,
+} from "https://esm.sh/rxjs";
 
 const memos = new Map();
 
@@ -24,8 +31,25 @@ export function inputSchema() {
 function memoizedImport({ node }) {
     return pipe(
         node.log("memoizedImport"),
+        withLatestFrom(node.tool$$("system:db")),
+        switchMap(([module, db]) => {
+            if (typeof module === "string") {
+                return of([
+                    {
+                        operation: "findOne",
+                        collection: "modules",
+                        params: { selector: { id: module } },
+                    },
+                ]).pipe(
+                    db.operator({ node }),
+                    switchMap(([module$]) => module$),
+                    filter((module) => !!module)
+                );
+            }
+
+            return of(module);
+        }),
         switchMap((module) => {
-            console.log("memo module", module);
             const id = module.get("id");
             if (memos.has(id)) {
                 return memos.get(id);

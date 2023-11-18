@@ -8,6 +8,7 @@ import {
     switchMap,
     combineLatest,
     merge,
+    of,
 } from "rxjs";
 
 export const role = "ingress";
@@ -15,34 +16,30 @@ export const key = "default-ingress";
 export const version = "0.0.1";
 
 export const configSchema = () =>
-    map(() => {
-        const schema = {
-            type: "object",
-            properties: {
-                ajv: {
-                    type: "object",
-                    description:
-                        "Ajv configuration for matching upstream output schema with downstream input schema",
-                    properties: {
-                        strict: {
-                            type: "boolean",
-                            default: false,
-                        },
+    of({
+        type: "object",
+        properties: {
+            ajv: {
+                type: "object",
+                description:
+                    "Ajv configuration for matching upstream output schema with downstream input schema",
+                properties: {
+                    strict: {
+                        type: "boolean",
+                        default: false,
                     },
-                    required: ["strict"],
                 },
-                joinOperator: {
-                    type: "string",
-                    description:
-                        "RxJS operator for joining upstream output streams",
-                    enum: ["merge"], //TODO: , "combineLatest", "forkJoin", "zip"],
-                    default: "merge",
-                },
+                required: ["strict"],
             },
-            required: ["ajv"],
-        };
-
-        return schema;
+            joinOperator: {
+                type: "string",
+                description:
+                    "RxJS operator for joining upstream output streams",
+                enum: ["merge"], //TODO: , "combineLatest", "forkJoin", "zip"],
+                default: "merge",
+            },
+        },
+        required: ["ajv"],
     });
 
 const DefaultIngress = ({ config, node }) => {

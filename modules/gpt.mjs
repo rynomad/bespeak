@@ -2,9 +2,11 @@ import {
     Observable,
     throwError,
     pipe,
-    Subject,
     switchMap,
     catchError,
+    of,
+    map,
+    from,
 } from "https://esm.sh/rxjs";
 import OpenAI from "openai";
 
@@ -34,131 +36,78 @@ const getModels = async ({ apiKey }) => {
 };
 
 // ChatGPT Operator Configuration Schema
-export const configSchema = async ({ node, keys }) => {
-    const models = keys
-        ? await getModels(keys)
-        : [
+export const configSchema = ({ node, keys }) => {
+    const models$ = keys?.apiKey
+        ? from(getModels(keys))
+        : of([
               "gpt-4",
               "gpt-3.5-turbo-0613",
               "gpt-4-1106-preview",
               "gpt-3.5-turbo-1106",
               "gpt-4-vision-preview",
-          ];
+          ]);
 
-    return of({
-        $schema: "http://json-schema.org/draft-07/schema#",
-        title: "ChatGPT Operator Configuration",
-        description:
-            "Configuration schema for custom RxJS operator to interact with ChatGPT API.",
-        type: "object",
-        properties: {
-            basic: {
-                type: "object",
-                properties: {
-                    prompt: {
-                        type: "string",
-                        title: "Prompt Content",
-                        description:
-                            "The prompt content to be sent to the API as the most recent message.",
+    return models$.pipe(
+        map((models) => ({
+            $schema: "http://json-schema.org/draft-07/schema#",
+            title: "ChatGPT Operator Configuration",
+            description:
+                "Configuration schema for custom RxJS operator to interact with ChatGPT API.",
+            type: "object",
+            properties: {
+                basic: {
+                    type: "object",
+                    properties: {
+                        prompt: {
+                            type: "string",
+                            title: "Prompt Content",
+                            description:
+                                "The prompt content to be sent to the API as the most recent message.",
+                        },
                     },
+                    required: ["prompt"],
                 },
-                required: ["prompt"],
-            },
-            advanced: {
-                type: "object",
-                properties: {
-                    role: {
-                        type: "string",
-                        title: "Role",
-                        description: "The role of the message sender.",
-                        enum: ["user", "assistant", "system"],
-                        default: "user",
+                advanced: {
+                    type: "object",
+                    properties: {
+                        role: {
+                            type: "string",
+                            title: "Role",
+                            description: "The role of the message sender.",
+                            enum: ["user", "assistant", "system"],
+                            default: "user",
+                        },
+                        temperature: {
+                            type: "number",
+                            title: "Temperature",
+                            description:
+                                "Controls randomness in the generation process. Higher values mean more random completions.",
+                            minimum: 0,
+                            maximum: 1,
+                            default: 0.3,
+                        },
+                        model: {
+                            type: "string",
+                            title: "Model",
+                            description:
+                                "The model to be used for generating responses.",
+                            enum: models,
+                            default: "gpt-3.5-turbo-0613",
+                        },
+                        // Additional advanced options can be added here as needed.
                     },
-                    temperature: {
-                        type: "number",
-                        title: "Temperature",
-                        description:
-                            "Controls randomness in the generation process. Higher values mean more random completions.",
-                        minimum: 0,
-                        maximum: 1,
-                        default: 0.3,
-                    },
-                    model: {
-                        type: "string",
-                        title: "Model",
-                        description:
-                            "The model to be used for generating responses.",
-                        enum: models,
-                        default: "gpt-3.5-turbo-0613",
-                    },
-                    // Additional advanced options can be added here as needed.
+                    required: ["role", "model"],
+                    default: {},
                 },
-                required: ["role", "model"],
-                default: {},
             },
-        },
-        required: ["basic", "advanced"],
-    });
-};
-
-// ChatGPT Streaming Status Schema
-export const statusSchema = async (context) => {
-    return {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        title: "ChatGPT Streaming Status",
-        description:
-            "Schema for the status messages sent during the streaming of responses from the chat model.",
-        type: "object",
-        properties: {
-            status: {
-                type: "string",
-                enum: ["in-progress", "completed"],
-                description:
-                    "Indicates whether the streaming is still in progress or has been completed.",
-            },
-            accumulatedResponse: {
-                type: "string",
-                description:
-                    "The accumulated response text from the beginning of the stream up to the current chunk.",
-            },
-            isFinalChunk: {
-                type: "boolean",
-                description:
-                    "Indicates if the current chunk is the final chunk of the stream.",
-            },
-            messages: {
-                type: "array",
-                items: {
-                    $ref: "#/definitions/message",
-                },
-                description: "The message history including the current chunk.",
-            },
-        },
-        required: ["status", "accumulatedResponse", "messages"],
-        definitions: {
-            message: {
-                type: "object",
-                properties: {
-                    role: {
-                        type: "string",
-                        enum: ["user", "assistant", "system"],
-                        description:
-                            "The role of the entity that sent the message.",
-                    },
-                    content: {
-                        type: "string",
-                        description: "The content of the message.",
-                    },
-                },
-                required: ["role", "content"],
-            },
-        },
-    };
+            required: ["basic", "advanced"],
+        }))
+    );
 };
 
 // ChatGPT Message History Output Schema
-export const outputSchema = async (context) => {
-    return {
+export const outputSchema = (context) => {
+    return of({
         $schema: "http://json-schema.org/draft-07/schema#",
         title: "ChatGPT Message History Output",
         description:
@@ -190,12 +139,12 @@ export const outputSchema = async (context) => {
             },
         },
         required: ["messages"],
-    };
+    });
 };
 
 // ChatGPT Operator Input Schema
-export const inputSchema = async (context) => {
-    return {
+export const inputSchema = (context) => {
+    return of({
         $schema: "http://json-schema.org/draft-07/schema#",
         title: "ChatGPT Operator Input",
         description: "The input schema for the custom ChatGPT RxJS operator.",
@@ -260,11 +209,11 @@ export const inputSchema = async (context) => {
             },
         },
         required: ["messages"],
-    };
+    });
 };
 
-export const keysSchema = async (context) => {
-    return {
+export const keysSchema = (context) => {
+    return of({
         title: "OpenAI API Keys",
         description: "API keys for OpenAI",
         type: "object",
@@ -275,18 +224,11 @@ export const keysSchema = async (context) => {
                 description: "The API key for OpenAI",
             },
         },
-    };
+    });
 };
 
 // Implementation of the custom RxJS operator
-export const chatGPTOperator = (
-    config,
-    keys,
-    node = {
-        log$: new Subject(),
-        status$: new Subject(),
-    }
-) => {
+export const chatGPTOperator = (config, keys, node) => {
     const openai = new OpenAI({
         apiKey: keys.apiKey,
         dangerouslyAllowBrowser: true,

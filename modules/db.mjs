@@ -1,8 +1,21 @@
-import { map, catchError, isObservable, of } from "https://esm.sh/rxjs";
+import {
+    map,
+    isObservable,
+    of,
+    from,
+    pipe,
+    withLatestFrom,
+    combineLatest,
+    tap,
+    switchMap,
+    mergeMap,
+} from "https://esm.sh/rxjs";
 import { createRxDatabase, addRxPlugin } from "rxdb";
 import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
 
 addRxPlugin(RxDBDevModePlugin);
+
+const memos = new Map();
 
 async function getDB(dbName, collections) {
     let db;
@@ -11,7 +24,7 @@ async function getDB(dbName, collections) {
             "rxdb/plugins/storage-dexie"
         );
 
-        db = createRxDatabase({
+        db = await createRxDatabase({
             name: dbName,
             storage: await getRxStorageDexie(),
         });
@@ -20,13 +33,15 @@ async function getDB(dbName, collections) {
             "rxdb/plugins/storage-memory"
         );
 
-        db = createRxDatabase({
+        db = await createRxDatabase({
             name: dbName,
             storage: await getRxStorageMemory(),
         });
     }
 
-    await db.createCollections(collections);
+    await db.addCollections(collections);
+    // console.log("db finished", db);
+    return db;
 }
 
 export const key = "dbOperation";
@@ -85,33 +100,43 @@ export function configSchema() {
 }
 
 function dbOperation({ config, node }) {
-    let db;
-    return (operations$) =>
-        operations$.pipe(
-            map(async (operations) => {
-                if (!db) {
-                    db = await getDB(config.dbName, config.collections);
-                }
-                return operations.map((_operation) => {
-                    try {
-                        const { operation, collection, params } = _operation;
-                        let result = db[collection][operation](params);
-                        result = result.$ || result;
-                        // Ensure the result is an Observable
-                        if (!isObservable(result)) {
-                            result = of(result);
-                        }
+    let db =
+        memos.get(config.dbName) || getDB(config.dbName, config.collections);
+    memos.set(config.dbName, db);
+    return pipe(
+        node.log("dbOperation: got operations"),
+        mergeMap((operations) => {
+            return combineLatest({
+                operations: of(operations),
+                db: from(db),
+            }).pipe(
+                map(({ operations, db }) => {
+                    return operations.map((_operation) => {
+                        try {
+                            const { operation, collection, params } =
+                                _operation;
 
-                        return result;
-                    } catch (err) {
-                        node.status$.next(
-                            `Error in dbOperation: ${err.message}`
-                        );
-                        throw new Error(`Error in dbOperation: ${err.message}`);
-                    }
-                });
-            })
-        );
+                            let result = db[collection][operation](params);
+                            result = result.$ || result;
+                            // Ensure the result is an Observable
+                            if (!isObservable(result)) {
+                                result = of(result);
+                            }
+                            return result;
+                        } catch (err) {
+                            node.status$.next(
+                                `Error in dbOperation: ${err.message}`
+                            );
+                            throw new Error(
+                                `Error in dbOperation: ${err.message}`
+                            );
+                        }
+                    });
+                }),
+                node.log("dbOperation: mapped operations")
+            );
+        })
+    );
 }
 
 export default dbOperation;
