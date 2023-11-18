@@ -87,7 +87,7 @@ combineLatest(
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
                 map((p) =>
-                    path.resolve(__dirname, p).resplace("c:", "file:///C:")
+                    path.resolve(__dirname, p).replace("c:", "file:///C:")
                 ),
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 tools.find(({ id }) => id === "system:db").operator(),
