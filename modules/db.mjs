@@ -19,7 +19,7 @@ const memos = new Map();
 
 async function getDB(dbName, collections) {
     let db;
-    if (window.indexedDB) {
+    if (self.indexedDB) {
         const { getRxStorageDexie } = await import(
             "rxdb/plugins/storage-dexie"
         );

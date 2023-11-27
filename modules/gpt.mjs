@@ -12,6 +12,17 @@ import OpenAI from "openai";
 
 export const key = "chat-gpt";
 export const version = "0.0.1";
+export const description = "ChatGPT Operator";
+
+function extractLastCodeBlock(str) {
+    const codeBlockRegex = /```.*?\n([\s\S]*?)```/gs;
+    let match;
+    let lastMatch;
+    while ((match = codeBlockRegex.exec(str)) !== null) {
+        lastMatch = match;
+    }
+    return lastMatch ? lastMatch[1].trim() : null;
+}
 
 const getModels = async ({ apiKey }) => {
     const openai = new OpenAI({
@@ -119,6 +130,11 @@ export const outputSchema = (context) => {
                 items: {
                     $ref: "#/definitions/message",
                 },
+            },
+            code: {
+                type: "string",
+                description:
+                    "The last code block from the accumulated response.",
             },
         },
         definitions: {
@@ -334,6 +350,8 @@ export const chatGPTOperator = ({ config, keys, node }) => {
                         // Emit the final output
                         observer.next({
                             messages: finalMessages,
+                            code: extractLastCodeBlock(accumulatedResponse),
+                            response: accumulatedResponse,
                             model: apiParams.model,
                         });
 

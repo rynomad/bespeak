@@ -4,6 +4,7 @@ import Ajv from "https://esm.sh/ajv";
 import {
     withLatestFrom,
     map,
+    zip,
     pipe,
     switchMap,
     combineLatest,
@@ -19,6 +20,12 @@ export const configSchema = () =>
     of({
         type: "object",
         properties: {
+            unsafelyBypassSchemaValidation: {
+                type: "boolean",
+                default: false,
+                description:
+                    "If true, will not validate the upstream output schema against the downstream input schema",
+            },
             ajv: {
                 type: "object",
                 description:
@@ -35,7 +42,7 @@ export const configSchema = () =>
                 type: "string",
                 description:
                     "RxJS operator for joining upstream output streams",
-                enum: ["merge"], //TODO: , "combineLatest", "forkJoin", "zip"],
+                enum: ["merge", "zip"], //TODO: , "combineLatest", "forkJoin", "zip"],
                 default: "merge",
             },
         },
@@ -58,6 +65,10 @@ const DefaultIngress =
                         const matchedInput = [];
                         const unmatchedInput = [];
                         inputNodeSchemas.forEach((outputSchema, i) => {
+                            if (config.unsafelyBypassSchemaValidation) {
+                                matchedInput.push(upstream[i]);
+                                return;
+                            }
                             const test = jsonPreset(
                                 outputSchema,
                                 empty(outputSchema)
@@ -83,14 +94,14 @@ const DefaultIngress =
                             // case "forkJoin":
                             //     joinOperator = forkJoin;
                             //     break;
-                            // case "zip":
-                            //     joinOperator = zip;
-                            //     break;
+                            case "zip":
+                                joinOperator = zip;
+                                break;
                             default:
                                 joinOperator = merge;
                         }
 
-                        return merge(
+                        return joinOperator(
                             ...matchedInput.map((node) => node.output$)
                         ).pipe(
                             node.log(

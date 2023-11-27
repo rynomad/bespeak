@@ -11,7 +11,6 @@ import {
     mergeMap,
     catchError,
     distinctUntilChanged,
-    shareReplay,
     takeUntil,
     timeout,
     concatMap,
@@ -414,7 +413,40 @@ const applyModule = ({
         module$.pipe(distinctUntilChanged(deepEqual))
     ).pipe(
         withLatestFrom(node.tool$$("system:validator")),
-        switchMap(([[node, { module, config, keys }], validator]) => {
+        switchMap(([[node, { module, config, keys, system }], validator]) => {
+            const _operator = module.default({
+                node,
+                config,
+                keys,
+                system,
+            });
+            let operator = _operator;
+
+            switch (system?.map) {
+                case "switch":
+                    operator = switchMap((input) => {
+                        return of(input).pipe(_operator);
+                    });
+                    break;
+                case "merge":
+                    operator = mergeMap((input) => {
+                        return of(input).pipe(_operator);
+                    });
+                    break;
+                case "concat":
+                    operator = concatMap((input) => {
+                        return of(input).pipe(_operator);
+                    });
+                    break;
+                case "exhaust":
+                    operator = exhaustMap((input) => {
+                        return of(input).pipe(_operator);
+                    });
+                    break;
+                case "none":
+                default:
+            }
+
             return stream$.pipe(
                 node.log(`${role} input received`),
                 validator.operator({
@@ -427,11 +459,7 @@ const applyModule = ({
                     },
                 }),
                 node.log(`${role} input validated`),
-                module.default({
-                    node,
-                    config,
-                    keys,
-                }),
+                operator,
                 node.log(`${role} output received`),
                 validator.operator({
                     node,
@@ -462,7 +490,6 @@ const systemToConfiguredModule =
                 ([systemA], [systemB]) => systemA[role] === systemB[role]
             ),
             node.log(`systemToConfiguredModule got system.${role}`),
-            node.log(`systemToConfiguredModule got db$ and imports$`),
             switchMap(([system, imports, db, validator]) => {
                 // console.log("re-getting module", system);
                 return of(system[role]).pipe(
@@ -533,6 +560,7 @@ const systemToConfiguredModule =
                                             module,
                                             config,
                                             keys,
+                                            system,
                                         };
                                     })
                                 );

@@ -82,6 +82,9 @@ combineLatest(
         "./registrar.mjs",
         "./gpt.mjs",
         "./validator.mjs",
+        "./importModuleFromCode.mjs",
+        "./testRunner.mjs",
+        "./configurableOperator.mjs",
     ]),
     NodeWrapper.systemTools$
 )

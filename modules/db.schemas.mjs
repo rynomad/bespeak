@@ -82,6 +82,12 @@ const systemSchema = {
             maxLength: 255,
             default: `${DefaultIngress.key}@${DefaultIngress.version}`,
         },
+        map: {
+            type: "string",
+            maxLength: 255,
+            enum: ["switch", "merge", "concat", "exhaust", "none"],
+            default: "none",
+        },
         name: {
             type: "string",
             maxLength: 255,
