@@ -12,7 +12,15 @@ import OpenAI from "openai";
 
 export const key = "chat-gpt";
 export const version = "0.0.1";
-export const description = "ChatGPT Operator";
+export const description = `The primary functional requirement of the @gpt.mjs module is to create a custom RxJS operator that interacts with the OpenAI API to generate responses based on a given prompt. This operator is designed to be used in a chat application where it can generate responses from the GPT model in real-time.
+
+The operator takes in a configuration object and an input object. The configuration object includes settings such as the role of the message sender, the temperature for randomness in the generation process, and the model to be used for generating responses. The input object includes a history of messages to be included in the prompt and optional overrides for the configured options.
+
+The operator returns an Observable that emits the generated responses from the GPT model as they become available. It also emits status updates and handles errors.
+
+The libraries that aid its function are:
+
+- openai: This library provides a client for the OpenAI API. It is used to make requests to the API and receive responses.`;
 
 function extractLastCodeBlock(str) {
     const codeBlockRegex = /```.*?\n([\s\S]*?)```/gs;

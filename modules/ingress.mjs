@@ -15,6 +15,13 @@ import {
 export const role = "ingress";
 export const key = "default-ingress";
 export const version = "0.0.1";
+export const description = `The primary functional requirement of ingress.mjs is to manage and control the flow of data from multiple upstream sources to a downstream destination. It validates the data schemas of the upstream sources against the downstream input schema, and then combines the data from the validated sources into a single stream. If the data schema of an upstream source does not match the downstream input schema, it is considered unmatched and handled separately.
+
+The libraries that aid its function are:
+
+- json-schema-preset: This library is used to create a preset of the JSON schema for validation.
+- json-schema-empty: This library is used to create an empty JSON schema.
+- ajv: This library is used to validate the data against the JSON schema.`;
 
 export const configSchema = () =>
     of({
