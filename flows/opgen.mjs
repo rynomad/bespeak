@@ -3,6 +3,8 @@ import "../modules/bootload.mjs";
 import schinquirer from "https://esm.sh/@luismayo/schinquirer";
 import { take } from "npm:rxjs@^7.8.1";
 import { key, version } from "../modules/importModuleFromCode.mjs";
+import { withLatestFrom } from "npm:rxjs@^7.8.1";
+import { getText } from "../modules/util.mjs";
 
 const importModuleFromCode = new NodeWrapper("importModuleFromCode");
 
@@ -19,6 +21,11 @@ const KEY = Deno.env.get("OPENAI_KEY");
 if (!KEY) {
     throw new Error("OPENAI_KEY environment variable not set");
 }
+const cwd = Deno.realPathSync(".");
+const path = Deno.args[0];
+const absolutePath = `${cwd}/${path}`;
+
+console.log("path", path);
 
 const keys = {
     apiKey: KEY,
@@ -40,8 +47,7 @@ requirements
         requirements
             .write$$("operator:config", {
                 basic: {
-                    prompt: (await import("../modules/readability.mjs"))
-                        .description,
+                    prompt: (await import(absolutePath)).prompt,
                 },
                 advanced: { model: "gpt-4" },
             })
@@ -86,8 +92,7 @@ signature
                 `Input and Output schemas should be objects, not primitive types.`,
                 `input and output should be objects, not primitive values.`,
                 `The NodeWrapper instance provides the following properties and methods:`,
-                `node.log(): a custom logging operator, it can be inserted directly into a pipeline, it does not need to be wrapped in a tap:`,
-                `pipe(operator1(...), node.log('operator1 done'), operator2(...))`,
+                await getText("prompts/node.md"),
             ].join("\n"),
         },
         advanced: {
@@ -155,7 +160,7 @@ finalize
                 "it should return an observable that completes with success or failure, including any error messages",
                 "it MUST have the following signature:",
                 "export const version = '0.0.1'",
-                "export const description = 'a description of your operator'",
+                "export const description = 'the original description provided by the user'",
                 "export const configSchema = ({node, config, keys}) => (input$) => output$ OR null",
                 "export const keysSchema = ({node, config, keys}) => (input$) => output$ OR null",
                 "export const inputSchema = ({node, config, keys}) => (input$) => output$",
@@ -165,7 +170,7 @@ finalize
                 "It MUST import any dependencies from https://esm.sh",
                 "It MUST import any rxjs dependencies from https://esm.sh/rxjs",
                 "It MUST NOT import any dependencies from rxjs/operators: all operators should be imported from https://esm.sh/rxjs",
-                "It MUST NOT omit any code or tests that were provided earlier.",
+                "It MUST include all code and tests that were provided earlier.",
             ].join("\n"),
         },
         advanced: {
@@ -203,7 +208,7 @@ review
                 "Please do not change the key of the operator.",
                 "Please do not change the default export of the operator.",
                 "\n",
-                "Please output the entire source code, not just the changes you made.",
+                "You MUST output the entire source code, not just the changes.",
             ].join("\n"),
         },
         advanced: {
@@ -411,3 +416,12 @@ filterImportPassed.log$.subscribe(({ message, value, callSite }) => {
     // console.log("review log", message, callSite);
     // }
 });
+
+filterPassed.output$
+    .pipe(withLatestFrom(finalize.output$), take(1))
+    .subscribe(([output, finalizeOutput]) => {
+        // write file to path
+        console.log("output", output);
+        console.log("finalizeOutput", finalizeOutput);
+        Deno.writeTextFileSync(absolutePath, finalizeOutput.code);
+    });

@@ -23,13 +23,29 @@ The libraries that aid its function are:
 - openai: This library provides a client for the OpenAI API. It is used to make requests to the API and receive responses.`;
 
 function extractLastCodeBlock(str) {
-    const codeBlockRegex = /```.*?\n([\s\S]*?)```/gs;
+    const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/gs;
+    console.log("extracting code block");
     let match;
     let lastMatch;
+    let parsed = null;
     while ((match = codeBlockRegex.exec(str)) !== null) {
         lastMatch = match;
+        if (lastMatch[1].trim().toLowerCase() === "json") {
+            try {
+                parsed = JSON.parse(lastMatch[2].trim());
+            } catch (e) {
+                console.warn("Failed to parse JSON in code block", e);
+            }
+        }
     }
-    return lastMatch ? lastMatch[1].trim() : null;
+
+    lastMatch = lastMatch ? lastMatch[2].trim() : null;
+
+    console.log("extracted code block", lastMatch);
+    return {
+        raw: lastMatch,
+        parsed: parsed,
+    };
 }
 
 const getModels = async ({ apiKey }) => {
@@ -143,6 +159,11 @@ export const outputSchema = (context) => {
                 type: "string",
                 description:
                     "The last code block from the accumulated response.",
+            },
+            json: {
+                type: "object",
+                description:
+                    "If the last code block from the accumulated response was JSON, this is the parsed JSON object.",
             },
         },
         definitions: {
@@ -355,10 +376,13 @@ export const chatGPTOperator = ({ config, keys, node }) => {
                             messages: finalMessages,
                         });
 
+                        const code = extractLastCodeBlock(accumulatedResponse);
+
                         // Emit the final output
                         observer.next({
                             messages: finalMessages,
-                            code: extractLastCodeBlock(accumulatedResponse),
+                            code: code.raw,
+                            json: code.parsed,
                             response: accumulatedResponse,
                             model: apiParams.model,
                         });
