@@ -1,5 +1,6 @@
 import { Observable, of, pipe, tap } from "https://esm.sh/rxjs";
 
+export const key = "importModuleFromCode";
 export const version = "0.0.1";
 export const description =
     "Dynamically import JavaScript code as a module from a provided string of source code. It creates a Blob URL from the source code, imports it as a module, and returns the imported module. If any error occurs during the import process, it captures and returns the error.";

@@ -14,10 +14,18 @@ import {
     combineLatest,
 } from "rxjs";
 
+const getText = async (path) => {
+    try {
+        const cwd = Deno.realPathSync(".");
+        return await Deno.readTextFile(`${cwd}/${path}`);
+    } catch (e) {
+        return await fetch(path).then((res) => res.text());
+    }
+};
+
 export const key = "validator";
 export const version = "0.0.1";
-export const description =
-    "The jsonPreset operator takes a schema key and data and returns a default object according to the associated schema on the given node. optionally configurable with an initial data object.";
+export const prompt = await getText(`prompts/validator.md`);
 
 export const configSchema = () => {
     return of({

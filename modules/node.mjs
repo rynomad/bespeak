@@ -291,7 +291,17 @@ export default class NodeWrapper {
                             },
                         ];
                     }),
-                    db.operator({ node: this })
+                    db.operator({ node: this }),
+                    switchMap(() => {
+                        return this[`${functionRole}$`].pipe(
+                            filter(
+                                (triple) =>
+                                    !!triple &&
+                                    validateObject(data, triple[collection])
+                            ),
+                            take(1)
+                        );
+                    })
                 );
             }),
             this.log(`write$$(${role}): wrote document`)
@@ -493,9 +503,13 @@ const systemToConfiguredModule =
             switchMap(([system, imports, db, validator]) => {
                 // console.log("re-getting module", system);
                 return of(system[role]).pipe(
-                    node.log("systemToConfiguredModule importing module"),
+                    node.log(
+                        `systemToConfiguredModule ${role} importing module`
+                    ),
                     imports.operator({ node: this }),
-                    node.log(`systemToConfiguredModule imported module`),
+                    node.log(
+                        `systemToConfiguredModule ${role} imported module`
+                    ),
                     switchMap((module) => {
                         // console.log("re-getting config and keys");
                         // TODO make this configurable
@@ -522,13 +536,13 @@ const systemToConfiguredModule =
                         ]).pipe(
                             db.operator({ node }),
                             node.log(
-                                `systemToConfiguredModule got config$ and keys$`
+                                `systemToConfiguredModule ${role} got config$ and keys$`
                             ),
                             switchMap(([config$, keys$]) => {
                                 return combineLatest([
                                     config$.pipe(
                                         node.log(
-                                            `systemToConfiguredModule got config document`
+                                            `systemToConfiguredModule ${role} got config document`
                                         ),
                                         validator.operator({
                                             node,
@@ -537,12 +551,12 @@ const systemToConfiguredModule =
                                             },
                                         }),
                                         node.log(
-                                            `systemToConfiguredModule validated config document`
+                                            `systemToConfiguredModule ${role} validated config document`
                                         )
                                     ),
                                     keys$.pipe(
                                         node.log(
-                                            `systemToConfiguredModule got keys document`
+                                            `systemToConfiguredModule ${role} got keys document`
                                         ),
                                         validator.operator({
                                             node,
@@ -551,7 +565,7 @@ const systemToConfiguredModule =
                                             },
                                         }),
                                         node.log(
-                                            `systemToConfiguredModule validated keys document`
+                                            `systemToConfiguredModule ${role} validated keys document`
                                         )
                                     ),
                                 ]).pipe(
@@ -572,6 +586,33 @@ const systemToConfiguredModule =
                     })
                 );
             }),
-            node.log(`systemToConfiguredModule completed`)
+            node.log(`systemToConfiguredModule completed for ${role}`)
         );
     };
+
+function validateObject(baseObject, objectToValidate) {
+    for (const key in baseObject) {
+        if (baseObject.hasOwnProperty(key)) {
+            // Check if both objects have the key
+            if (!objectToValidate.hasOwnProperty(key)) {
+                return false;
+            }
+
+            // If the value is an object, recurse
+            if (
+                typeof baseObject[key] === "object" &&
+                typeof objectToValidate[key] === "object"
+            ) {
+                if (!validateObject(baseObject[key], objectToValidate[key])) {
+                    return false;
+                }
+            } else {
+                // Direct value comparison
+                if (baseObject[key] !== objectToValidate[key]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}

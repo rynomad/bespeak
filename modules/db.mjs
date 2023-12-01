@@ -12,6 +12,14 @@ import {
 } from "https://esm.sh/rxjs";
 import { createRxDatabase, addRxPlugin } from "rxdb";
 import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
+const getText = async (path) => {
+    try {
+        const cwd = Deno.realPathSync(".");
+        return await Deno.readTextFile(`${cwd}/${path}`);
+    } catch (e) {
+        return await fetch(path).then((res) => res.text());
+    }
+};
 
 addRxPlugin(RxDBDevModePlugin);
 
@@ -46,8 +54,7 @@ async function getDB(dbName, collections) {
 
 export const key = "dbOperation";
 export const version = "0.0.1";
-export const description =
-    "The dbOperation operator is a higher-order function that takes a configuration object and returns a function that operates on an Observable of database operations. The configuration object should include the database name and collections. The operator maps each operation (which should be an object with operation, collection, and params properties) to a corresponding operation on the specified collection in the database. The result of each operation is ensured to be an Observable.";
+export const prompt = await getText(`prompts/db.md`);
 
 export function inputSchema() {
     const schema = {
@@ -100,7 +107,7 @@ export function configSchema() {
 }
 
 function dbOperation({ config, node }) {
-    let db =
+    const db =
         memos.get(config.dbName) || getDB(config.dbName, config.collections);
     memos.set(config.dbName, db);
     return pipe(

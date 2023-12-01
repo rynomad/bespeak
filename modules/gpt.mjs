@@ -7,8 +7,11 @@ import {
     of,
     map,
     from,
+    startWith,
 } from "https://esm.sh/rxjs";
 import OpenAI from "openai";
+import { combineLatest } from "npm:rxjs@^7.8.1";
+import { withLatestFrom } from "npm:rxjs@^7.8.1";
 
 export const key = "chat-gpt";
 export const version = "0.0.1";
@@ -129,6 +132,12 @@ export const configSchema = ({ node, keys }) => {
                             enum: models,
                             default: "gpt-3.5-turbo-0613",
                         },
+                        tools: {
+                            type: ["string", "null"],
+                            enum: ["user", "none", "all"],
+                            default: "user",
+                            description: "Whether to expose tools to the LLM.",
+                        },
                         // Additional advanced options can be added here as needed.
                     },
                     required: ["role", "model"],
@@ -164,6 +173,7 @@ export const outputSchema = (context) => {
                 type: "object",
                 description:
                     "If the last code block from the accumulated response was JSON, this is the parsed JSON object.",
+                additionalProperties: true,
             },
         },
         definitions: {
@@ -247,6 +257,12 @@ export const inputSchema = (context) => {
                         description:
                             "The model to override the configured model.",
                     },
+                    tools: {
+                        type: ["string", "null"],
+                        enum: ["user", "none", "all"],
+                        default: "user",
+                        description: "Whether to expose tools to the LLM.",
+                    },
                     // Add any other optional override properties here
                 },
                 description: "Optional overrides for the configured options.",
@@ -271,154 +287,257 @@ export const keysSchema = (context) => {
     });
 };
 
-// Implementation of the custom RxJS operator
-export const chatGPTOperator = ({ config, keys, node }) => {
-    const openai = new OpenAI({
-        apiKey: keys.apiKey,
-        dangerouslyAllowBrowser: true,
-    });
-
-    let abortController; // Store the AbortController
-
-    return pipe(
-        switchMap((input) => {
-            // Merge input overrides with config
-            const effectiveConfig = {
-                ...config,
-                basic: {
-                    ...config.basic,
-                    ...input.override, // Nested under 'basic' to match the schema
-                },
-                advanced: {
-                    ...config.advanced,
-                    ...input.override, // Nested under 'advanced' to match the schema
-                },
-                messages: input.messages || [],
-            };
-
-            // Use the prompt from the 'basic' configuration if it's the first call in the chain
-            if (effectiveConfig.basic && effectiveConfig.basic.prompt) {
-                effectiveConfig.messages.push({
-                    role: effectiveConfig.advanced.role,
-                    content: effectiveConfig.basic.prompt,
-                });
+export const toolsToFunctionsOperator = ({ node, config }) => {
+    return node.tools$.pipe(
+        node.log("toolsToFunctionsOperator"),
+        map((tools) =>
+            tools.filter((tool) =>
+                config.advanced.tools === "all"
+                    ? true
+                    : config.advanced.tools === "user"
+                    ? !tool.id.startsWith("system:")
+                    : false
+            )
+        ),
+        node.log("toolsToFunctionsOperator: filtered tools"),
+        switchMap((tools) => {
+            if (tools.length === 0) {
+                return of({ tools: [] });
             }
 
-            // Prepare the API call parameters
-            const apiParams = {
-                model: effectiveConfig.advanced.model,
-                messages: effectiveConfig.messages,
-                temperature: effectiveConfig.advanced.temperature,
-                stream: true,
-            };
-
-            // Start the stream
-            return new Observable((observer) => {
-                (async () => {
-                    try {
-                        if (observer.closed) {
-                            return;
-                        }
-                        const stream =
-                            await openai.beta.chat.completions.stream(
-                                apiParams
-                            );
-
-                        abortController = stream; // Store the AbortController
-                        let accumulatedResponse = "";
-
-                        for await (const chunk of stream) {
-                            if (observer.closed) {
-                                return;
-                            }
-                            const content =
-                                chunk.choices[0]?.delta.content || "";
-                            accumulatedResponse += content;
-
-                            // Emit status update
-                            node.status$.next({
-                                status: "in-progress",
-                                message: accumulatedResponse,
-                                detail: {
-                                    chunk: chunk.choices[0]?.delta.content,
-                                    isFinalChunk: false,
-                                },
-                            });
-                        }
-
-                        // Once the stream is complete, get the final chat completion
-                        const finalChatCompletion = await stream
-                            .finalChatCompletion()
-                            .catch((e) => {
-                                console.warn(e);
-                                return {
-                                    choices: [
-                                        {
-                                            message: {
-                                                content: "Error",
-                                            },
-                                        },
-                                    ],
-                                };
-                            });
-                        const finalMessages = apiParams.messages.concat(
-                            finalChatCompletion.choices.map((choice) => ({
-                                role: "assistant",
-                                content: choice.message.content,
-                            }))
-                        );
-
-                        // Emit the final status
-                        node.status$.next({
-                            status: "completed",
-                            accumulatedResponse,
-                            isFinalChunk: true,
-                            messages: finalMessages,
-                        });
-
-                        const code = extractLastCodeBlock(accumulatedResponse);
-
-                        // Emit the final output
-                        observer.next({
-                            messages: finalMessages,
-                            code: code.raw,
-                            json: code.parsed,
-                            response: accumulatedResponse,
-                            model: apiParams.model,
-                        });
-
-                        // Complete the observable
-                        observer.complete();
-                    } catch (error) {
-                        // Handle errors
-                        observer.error(error);
-                    }
-                })();
-
-                // Return the teardown logic for cancellation
-                return () => {
-                    if (abortController?.controller) {
-                        try {
-                            // abortController.controller.abort();
-                        } catch (e) {
-                            console.warn(e);
-                        }
-                    }
-                };
+            console.log("TOOLS1", tools[0].id);
+            return combineLatest({
+                tools: of(tools),
+                inputSchemas: combineLatest(
+                    tools.map((tool) =>
+                        tool
+                            .schema$$("operator:input")
+                            .pipe(node.log(`got input schema for ${tool.id}`))
+                    )
+                ),
+                configSchemas: combineLatest(
+                    tools.map((tool) =>
+                        tool
+                            .schema$$("operator:config")
+                            .pipe(node.log(`got config schema for ${tool.id}`))
+                    )
+                ),
             });
         }),
-        catchError((error) => {
-            // Emit error status
-            console.error(error);
-            node.status$.next({
-                status: "error",
-                error: error.message || "An error occurred",
+        map(({ tools, inputSchemas, configSchemas }) => {
+            return tools.map((toolNode, i) => {
+                return {
+                    function: async ({ input, config }) => {
+                        return await new Promise((resolve, reject) => {
+                            of(input)
+                                .pipe(
+                                    toolNode.operator({ node, config }),
+                                    catchError(reject)
+                                )
+                                .subscribe(resolve);
+                        });
+                    },
+                    parse: JSON.parse,
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            input: inputSchemas[i],
+                            config: configSchemas[i],
+                        },
+                    },
+                };
             });
-            return throwError(
-                () => new Error(error.message || "An error occurred")
-            );
         })
     );
 };
+
+// Implementation of the custom RxJS operator
+export const chatGPTOperator =
+    ({ config, keys, node }) =>
+    (source$) => {
+        const openai = new OpenAI({
+            apiKey: keys.apiKey,
+            dangerouslyAllowBrowser: true,
+        });
+
+        let abortController; // Store the AbortController
+        console.log("chatGPTOperator");
+        return combineLatest(
+            source$,
+            toolsToFunctionsOperator({ node, config })
+        ).pipe(
+            node.log("toolsToFunctionsOperator complete"),
+            switchMap(([input, functions]) => {
+                // Merge input overrides with config
+                const effectiveConfig = {
+                    ...config,
+                    basic: {
+                        ...config.basic,
+                        ...input.override, // Nested under 'basic' to match the schema
+                    },
+                    advanced: {
+                        ...config.advanced,
+                        ...input.override, // Nested under 'advanced' to match the schema
+                    },
+                    messages: input.messages || [],
+                };
+
+                // Use the prompt from the 'basic' configuration if it's the first call in the chain
+                if (effectiveConfig.basic && effectiveConfig.basic.prompt) {
+                    effectiveConfig.messages.push({
+                        role: effectiveConfig.advanced.role,
+                        content: effectiveConfig.basic.prompt,
+                    });
+                }
+
+                // Prepare the API call parameters
+                const apiParams = {
+                    model: effectiveConfig.advanced.model,
+                    messages: effectiveConfig.messages,
+                    temperature: effectiveConfig.advanced.temperature,
+                    stream: true,
+                };
+
+                // Start the stream
+                console.log("START CHATGPT", functions);
+                return new Observable((observer) => {
+                    (async () => {
+                        try {
+                            if (observer.closed) {
+                                return;
+                            }
+
+                            let apiCall =
+                                openai.beta.chat.completions.stream.bind(
+                                    openai.beta.chat.completions
+                                );
+
+                            if (functions.length) {
+                                apiCall =
+                                    openai.beta.chat.completions.runFunctions.bind(
+                                        openai.beta.chat.completions
+                                    );
+                                apiParams.functions = functions;
+                            }
+
+                            const stream = await apiCall(apiParams);
+
+                            [
+                                "connect",
+                                "chunk",
+                                "chatCompletion",
+                                "message",
+                                "content",
+                                "functionCall",
+                                "functionCallResult",
+                                "finalChatCompletion",
+                                "finalContent",
+                                "finalMessage",
+                                "finalFunctionCall",
+                                "finalFunctionCallResult",
+                                "error",
+                                "abort",
+                                "totalUsage",
+                                "end",
+                            ].forEach((eventType) => {
+                                stream.on(eventType, async (data, snapshot) => {
+                                    const progressEvent = {
+                                        status: eventType,
+                                        message:
+                                            snapshot ||
+                                            `Event of type ${eventType} received`,
+                                        detail: data,
+                                    };
+                                    node.status$.next(progressEvent);
+
+                                    if (eventType === "error") {
+                                        observer.error(data);
+                                    }
+
+                                    if (eventType === "abort") {
+                                        observer.error(data);
+                                    }
+
+                                    if (eventType === "finalMessage") {
+                                        console.log("FINALMESSAGE", data);
+
+                                        const code = extractLastCodeBlock(
+                                            data.content
+                                        );
+                                        const output = {
+                                            messages:
+                                                apiParams.messages.concat(data),
+                                            response: data.content,
+                                            model: apiParams.model,
+                                        };
+
+                                        if (code.raw) {
+                                            output.code = code.raw;
+                                            if (code.parsed) {
+                                                output.json = code.parsed;
+                                            }
+                                        }
+                                        // Emit the final output
+                                        observer.next(output);
+                                    }
+
+                                    if (eventType === "end") {
+                                        observer.complete();
+                                    }
+                                });
+                            });
+
+                            abortController = stream; // Store the AbortController
+
+                            // const code =
+                            //     extractLastCodeBlock(accumulatedResponse);
+                            // const output = {
+                            //     messages: finalMessages,
+                            //     response: accumulatedResponse,
+                            //     model: apiParams.model,
+                            // };
+
+                            // if (code.raw) {
+                            //     output.code = code.raw;
+                            //     if (code.parsed) {
+                            //         output.json = code.parsed;
+                            //     }
+                            // }
+                            // // Emit the final output
+                            // observer.next(output);
+
+                            // // Complete the observable
+                            // observer.complete();
+                        } catch (error) {
+                            // Handle errors
+                            observer.error(error);
+                        }
+                    })();
+
+                    // Return the teardown logic for cancellation
+                    return () => {
+                        if (abortController?.controller) {
+                            try {
+                                // abortController.controller.abort();
+                            } catch (e) {
+                                console.warn(e);
+                            }
+                        }
+                    };
+                });
+            }),
+            catchError((error) => {
+                // Emit error status
+                console.error(error);
+                node.status$.next({
+                    status: "error",
+                    error: error.message || "An error occurred",
+                });
+                return throwError(
+                    () => new Error(error.message || "An error occurred")
+                );
+            })
+        );
+    };
 
 export default chatGPTOperator;

@@ -85,6 +85,7 @@ combineLatest(
         "./importModuleFromCode.mjs",
         "./testRunner.mjs",
         "./configurableOperator.mjs",
+        "./readability.mjs",
     ]),
     NodeWrapper.systemTools$
 )
@@ -110,27 +111,25 @@ combineLatest(
 
 NodeWrapper.$.pipe(
     tap((node) => {
-        // node.operator$.subscribe(
-        //     (operator) => {
-        //         console.log(node.id, "got operator", operator);
-        //     },
-        //     (error) => {
-        //         console.error(node.id, "operator$ error", error);
-        //     },
-        //     () => {
-        //         console.log(node.id, "operator$ complete");
-        //     }
-        // );
         node.log$.subscribe(({ message, value, callSite }) => {
             const DEBUG = Deno.env.get("DEBUG");
             if (!DEBUG) return;
+
+            if (DEBUG === "all") {
+                console.log(node.id, message, callSite);
+                return;
+            }
+
+            if (DEBUG.includes(node.id)) {
+                console.log(node.id, message, callSite);
+                return;
+            }
+
             if (DEBUG === "dots") {
                 const text = new TextEncoder().encode(".");
                 Deno.writeAllSync(Deno.stdout, text);
                 return;
             }
-
-            console.log(node.id, message, callSite);
         });
         node.error$.subscribe((error) => console.error(node.id, error));
     })
