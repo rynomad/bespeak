@@ -31,3 +31,4 @@
     "https://www.npmjs.com/package/json-schema-preset",
     "https://www.npmjs.com/package/json-schema-empty"
 ]
+```
