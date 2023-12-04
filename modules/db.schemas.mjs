@@ -71,22 +71,15 @@ const systemSchema = {
             final: true,
             maxLength: 255,
         },
-        operator: {
+        process: {
             type: "string",
             maxLength: 255,
-            final: true,
             default: `${GPT.key}@${GPT.version}`,
         },
         ingress: {
             type: "string",
             maxLength: 255,
             default: `${DefaultIngress.key}@${DefaultIngress.version}`,
-        },
-        map: {
-            type: "string",
-            maxLength: 255,
-            enum: ["switch", "merge", "concat", "exhaust", "none"],
-            default: "none",
         },
         name: {
             type: "string",
@@ -96,8 +89,8 @@ const systemSchema = {
             type: "string",
         },
     },
-    required: ["operator", "ingress"],
-    indexes: ["operator", "ingress"],
+    required: ["process", "ingress"],
+    indexes: ["process", "ingress"],
 };
 
 const moduleSchema = {

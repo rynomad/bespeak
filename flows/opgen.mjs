@@ -3,14 +3,16 @@ import "../modules/bootload.mjs";
 import schinquirer from "https://esm.sh/@luismayo/schinquirer";
 import { take } from "npm:rxjs@^7.8.1";
 import { key, version } from "../modules/importModuleFromCode.mjs";
+import * as _readability from "../modules/readability.mjs";
 import { withLatestFrom } from "npm:rxjs@^7.8.1";
 import { getText } from "../modules/util.mjs";
 
 const importModuleFromCode = new NodeWrapper("importModuleFromCode");
 
+const readability = new NodeWrapper("readability");
 importModuleFromCode
     .write$$("system", {
-        operator: `${key}@${version}`,
+        process: `${key}@${version}`,
     })
     .subscribe(() => {
         console.log("importModuleFromCode wrote system");
@@ -31,128 +33,161 @@ const keys = {
     apiKey: KEY,
 };
 
+readability
+    .write$$("system", {
+        process: `${_readability.key}@${_readability.version}`,
+    })
+    .subscribe();
+
+readability
+    .write$$("process:config", {
+        insertLinks: true,
+        insertImages: false,
+    })
+    .subscribe(() => {
+        console.log("readability wrote config");
+    });
+
 const requirements = new NodeWrapper("requirements");
 
-requirements.write$$("operator:keys", keys).subscribe(() => {
+requirements.write$$("process:keys", keys).subscribe(() => {
     console.log("requirements wrote keys");
 });
 
+requirements.flowTools$.next([readability]);
+// schinquirer
+//     .prompt(schema.properties.basic.properties)
+//     .then((config) => {
 requirements
-    .schema$$("operator:config")
-    .pipe(take(1))
-    .subscribe(async (schema) => {
-        // schinquirer
-        //     .prompt(schema.properties.basic.properties)
-        //     .then((config) => {
-        requirements
-            .write$$("operator:config", {
-                basic: {
-                    prompt: (await import(absolutePath)).prompt,
+    .write$$("process:config", {
+        basic: {
+            prompt: (await import(absolutePath)).prompt,
+        },
+        advanced: { model: "gpt-4-1106-preview", cleanup: "system" },
+    })
+    .subscribe(() => {
+        requirements.input$.next({
+            messages: [
+                {
+                    role: "system",
+                    content: [
+                        "The user will provide you with some requirements for an rxjs operator.",
+                        "You will invoke the readability function to read any documentation.",
+                        "You will report the portion of relevant documentation back.",
+                        "You will include all relevant interfaces and code samples or examples you find.",
+                        "You MUST follow every provided link before beginning your response.",
+                        "You MAY follow links you find within the documentation.",
+                        "You SHOULD research thoroughly before responding.",
+                        // ""
+                        // "The operator should be presumed to be long-lived, handling many events over its lifetime.",
+                        // "Your code should target a browser/deno environment, not node.",
+                        // "Your code should use es6 modules, not commonjs.",
+                        // "Your code should prefer web standards over node standards.",
+                        // "Your code should import all rxjs dependencies from https://esm.sh/rxjs",
+                        // "Your code should import dependencies from https://esm.sh",
+                        // "Your code should be written with vanilla es6 modules, and should not require the use any bundlers or transpilers.",
+                        // "Your code should not use any typescript features.",
+                        // "Your code should prefer using the pipe operator to compose operators, rather than constructing a new Observable.",
+                        // "always choose to invoke functions/tools before responding to the user. When provided multiple links, always visit each of them before responding to the user.",
+                    ].join("\n"),
                 },
-                advanced: { model: "gpt-4" },
-            })
-            .pipe(take(1))
-            .subscribe(() => {
-                requirements.input$.next({
-                    messages: [
-                        {
-                            role: "system",
-                            content: [
-                                "The user will provide you with some requirements for an rxjs operator, you will respond with draft code for the operator. Make it as complete as possible",
-                                "The operator should be presumed to be long-lived, handling many events over its lifetime.",
-                                "Your code should target a browser/deno environment, not node.",
-                                "Your code should use es6 modules, not commonjs.",
-                                "Your code should prefer web standards over node standards.",
-                                "Your code should import all rxjs dependencies from https://esm.sh/rxjs",
-                                "Your code should import dependencies from https://esm.sh",
-                                "Your code should be written with vanilla es6 modules, and should not require the use any bundlers or transpilers.",
-                                "Your code should not use any typescript features.",
-                                "Your code should prefer using the pipe operator to compose operators, rather than constructing a new Observable.",
-                            ].join("\n"),
-                        },
-                    ],
-                });
-                console.log("requirements wrote config");
-            });
+            ],
+        });
+        console.log("requirements wrote config");
     });
-// });
 
 const signature = new NodeWrapper("signature");
 
 signature
-    .write$$("operator:config", {
+    .write$$("process:config", {
         basic: {
             prompt: [
-                "please make the operator factory signature match the following:",
+                "You are working on developing an rxjs operator for the user.",
+                "Based on the requirements, documentation, and schemas you provided above, you will write a complete implementation of the operator factory:",
                 `({node, config, keys}) => (input$) => output$`,
                 `where node is a NodeWrapper instance, config is the operator config, keys is the operator keys, input$ is an rxjs observable of input messages, and output$ is an rxjs observable of output messages`,
-                `Config and Keys are optional, it is up to you to decide how to use them.`,
-                `Keys should be used if there are any api keys that should be shared by all instances of this operator.`,
-                `Config should be used if there are any config values that should be applied to each invokation of this operator within a given pipeline.`,
-                `Input and Output schemas should be objects, not primitive types.`,
-                `input and output should be objects, not primitive values.`,
-                `The NodeWrapper instance provides the following properties and methods:`,
+                `here's documentation for the NodeWrapper:`,
                 await getText("prompts/node.md"),
+                `# Requirements`,
+                (await import(absolutePath)).prompt,
             ].join("\n"),
         },
         advanced: {
             model: "gpt-4",
+            role: "system",
+            cleanup: "system",
         },
     })
     .subscribe(() => {
         console.log("signature wrote config");
     });
 
-signature.upstream$.next([requirements]);
+// signature.upstream$.next([requirements]);
 
 const schemas = new NodeWrapper("schemas");
 
 schemas
-    .write$$("operator:config", {
+    .write$$("process:config", {
         basic: {
             prompt: [
-                "Please provide the schemas for the following, as necessary:",
+                "You are working on developing an rxjs operator for the user.",
+                "Based on the documentation you provided above, write schemas for the process:",
                 "input",
                 "config",
                 "keys",
                 "output",
                 "Please provide each of them in the form of an creation operator that takes the same factory signature as the operator you are writing, and returns an observable of the schema.",
                 "example: ({node, config, keys}) => of({...schema...})",
+                "The reason for this is so that you can populate parts of the schema dynamically.",
+                "For example, you may have an enum of api endpoints the user can choose from, but you need to make an api call to get the list of endpoints.",
+                "Make sure to include inline `description` values inside the schemas",
                 "If any of the schemas are not applicable to your operator, you may omit the generator for that schema.",
+                `The NodeWrapper instance provides the following properties and methods:`,
+                await getText("prompts/node.md"),
             ].join("\n"),
         },
         advanced: {
             model: "gpt-4",
+            role: "system",
+            cleanup: "system",
         },
     })
     .subscribe(() => {});
 
-schemas.upstream$.next([signature]);
+schemas.upstream$.next([requirements]);
 
 const test = new NodeWrapper("test");
 
-test.upstream$.next([schemas]);
+// test.upstream$.next([schemas]);
 
-test.write$$("operator:config", {
+test.write$$("process:config", {
     basic: {
         prompt: [
-            "Please provide a few test cases for your operator.",
-            "Each test case should be an input object, config object, and a matching output object.",
-            "The test runner will run each test case through the operator, and compare the output to the expected output.",
-            "you should also provide any setup or teardown functions for the tests (for example, creating and cleaning up test files).",
-            "The test runner will handle setting up the observable pipeline, your test case input and expected output must be provided as POJOs.",
+            "You are tasked with developing an rxjs operator for the user.",
+            "Based on the documentation and schemas you provided above, you are required to construct a comprehensive test suite for the process:",
+            "Each test case must consist of an input object, a config object, and a corresponding output object.",
+            "The test runner will execute each test case through the operator, and the output will be compared to the expected output.",
+            "It is mandatory to provide any setup or teardown functions for the tests, such as creating and deleting test files.",
+            "The test runner will manage the setup of the observable pipeline, your responsibility is to provide the test case input and expected output as POJOs.",
+            "The final suite must be presented as an async function with the following signature:",
+            "async () => ({cases, teardown})",
+            "Ensure that no steps are omitted and the output is complete with all required code and test cases.",
+            "You MUST provide a test for the entire happy path.",
         ].join("\n"),
     },
     advanced: {
         model: "gpt-4",
+        role: "system",
+        cleanup: "system",
     },
 }).subscribe(() => {});
 
 const finalize = new NodeWrapper("finalize");
-finalize.upstream$.next([test]);
+signature.upstream$.next([schemas]);
+finalize.upstream$.next([signature]);
 
 finalize
-    .write$$("operator:config", {
+    .write$$("process:config", {
         basic: {
             prompt: [
                 "Please bring everything together:",
@@ -161,8 +196,9 @@ finalize
                 "it MUST have the following signature:",
                 "export const version = '0.0.1'",
                 "export const description = 'the original description provided by the user'",
-                "export const configSchema = ({node, config, keys}) => (input$) => output$ OR null",
-                "export const keysSchema = ({node, config, keys}) => (input$) => output$ OR null",
+                "export const configSchema = ({node, config, keys}) => (input$) => output$",
+                "export const keysSchema = ({node, config, keys}) => (input$) => output$",
+                "NOTE: if you do not have a keys schema or a config schema, simply omit the export",
                 "export const inputSchema = ({node, config, keys}) => (input$) => output$",
                 "export const outputSchema = ({node, config, keys}) => (input$) => output$",
                 "export const test = async () => {...perform setup... return {cases, teardown}}",
@@ -189,26 +225,10 @@ review
     .subscribe(() => {});
 
 review
-    .write$$("operator:config", {
+    .write$$("process:config", {
         basic: {
             prompt: [
-                "Please review the code, and make any changes you see fit:",
-                "If you see any errors, please fix them.",
-                "If you see any opportunities for improvement, please make them.",
-                "If you see any opportunities for optimization, please make them.",
-                "If you see any opportunities for refactoring, please make them.",
-                "If you see any opportunities for simplification, please make them.",
-                "If you see any opportunities for clarification, please make them.",
-                "\n",
-                "Please do not change the signature of the operator.",
-                "Please do not change the schemas of the operator.",
-                "Please do not change the test of the operator.",
-                "Please do not change the description of the operator.",
-                "Please do not change the version of the operator.",
-                "Please do not change the key of the operator.",
-                "Please do not change the default export of the operator.",
-                "\n",
-                "You MUST output the entire source code, not just the changes.",
+                "Please output the code again, make sure that all schemas, tests, and code from earlier steps are present in full:",
             ].join("\n"),
         },
         advanced: {
@@ -229,7 +249,7 @@ testRunner
 
 testRunner
     .write$$("system", {
-        operator: "testRunner@0.0.1",
+        process: "testRunner@0.0.1",
     })
     .subscribe(() => {});
 
@@ -238,7 +258,7 @@ filterImportFailed.upstream$.next([importModuleFromCode]);
 
 filterImportFailed
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
@@ -249,7 +269,7 @@ filterImportFailed
     .subscribe(() => {});
 
 filterImportFailed
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "filter",
         funcString: "value.error",
     })
@@ -260,7 +280,7 @@ filterImportPassed.upstream$.next([importModuleFromCode]);
 
 filterImportPassed
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
@@ -271,7 +291,7 @@ filterImportPassed
     .subscribe(() => {});
 
 filterImportPassed
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "filter",
         funcString: "console.log('FILTER IMPORT PASSED',value) || !value.error",
     })
@@ -283,7 +303,7 @@ testRunner.upstream$.next([filterImportPassed]);
 
 filterFailed
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
@@ -294,7 +314,7 @@ filterFailed
     .subscribe(() => {});
 
 filterFailed
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "filter",
         funcString: "value.results.some(result => !result.passed)",
     })
@@ -304,7 +324,7 @@ const filterPassed = new NodeWrapper("filterPassed");
 
 filterPassed
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
@@ -315,7 +335,7 @@ filterPassed
     .subscribe(() => {});
 
 filterPassed
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "filter",
         funcString: "value.results.every(result => result.passed)",
     })
@@ -328,7 +348,7 @@ const normalizeError = new NodeWrapper("normalizeError");
 
 normalizeError
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
@@ -339,7 +359,7 @@ normalizeError
     .subscribe(() => {});
 
 normalizeError
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "map",
         funcString:
             "{error: `Error: \n${value.error?.message || value.results.find(r => r.error)?.error?.message || ''}\n\n${value.error?.stack || value.results.find(r => r.error).error.stack || ''}`}",
@@ -352,19 +372,19 @@ const recurseError = new NodeWrapper("recurseError");
 
 recurseError
     .write$$("system", {
-        operator: "configurableOperator@0.0.1",
+        process: "configurableOperator@0.0.1",
     })
     .subscribe(() => {});
 
 recurseError
     .write$$("ingress:config", {
         unsafelyBypassSchemaValidation: true,
-        joinOperator: "zip",
+        joinprocess: "zip",
     })
     .subscribe(() => {});
 
 recurseError
-    .write$$("operator:config", {
+    .write$$("process:config", {
         operatorName: "map",
         funcString:
             "{ messages: [{ role: 'user', content: `Source:\n\n${value[0].code}` }, {role: 'user', content: value[1].error}] }",
@@ -391,9 +411,21 @@ review.upstream$.next([finalize, recurseError]);
     normalizeError,
     recurseError,
 ].forEach((node) => {
-    node.status$.subscribe((status) => {
-        const text = new TextEncoder().encode(status.detail?.chunk || "\n");
-        Deno.writeAllSync(Deno.stdout, text);
+    node.status$.subscribe((event) => {
+        if (event.status === "content") {
+            Deno.writeAllSync(
+                Deno.stdout,
+                new TextEncoder().encode(event.detail)
+            );
+        }
+
+        if (event.status === "functionCall") {
+            console.log("functionCall", event.detail);
+        }
+
+        if (event.status === "message") {
+            console.log("message", event.detail);
+        }
     });
     node.output$.subscribe((output) => {
         console.log(node.id, "output", output.messages || output);

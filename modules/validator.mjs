@@ -63,7 +63,7 @@ export const validator =
     ({
         node,
         config: {
-            role = "operator:input",
+            role = "process:input",
             ajv: ajvConfig,
             strict,
             skipPresets,

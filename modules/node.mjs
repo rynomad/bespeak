@@ -51,7 +51,7 @@ export default class NodeWrapper {
         this.upstream$ = new ReplaySubject(1);
         this.ingress$ = new ReplaySubject(1);
         this.input$ = new ReplaySubject(1);
-        this.operator$ = new ReplaySubject(1);
+        this.process$ = new ReplaySubject(1);
         this.output$ = new ReplaySubject(1);
 
         this.destroy$ = new ReplaySubject(1);
@@ -102,12 +102,12 @@ export default class NodeWrapper {
             .pipe(
                 systemToConfiguredModule({
                     node: this,
-                    config: { role: "operator" },
+                    config: { role: "process" },
                 }),
                 distinctUntilChanged(deepEqual),
                 takeTillDone({ node: this })
             )
-            .subscribe(this.operator$);
+            .subscribe(this.process$);
 
         this.system$
             .pipe(
@@ -175,9 +175,9 @@ export default class NodeWrapper {
         applyModule({
             node: this,
             config: {
-                module$: this.operator$,
+                module$: this.process$,
                 stream$: this.input$,
-                role: "operator",
+                role: "process",
             },
         })
             .pipe(takeTillDone({ node: this }))
@@ -348,8 +348,8 @@ export default class NodeWrapper {
         node ||= this;
         return pipe(
             this.log(`invoked as operator: ${node.id}`),
-            withLatestFrom(this.operator$),
-            this.log(`invoked as operator: ${node.id}: got operator`),
+            withLatestFrom(this.process$),
+            this.log(`invoked as operator: ${node.id}: got process operator`),
             mergeMap(([input, { module, config: _config, keys: _keys }]) => {
                 return of(input).pipe(
                     module.default({
@@ -486,7 +486,7 @@ const applyModule = ({
 };
 
 const systemToConfiguredModule =
-    ({ node, config: { role = "operator" } }) =>
+    ({ node, config: { role = "process" } }) =>
     (system$) => {
         return combineLatest(
             system$,

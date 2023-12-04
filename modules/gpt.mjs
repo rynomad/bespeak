@@ -1,20 +1,28 @@
 import {
     Observable,
     throwError,
-    pipe,
     switchMap,
     catchError,
     of,
     map,
     from,
-    startWith,
 } from "https://esm.sh/rxjs";
 import OpenAI from "openai";
+import Ajv from "https://esm.sh/ajv";
+import addFormats from "https://esm.sh/ajv-formats";
 import { combineLatest } from "npm:rxjs@^7.8.1";
-import { withLatestFrom } from "npm:rxjs@^7.8.1";
+const getText = async (path) => {
+    try {
+        const cwd = Deno.realPathSync(".");
+        return await Deno.readTextFile(`${cwd}/${path}`);
+    } catch (e) {
+        return await fetch(path).then((res) => res.text());
+    }
+};
 
 export const key = "chat-gpt";
 export const version = "0.0.1";
+export const prompt = await getText(`prompts/gpt.md`);
 export const description = `The primary functional requirement of the @gpt.mjs module is to create a custom RxJS operator that interacts with the OpenAI API to generate responses based on a given prompt. This operator is designed to be used in a chat application where it can generate responses from the GPT model in real-time.
 
 The operator takes in a configuration object and an input object. The configuration object includes settings such as the role of the message sender, the temperature for randomness in the generation process, and the model to be used for generating responses. The input object includes a history of messages to be included in the prompt and optional overrides for the configured options.
@@ -27,7 +35,6 @@ The libraries that aid its function are:
 
 function extractLastCodeBlock(str) {
     const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/gs;
-    console.log("extracting code block");
     let match;
     let lastMatch;
     let parsed = null;
@@ -44,7 +51,6 @@ function extractLastCodeBlock(str) {
 
     lastMatch = lastMatch ? lastMatch[2].trim() : null;
 
-    console.log("extracted code block", lastMatch);
     return {
         raw: lastMatch,
         parsed: parsed,
@@ -137,6 +143,14 @@ export const configSchema = ({ node, keys }) => {
                             enum: ["user", "none", "all"],
                             default: "user",
                             description: "Whether to expose tools to the LLM.",
+                        },
+                        cleanup: {
+                            type: "string",
+                            enum: ["none", "system", "user", "all"],
+                            title: "Clean",
+                            description:
+                                "Whether to strip system and or user messages from the returned message history.",
+                            default: "none",
                         },
                         // Additional advanced options can be added here as needed.
                     },
@@ -299,34 +313,69 @@ export const toolsToFunctionsOperator = ({ node, config }) => {
                     : false
             )
         ),
-        node.log("toolsToFunctionsOperator: filtered tools"),
+        node.log("toolsToFunctionsprocess: filtered tools"),
         switchMap((tools) => {
             if (tools.length === 0) {
                 return of({ tools: [] });
             }
 
-            console.log("TOOLS1", tools[0].id);
             return combineLatest({
                 tools: of(tools),
                 inputSchemas: combineLatest(
                     tools.map((tool) =>
                         tool
-                            .schema$$("operator:input")
+                            .schema$$("process:input")
                             .pipe(node.log(`got input schema for ${tool.id}`))
                     )
                 ),
                 configSchemas: combineLatest(
                     tools.map((tool) =>
                         tool
-                            .schema$$("operator:config")
+                            .schema$$("process:config")
                             .pipe(node.log(`got config schema for ${tool.id}`))
                     )
                 ),
+                operators: combineLatest(tools.map((tool) => tool.process$)),
             });
         }),
-        map(({ tools, inputSchemas, configSchemas }) => {
+        map(({ tools, inputSchemas, configSchemas, operators }) => {
             return tools.map((toolNode, i) => {
+                const {
+                    module: { description },
+                    config,
+                } = operators[i];
+
+                const parameters = {
+                    type: "object",
+                    description:
+                        "Only input is required, but it must be provided on a sub property. If config is omitted, the tool will use the following configuration: \n" +
+                        JSON.stringify(config, null, 2),
+                    properties: {
+                        input: inputSchemas[i],
+                        config: configSchemas[i],
+                    },
+                    required: ["input"],
+                };
+
+                const parse = (str) => {
+                    const data = JSON.parse(str);
+                    data.config ||= config;
+                    const ajv = new Ajv();
+                    addFormats(ajv);
+                    const validate = ajv.compile(parameters);
+                    const valid = validate(data);
+                    if (!valid) {
+                        console.warn(data, parameters);
+                        throw new Error(
+                            `Input data does not match schema.\n${ajv.errorsText()}`
+                        );
+                    }
+
+                    return data;
+                };
+
                 return {
+                    description,
                     function: async ({ input, config }) => {
                         return await new Promise((resolve, reject) => {
                             of(input)
@@ -337,14 +386,8 @@ export const toolsToFunctionsOperator = ({ node, config }) => {
                                 .subscribe(resolve);
                         });
                     },
-                    parse: JSON.parse,
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            input: inputSchemas[i],
-                            config: configSchemas[i],
-                        },
-                    },
+                    parse,
+                    parameters,
                 };
             });
         })
@@ -399,7 +442,6 @@ export const chatGPTOperator =
                 };
 
                 // Start the stream
-                console.log("START CHATGPT", functions);
                 return new Observable((observer) => {
                     (async () => {
                         try {
@@ -465,8 +507,49 @@ export const chatGPTOperator =
                                             data.content
                                         );
                                         const output = {
-                                            messages:
-                                                apiParams.messages.concat(data),
+                                            messages: apiParams.messages
+                                                .concat(data)
+                                                .filter((message) => {
+                                                    if (
+                                                        effectiveConfig.advanced
+                                                            .cleanup === "none"
+                                                    ) {
+                                                        return true;
+                                                    }
+
+                                                    if (
+                                                        effectiveConfig.advanced
+                                                            .cleanup ===
+                                                            "all" &&
+                                                        message.role !==
+                                                            "assistant"
+                                                    ) {
+                                                        return false;
+                                                    }
+
+                                                    if (
+                                                        effectiveConfig.advanced
+                                                            .cleanup ===
+                                                        "system"
+                                                    ) {
+                                                        return (
+                                                            message.role !==
+                                                            "system"
+                                                        );
+                                                    }
+
+                                                    if (
+                                                        effectiveConfig.advanced
+                                                            .cleanup === "user"
+                                                    ) {
+                                                        return (
+                                                            message.role !==
+                                                            "user"
+                                                        );
+                                                    }
+
+                                                    return true;
+                                                }),
                                             response: data.content,
                                             model: apiParams.model,
                                         };

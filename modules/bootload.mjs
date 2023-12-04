@@ -24,51 +24,51 @@ const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
 const systemTools = [
     {
         id: "db",
-        operator: {
+        process: {
             module: await import("./db.mjs"),
             config: dbConfig,
         },
         system: {
-            operator: `${DB.key}@${DB.version}`,
+            process: `${DB.key}@${DB.version}`,
             ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
         },
     },
     {
         id: "validator",
-        operator: {
+        process: {
             module: Validator,
             config: {},
         },
         system: {
             ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
-            operator: `${Validator.key}@${Validator.version}`,
+            process: `${Validator.key}@${Validator.version}`,
         },
     },
     {
         id: "imports",
-        operator: {
+        process: {
             module: Imports,
         },
         system: {
             ingress: `${DefaultIngress.key}@${DefaultIngress.version}`,
-            operator: `${Imports.key}@${Imports.version}`,
+            process: `${Imports.key}@${Imports.version}`,
         },
     },
     {
         id: "registrar",
-        operator: {
+        process: {
             module: Registrar,
         },
         system: {
-            operator: `${Registrar.key}@${Registrar.version}`,
+            process: `${Registrar.key}@${Registrar.version}`,
         },
     },
 ];
 
 NodeWrapper.systemTools$.next(
-    systemTools.map(({ id, operator, system }) => {
+    systemTools.map(({ id, process, system }) => {
         const node = new NodeWrapper(`system:${id}`);
-        node.operator$.next(operator);
+        node.process$.next(process);
         node.system$.next(system);
         return node;
     })

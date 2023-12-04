@@ -98,7 +98,7 @@ export default ({ node, config = {}, keys = {} }) =>
                 operator = distinctUntilChanged(func);
                 break;
             default:
-                throw new Error(`Unsupported operator: ${config.operatorName}`);
+                throw new Error(`Unsupported process: ${config.operatorName}`);
         }
 
         return input$.pipe(operator, node.log(`${config.operatorName} done`));

@@ -39,7 +39,7 @@ export const configSchema = () =>
                 },
                 required: ["strict"],
             },
-            joinOperator: {
+            joinprocess: {
                 type: "string",
                 description:
                     "RxJS operator for joining upstream output streams",
@@ -53,11 +53,11 @@ export const configSchema = () =>
 const DefaultIngress =
     ({ config, node }) =>
     (source$) => {
-        return combineLatest(source$, node.schema$$("operator:input")).pipe(
+        return combineLatest(source$, node.schema$$("process:input")).pipe(
             node.log("DefaultIngress got upstream"),
             switchMap(([upstream, inputSchema]) => {
                 return combineLatest(
-                    ...upstream.map((node) => node.schema$$("operator:output"))
+                    ...upstream.map((node) => node.schema$$("process:output"))
                 ).pipe(
                     node.log(
                         "DefaultIngress got upstreams with schemas and self schema"
