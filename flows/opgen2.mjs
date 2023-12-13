@@ -13,12 +13,6 @@ const fs = new Node("fs");
 
 fs.write$$("system", {
     process: `fs@0.0.1`,
-    description: [
-        `This fs operator gives access to a directory containing markdown files.`,
-        `you can read any file by giving only it's name: i.e. file: "readme.md" will get you the proper readme file without needing to worry about its path prefix`,
-        `the files contain double bracket [[links]]. These links are used to navigate the documentation.`,
-        `so if you encounter [[something interesting]], you can use the function to read that file with file: "something interesting.md"`,
-    ],
 }).subscribe(() => {
     console.log("fs wrote system");
 });
@@ -74,7 +68,7 @@ requirements.write$$("process:keys", keys).subscribe(() => {
     console.log("requirements wrote keys");
 });
 
-requirements.flowTools$.next([readability, fs]);
+requirements.flowTools$.next([readability]);
 // schinquirer
 //     .prompt(schema.properties.basic.properties)
 //     .then((config) => {
@@ -82,16 +76,24 @@ requirements
     .write$$("process:config", {
         basic: {
             prompt: [
-                "You are a developer tasked with developing an rxjs operator for the user.",
-                "You have access to the documentation for the system the operator will be used in, via the fs tool.",
-                "You have access to web documentation via the readability tool.",
-                "You will visit all web documentation links provided in the user message",
-                "You will read all files provided in the user message",
-                "You will thoroughly crawl both the web documentation and the local documentation to find all relevant information.",
-                "You will make all invocations of the fs tool and the readability tool before responding to the user.",
-                "After you read all the documentation you will respond a complete implementation of the operator, including all schemas.",
-                "You MUST fulfill all requirements.",
-                "You MUST match the instructions exactly.",
+                "You will invoke the readability function to read any documentation referenced in the requirements.",
+                "You will report the portion of relevant documentation back.",
+                "You will include all relevant interfaces and code samples or examples you find.",
+                "You MUST follow every provided link before beginning your response.",
+                "You MAY follow links you find within the documentation.",
+                "You SHOULD research thoroughly before responding.",
+                "If there are no links provided, simply acknowledge that there is no research to be done.",
+                // ""
+                // "The operator should be presumed to be long-lived, handling many events over its lifetime.",
+                // "Your code should target a browser/deno environment, not node.",
+                // "Your code should use es6 modules, not commonjs.",
+                // "Your code should prefer web standards over node standards.",
+                // "Your code should import all rxjs dependencies from https://esm.sh/rxjs",
+                // "Your code should import dependencies from https://esm.sh",
+                // "Your code should be written with vanilla es6 modules, and should not require the use any bundlers or transpilers.",
+                // "Your code should not use any typescript features.",
+                // "Your code should prefer using the pipe operator to compose operators, rather than constructing a new Observable.",
+                // "always choose to invoke functions/tools before responding to the user. When provided multiple links, always visit each of them before responding to the user.",
             ].join("\n"),
         },
         advanced: {
@@ -100,19 +102,13 @@ requirements
             role: "system",
         },
     })
-    .subscribe(async () => {
+    .subscribe(() => {
         console.log("requirements wrote config");
-        requirements.input$.next({
-            messages: [
-                {
-                    role: "user",
-                    content: await getText(path),
-                },
-            ],
-        });
     });
 
 const docs = new Node("docs");
+
+requirements.upstream$.next([docs]);
 
 docs.write$$("process:config", {
     basic: {
@@ -139,36 +135,33 @@ docs.write$$("process:config", {
     },
 }).subscribe(async () => {
     console.log("docs wrote config");
-    // docs.input$.next({
-    //     messages: [
-    //         {
-    //             role: "user",
-    //             content: await getText(path),
-    //         },
-    //     ],
-    // });
+    docs.input$.next({
+        messages: [
+            {
+                role: "user",
+                content: await getText(path),
+            },
+        ],
+    });
 });
 
 docs.flowTools$.next([fs]);
 
 const signature = new Node("signature");
 
-// signature.flowTools$.next([fs, readability]);
-signature.upstream$.next([requirements]);
-
 signature
     .write$$("process:config", {
         basic: {
             prompt: [
-                "Please review the implementation. Do they cover all the requirements?",
-                "If there are missing requirements, list them.",
-                "here's a reminder of the requirements:",
+                "You are working on developing an rxjs operator for the user.",
+                "Based on the requirements, documentation, and schemas you provided above, you will write a complete implementation of the operator factory:",
+                "here's  a reminder of the requirements:",
                 await getText(path),
             ].join("\n"),
         },
         advanced: {
             model: "gpt-4",
-            role: "user",
+            role: "system",
             cleanup: "system",
         },
     })
@@ -180,31 +173,25 @@ signature
 
 const schemas = new Node("schemas");
 
-schemas.upstream$.next([signature]);
-schemas.flowTools$.next([fs, readability]);
-
 schemas
     .write$$("process:config", {
         basic: {
             prompt: [
-                "You are a developer working on an rxjs operator for the user.",
-                "You have access to the documentation for the system the operator will be used in, via the fs tool.",
-                "You have access to web documentation via the readability tool.",
-                "You will visit all web documentation links provided in the user message",
-                "You will read all files provided in the user message",
-                "You will thoroughly crawl both the web documentation and the local documentation to find all relevant information.",
-                "You will make all invocations of the fs tool and the readability tool before responding to the user.",
-                "After you read all the documentation you will respond with changes to complete the implementation.",
+                "Based on the documentation you provided above, implement the operator acoording to the requirements:",
+                "Your output MUST obey the conventions of the system you are working in.",
+                "Your output MUST fulfill all the requirements.",
+                "here's  a reminder of the requirements:",
+                await getText(path),
             ].join("\n"),
         },
         advanced: {
-            model: "gpt-4-1106-preview",
-            role: "system",
+            model: "gpt-4",
+            role: "user",
         },
     })
     .subscribe(() => {});
 
-// schemas.upstream$.next([requirements]);
+schemas.upstream$.next([requirements]);
 
 const test = new Node("test");
 

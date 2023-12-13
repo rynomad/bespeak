@@ -144,6 +144,11 @@ export const configSchema = ({ node, keys }) => {
                             default: "user",
                             description: "Whether to expose tools to the LLM.",
                         },
+                        continue: {
+                            type: "boolean",
+                            default: false,
+                            description: `whether to allow the model to continue the conversation from the prompt. If set to false, the model the conversation will end after the model's first response. If set to true, the model will be allowed to continue the conversation for up to 4 additional turns or until it calls a "finish" function.`,
+                        },
                         cleanup: {
                             type: "string",
                             enum: ["none", "system", "user", "all"],
@@ -336,30 +341,25 @@ export const toolsToFunctionsOperator = ({ node, config }) => {
                     )
                 ),
                 operators: combineLatest(tools.map((tool) => tool.process$)),
+                system: node.system$,
             });
         }),
-        map(({ tools, inputSchemas, configSchemas, operators }) => {
+        map(({ tools, inputSchemas, configSchemas, operators, system }) => {
             return tools.map((toolNode, i) => {
-                const {
-                    module: { description },
-                    config,
-                } = operators[i];
+                const { module, config } = operators[i];
 
-                const parameters = {
-                    type: "object",
-                    description:
-                        "Only input is required, but it must be provided on a sub property. If config is omitted, the tool will use the following configuration: \n" +
-                        JSON.stringify(config, null, 2),
-                    properties: {
-                        input: inputSchemas[i],
-                        config: configSchemas[i],
-                    },
-                    required: ["input"],
-                };
+                const description = `${toolNode.id}\nCode Description: ${
+                    module.description
+                }${
+                    system.description
+                        ? `\nUser Description: ${system.description}`
+                        : ``
+                }`;
+
+                const parameters = inputSchemas[i];
 
                 const parse = (str) => {
                     const data = JSON.parse(str);
-                    data.config ||= config;
                     const ajv = new Ajv();
                     addFormats(ajv);
                     const validate = ajv.compile(parameters);
@@ -375,12 +375,13 @@ export const toolsToFunctionsOperator = ({ node, config }) => {
                 };
 
                 return {
+                    name: toolNode.id,
                     description,
-                    function: async ({ input, config }) => {
+                    function: async (input) => {
                         return await new Promise((resolve, reject) => {
                             of(input)
                                 .pipe(
-                                    toolNode.operator({ node, config }),
+                                    toolNode.operator({ node }),
                                     catchError(reject)
                                 )
                                 .subscribe(resolve);
@@ -441,159 +442,43 @@ export const chatGPTOperator =
                     stream: true,
                 };
 
+                if (functions.length || effectiveConfig.advanced.continue) {
+                    apiParams.functions = functions;
+                    if (effectiveConfig.advanced.continue) {
+                        apiParams.functions.push({
+                            name: "complete",
+                            description:
+                                "Call this function to finish the chat.",
+                            function: (_, runner) => {
+                                runner.abort();
+                            },
+                            parse: JSON.parse,
+                            parameters: {
+                                type: "object",
+                                properties: {
+                                    reason: {
+                                        type: "string",
+                                    },
+                                },
+                            },
+                        });
+                    }
+                }
+
                 // Start the stream
                 return new Observable((observer) => {
                     (async () => {
                         try {
-                            if (observer.closed) {
-                                return;
-                            }
-
-                            let apiCall =
-                                openai.beta.chat.completions.stream.bind(
-                                    openai.beta.chat.completions
-                                );
-
-                            if (functions.length) {
-                                apiCall =
-                                    openai.beta.chat.completions.runFunctions.bind(
-                                        openai.beta.chat.completions
-                                    );
-                                apiParams.functions = functions;
-                            }
-
-                            const stream = await apiCall(apiParams);
-
-                            [
-                                "connect",
-                                "chunk",
-                                "chatCompletion",
-                                "message",
-                                "content",
-                                "functionCall",
-                                "functionCallResult",
-                                "finalChatCompletion",
-                                "finalContent",
-                                "finalMessage",
-                                "finalFunctionCall",
-                                "finalFunctionCallResult",
-                                "error",
-                                "abort",
-                                "totalUsage",
-                                "end",
-                            ].forEach((eventType) => {
-                                stream.on(eventType, async (data, snapshot) => {
-                                    const progressEvent = {
-                                        status: eventType,
-                                        message:
-                                            snapshot ||
-                                            `Event of type ${eventType} received`,
-                                        detail: data,
-                                    };
-                                    node.status$.next(progressEvent);
-
-                                    if (eventType === "error") {
-                                        observer.error(data);
-                                    }
-
-                                    if (eventType === "abort") {
-                                        observer.error(data);
-                                    }
-
-                                    if (eventType === "finalMessage") {
-                                        console.log("FINALMESSAGE", data);
-
-                                        const code = extractLastCodeBlock(
-                                            data.content
-                                        );
-                                        const output = {
-                                            messages: apiParams.messages
-                                                .concat(data)
-                                                .filter((message) => {
-                                                    if (
-                                                        effectiveConfig.advanced
-                                                            .cleanup === "none"
-                                                    ) {
-                                                        return true;
-                                                    }
-
-                                                    if (
-                                                        effectiveConfig.advanced
-                                                            .cleanup ===
-                                                            "all" &&
-                                                        message.role !==
-                                                            "assistant"
-                                                    ) {
-                                                        return false;
-                                                    }
-
-                                                    if (
-                                                        effectiveConfig.advanced
-                                                            .cleanup ===
-                                                        "system"
-                                                    ) {
-                                                        return (
-                                                            message.role !==
-                                                            "system"
-                                                        );
-                                                    }
-
-                                                    if (
-                                                        effectiveConfig.advanced
-                                                            .cleanup === "user"
-                                                    ) {
-                                                        return (
-                                                            message.role !==
-                                                            "user"
-                                                        );
-                                                    }
-
-                                                    return true;
-                                                }),
-                                            response: data.content,
-                                            model: apiParams.model,
-                                        };
-
-                                        if (code.raw) {
-                                            output.code = code.raw;
-                                            if (code.parsed) {
-                                                output.json = code.parsed;
-                                            }
-                                        }
-                                        // Emit the final output
-                                        observer.next(output);
-                                    }
-
-                                    if (eventType === "end") {
-                                        observer.complete();
-                                    }
-                                });
-                            });
-
-                            abortController = stream; // Store the AbortController
-
-                            // const code =
-                            //     extractLastCodeBlock(accumulatedResponse);
-                            // const output = {
-                            //     messages: finalMessages,
-                            //     response: accumulatedResponse,
-                            //     model: apiParams.model,
-                            // };
-
-                            // if (code.raw) {
-                            //     output.code = code.raw;
-                            //     if (code.parsed) {
-                            //         output.json = code.parsed;
-                            //     }
-                            // }
-                            // // Emit the final output
-                            // observer.next(output);
-
-                            // // Complete the observable
-                            // observer.complete();
-                        } catch (error) {
-                            // Handle errors
-                            observer.error(error);
+                            await callOpenAi(
+                                node,
+                                effectiveConfig,
+                                observer,
+                                apiParams,
+                                openai,
+                                effectiveConfig.advanced.continue ? 4 : 0
+                            );
+                        } catch (e) {
+                            console.warn(e);
                         }
                     })();
 
@@ -622,5 +507,140 @@ export const chatGPTOperator =
             })
         );
     };
+
+const callOpenAi = async (
+    node,
+    effectiveConfig,
+    observer,
+    apiParams,
+    openai,
+    _continue = 0
+) => {
+    try {
+        if (observer.closed) {
+            return;
+        }
+
+        let apiCall = openai.beta.chat.completions.stream.bind(
+            openai.beta.chat.completions
+        );
+
+        console.log("CALLING OPENAI", apiParams.functions);
+        if (apiParams.functions?.length) {
+            apiCall = openai.beta.chat.completions.runFunctions.bind(
+                openai.beta.chat.completions
+            );
+        }
+
+        const stream = await apiCall(apiParams, { maxChatCompletions: 100 });
+
+        [
+            "connect",
+            "chunk",
+            "chatCompletion",
+            "message",
+            "content",
+            "functionCall",
+            "functionCallResult",
+            "finalChatCompletion",
+            "finalContent",
+            "finalMessage",
+            "finalFunctionCall",
+            "finalFunctionCallResult",
+            "error",
+            "abort",
+            "totalUsage",
+            "end",
+        ].forEach((eventType) => {
+            stream.on(eventType, async (data, snapshot) => {
+                const progressEvent = {
+                    status: eventType,
+                    message: snapshot || `Event of type ${eventType} received`,
+                    detail: data,
+                };
+                node.status$.next(progressEvent);
+
+                if (eventType === "error") {
+                    observer.error(data);
+                }
+
+                if (eventType === "abort") {
+                    observer.error(data);
+                }
+
+                if (eventType === "finalMessage") {
+                    console.log("FINALMESSAGE", data);
+
+                    if (_continue) {
+                        console.log("CONTINUE", apiParams.messages);
+                        apiParams.messages = stream.messages;
+                        return await callOpenAi(
+                            node,
+                            effectiveConfig,
+                            observer,
+                            apiParams,
+                            openai,
+                            _continue - 1
+                        );
+                    }
+
+                    const code = extractLastCodeBlock(data.content);
+                    const output = {
+                        messages: apiParams.messages
+                            .concat(data)
+                            .filter((message) => {
+                                if (
+                                    effectiveConfig.advanced.cleanup === "none"
+                                ) {
+                                    return true;
+                                }
+
+                                if (
+                                    effectiveConfig.advanced.cleanup ===
+                                        "all" &&
+                                    message.role !== "assistant"
+                                ) {
+                                    return false;
+                                }
+
+                                if (
+                                    effectiveConfig.advanced.cleanup ===
+                                    "system"
+                                ) {
+                                    return message.role !== "system";
+                                }
+
+                                if (
+                                    effectiveConfig.advanced.cleanup === "user"
+                                ) {
+                                    return message.role !== "user";
+                                }
+
+                                return true;
+                            }),
+                        response: data.content,
+                        model: apiParams.model,
+                    };
+
+                    if (code.raw) {
+                        output.code = code.raw;
+                        if (code.parsed) {
+                            output.json = code.parsed;
+                        }
+                    }
+                    // Emit the final output
+                    observer.next(output);
+                }
+            });
+        });
+
+        // abortController = stream; // Store the AbortController
+
+        // observer.complete();
+    } catch (error) {
+        // Handle errors
+        observer.error(error);
+    }
+};
 
 export default chatGPTOperator;

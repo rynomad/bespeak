@@ -1,6 +1,6 @@
 import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
 import slash from "https://deno.land/x/slash/mod.ts";
-import NodeWrapper from "./node.mjs";
+import Node from "http://localhost:3002/modules/node.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { config as dbConfig } from "./db.schemas.mjs";
 
@@ -65,9 +65,9 @@ const systemTools = [
     },
 ];
 
-NodeWrapper.systemTools$.next(
+Node.systemTools$.next(
     systemTools.map(({ id, process, system }) => {
-        const node = new NodeWrapper(`system:${id}`);
+        const node = new Node(`system:${id}`);
         node.process$.next(process);
         node.system$.next(system);
         return node;
@@ -86,8 +86,10 @@ combineLatest(
         "./testRunner.mjs",
         "./configurableOperator.mjs",
         "./readability.mjs",
+        "./fs.mjs",
+        "./flow.mjs",
     ]),
-    NodeWrapper.systemTools$
+    Node.systemTools$
 )
     .pipe(
         concatMap(([paths, tools]) => {
@@ -109,7 +111,7 @@ combineLatest(
         console.log("Registration Complete");
     });
 
-NodeWrapper.$.pipe(
+Node.$.pipe(
     tap((node) => {
         node.log$.subscribe(({ message, value, callSite }) => {
             const DEBUG = Deno.env.get("DEBUG");

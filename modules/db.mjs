@@ -54,7 +54,7 @@ async function getDB(dbName, collections) {
 
 export const key = "dbOperation";
 export const version = "0.0.1";
-export const prompt = await getText(`prompts/db.md`);
+export const description = `Performs operations on a database.`;
 
 export function inputSchema() {
     const schema = {

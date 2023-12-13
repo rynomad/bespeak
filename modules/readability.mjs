@@ -61,8 +61,8 @@ const parseHTML =
                     : html;
                 const doc = new DOMParser().parseFromString(text, "text/html");
                 const article = new Readability(doc).parse();
-
-                ["a", "img"].forEach((selector) =>
+                // console.log("ARTICLE", article.textContent);
+                [("a", "img")].forEach((selector) =>
                     replaceContent(
                         doc,
                         selector,
@@ -72,7 +72,7 @@ const parseHTML =
                     )
                 );
 
-                return { text: article.textContent };
+                return { text: article?.textContent };
             })
         );
 

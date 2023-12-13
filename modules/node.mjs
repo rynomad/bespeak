@@ -21,19 +21,14 @@ import {
 } from "https://esm.sh/rxjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { deepEqual } from "https://esm.sh/fast-equals";
+import { v4 as uuid } from "https://esm.sh/uuid";
 
-const GPT = await import("./gpt.mjs");
-const Imports = await import("./imports.mjs");
-const Registrar = await import("./registrar.mjs");
-const Validator = await import("./validator.mjs");
-const DB = await import("./db.mjs");
-
-export default class NodeWrapper {
+export default class Node {
     static $ = new ReplaySubject(10);
 
     static systemTools$ = new ReplaySubject(1);
 
-    constructor(id = "test", system) {
+    constructor(id = uuid()) {
         this.id = id;
 
         this.status$ = new ReplaySubject(1);
@@ -61,8 +56,8 @@ export default class NodeWrapper {
 
         this.$.next(this);
         this.reset$.next();
-
-        NodeWrapper.$.next(this);
+        this.flowTools$.next([]);
+        Node.$.next(this);
     }
 
     setupPipelines() {
@@ -72,10 +67,7 @@ export default class NodeWrapper {
     }
 
     setupToolsPipelines() {
-        combineLatest(
-            this.flowTools$.pipe(startWith([])),
-            NodeWrapper.systemTools$
-        )
+        combineLatest(this.flowTools$.pipe(startWith([])), Node.systemTools$)
             .pipe(
                 map(([flowTools, systemTools]) => {
                     return flowTools.concat(systemTools);
@@ -253,6 +245,7 @@ export default class NodeWrapper {
     write$$(role, data) {
         const [functionRole, collection] = role.split(":");
         if (functionRole === "system") {
+            console.log("WRITE SYSTEM");
             return of(data).pipe(
                 tap((data) => this.system$.next(data)),
                 this.log(`write$$(${role}): wrote system data`)
@@ -266,6 +259,12 @@ export default class NodeWrapper {
         ).pipe(
             this.log(`got system, validator, and db for role: ${role}`),
             switchMap(([system, validator, db]) => {
+                console.log(
+                    "write$$",
+                    system,
+                    functionRole,
+                    system[functionRole]
+                );
                 return of(data).pipe(
                     this.log(`validating write$$ data for role: ${role}`),
                     validator.operator({
@@ -292,12 +291,17 @@ export default class NodeWrapper {
                         ];
                     }),
                     db.operator({ node: this }),
+                    this.log(`wrote write$$ document for role: ${role}`),
                     switchMap(() => {
                         return this[`${functionRole}$`].pipe(
+                            this.log(`write$$(${role}): got ${functionRole}$`),
                             filter(
                                 (triple) =>
                                     !!triple &&
                                     validateObject(data, triple[collection])
+                            ),
+                            this.log(
+                                `write$$(${role}): got ${functionRole}$ document that matches data`
                             ),
                             take(1)
                         );

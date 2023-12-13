@@ -1,6 +1,7 @@
 import { jsonPreset } from "https://esm.sh/json-schema-preset";
 import empty from "https://esm.sh/json-schema-empty";
 import Ajv from "https://esm.sh/ajv";
+import addFormats from "https://esm.sh/ajv-formats";
 
 import {
     pipe,
@@ -79,19 +80,37 @@ export const validator =
                         return of(null).pipe(filter(() => !schema));
                     }
                     doc = schema ? empty(schema) : {};
+                    // console.log("empty doc", doc);
                 }
 
                 const doc$ = doc?.get$ ? doc.get$("data") : of(doc);
 
                 return doc$.pipe(
+                    // tap((data) =>
+                    //     // console.log(
+                    //     //     "validator got data",
+                    //     //     data,
+                    //     //     JSON.stringify(schema, null, 4)
+                    //     // )
+                    // ),
                     map((data) =>
                         !schema || skipPresets ? data : jsonPreset(schema, data)
                     ),
+                    map((data) => {
+                        for (const key in data) {
+                            if (data[key]?.items) {
+                                delete data[key].items;
+                            }
+                        }
+                        return data;
+                    }),
                     filter((data) => {
+                        // console.log("json preset?", data);
                         if (skipValidation || !schema) return true;
                         if (!data) return false;
 
                         const ajv = new Ajv(ajvConfig);
+                        addFormats(ajv);
                         const validate = ajv.compile(schema);
                         const valid = validate(data);
                         if (!valid && strict) {
@@ -99,6 +118,12 @@ export const validator =
                                 `Input does not match schema: ${ajv.errorsText()}`
                             );
                         }
+                        // console.log(
+                        //     "Valid",
+                        //     valid,
+                        //     JSON.stringify(schema, null, 2),
+                        //     ajv.errorsText()
+                        // );
                         return valid;
                     })
                 );
