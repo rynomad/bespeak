@@ -16,13 +16,10 @@ export const description =
 
 export function inputSchema() {
     return of({
-        type: "array",
-        items: {
-            type: "object",
-            format: "rxdbDocument",
-            properties: {
-                id: { type: "string" },
-                data: { type: "string" },
+        type: "object",
+        properties: {
+            module: {
+                type: "string",
             },
         },
     });
@@ -32,7 +29,7 @@ function memoizedImport({ node }) {
     return pipe(
         node.log("memoizedImport"),
         withLatestFrom(node.tool$$("system:db")),
-        switchMap(([module, db]) => {
+        switchMap(([{ module }, db]) => {
             if (typeof module === "string") {
                 return of([
                     {
@@ -50,6 +47,10 @@ function memoizedImport({ node }) {
             return of(module);
         }),
         switchMap((module) => {
+            if (!module) {
+                return of(memos);
+            }
+
             const id = module.get("id");
             if (memos.has(id)) {
                 return memos.get(id);

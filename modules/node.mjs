@@ -27,6 +27,7 @@ export default class Node {
     static $ = new ReplaySubject(10);
 
     static systemTools$ = new ReplaySubject(1);
+    static ready$ = new ReplaySubject(1);
 
     constructor(id = uuid()) {
         this.id = id;
@@ -214,7 +215,9 @@ export default class Node {
                             `schema$$(${role}) (timeout recovery): got system json and system:imports tool.`
                         ),
                         switchMap(({ system, imports }) => {
-                            return of(system[`${functionRole}`]).pipe(
+                            return of({
+                                module: system[`${functionRole}`],
+                            }).pipe(
                                 imports.operator({ node: this }),
                                 map((module) => ({ module })),
                                 this.log(
@@ -506,7 +509,9 @@ const systemToConfiguredModule =
             node.log(`systemToConfiguredModule got system.${role}`),
             switchMap(([system, imports, db, validator]) => {
                 // console.log("re-getting module", system);
-                return of(system[role]).pipe(
+                return of({
+                    module: system[role],
+                }).pipe(
                     node.log(
                         `systemToConfiguredModule ${role} importing module`
                     ),

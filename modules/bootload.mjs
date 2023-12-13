@@ -1,6 +1,6 @@
 import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
 import slash from "https://deno.land/x/slash/mod.ts";
-import Node from "http://localhost:3002/modules/node.mjs";
+import Node from "http://localhost:3004/modules/node.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { config as dbConfig } from "./db.schemas.mjs";
 
@@ -13,7 +13,9 @@ import {
     tap,
     map,
     catchError,
+    toArray,
 } from "rxjs";
+import { take } from "npm:rxjs@^7.8.1";
 const Imports = await import("./imports.mjs");
 const Registrar = await import("./registrar.mjs");
 const Validator = await import("./validator.mjs");
@@ -103,12 +105,32 @@ combineLatest(
                         error.stack
                     );
                     return EMPTY;
-                })
+                }),
+                toArray(),
+                map((v) => [paths, tools])
+            );
+        }),
+        concatMap(([paths, tools]) => {
+            return from(paths).pipe(
+                map((p) => slash(path.resolve(__dirname, p))),
+                tools.find(({ id }) => id === "system:registrar").operator(),
+                map(([{ params }]) => ({ module: params.id })),
+                tools.find(({ id }) => id === "system:imports").operator(),
+                catchError((error) => {
+                    console.error(
+                        "Catastrophic Error In Registration Import flow: ",
+                        error.stack
+                    );
+                    return EMPTY;
+                }),
+                take(paths.length),
+                toArray()
             );
         })
     )
-    .subscribe(() => {
-        console.log("Registration Complete");
+    .subscribe((v) => {
+        console.log("Registration Complete", v);
+        Node.ready$.next(true);
     });
 
 Node.$.pipe(

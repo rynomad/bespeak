@@ -1,22 +1,9 @@
-import Node from "http://localhost:3002/modules/node.mjs";
+import Node from "http://localhost:3004/modules/node.mjs";
 import "../modules/bootload.mjs";
 import { getText } from "../modules/util.mjs";
 
 const config = {
     nodes: [
-        {
-            system: {
-                process: "fs@0.0.1",
-                ingress: "default-ingress@0.0.1",
-                name: "fs",
-                description:
-                    "This fs operator gives access to a directory containing markdown files.",
-            },
-            processConfig: {
-                directory: "./pages",
-            },
-            ingressConfig: {},
-        },
         {
             system: {
                 process: "readability@0.0.1",
@@ -28,6 +15,19 @@ const config = {
             processConfig: {
                 insertLinks: true,
                 insertImages: false,
+            },
+            ingressConfig: {},
+        },
+        {
+            system: {
+                process: "fs@0.0.1",
+                ingress: "default-ingress@0.0.1",
+                name: "fs",
+                description:
+                    "This fs operator gives access to a directory containing markdown files.",
+            },
+            processConfig: {
+                directory: "./pages",
             },
             ingressConfig: {},
         },
@@ -282,50 +282,50 @@ const keySetter = new Node();
 keySetter.write$$("process:keys", keys).subscribe(() => {
     console.log("keySetter wrote keys");
 });
-setTimeout(async () => {
-    const flow = new Node();
 
-    flow.write$$("system", {
-        process: "flow@0.0.1",
-    }).subscribe(() => {
-        console.log("flow wrote system");
-    });
+console.log("READY");
+const flow = new Node();
 
-    flow.write$$("process:config", config).subscribe(() => {
-        console.log("flow wrote config");
-    });
+flow.write$$("system", {
+    process: "flow@0.0.1",
+}).subscribe(() => {
+    console.log("flow wrote system");
+});
 
-    flow.schema$$("process:config").subscribe((schema) => {
-        console.log("flow schema", schema);
-    });
+flow.write$$("process:config", config).subscribe(() => {
+    console.log("flow wrote config");
+});
 
-    console.log("FLOW WRITE INPUT");
+flow.schema$$("process:config").subscribe((schema) => {
+    console.log("flow schema", schema);
+});
 
-    flow.input$.next({
-        name: "header",
-        payload: {
-            messages: [
-                {
-                    role: "system",
-                    content: [
-                        "The user will privde you with a set of requirements for a process operator.",
-                        "The user will then guide you step by step through the process of writing the operator.",
-                        "The requirements may include web links, which you should read via the readability function if and only if they are relevant to the current step.",
-                        "If you are uncertain whether a web link is relevant for a given step, you MUST read it.",
-                        "The user will provide you with a set of local document links that are relevant to the current step.",
-                        "You MUST invoke the fs tool to read these local documents BEFORE beginning work on the current step.",
-                        "You MUST output a thorough and complete implementation of the current step.",
-                        "You MUST read `process operators.md` with the fs tool before beginning work on the current step.",
-                    ].join("\n"),
-                },
-                {
-                    role: "user",
-                    content: await getText(path),
-                },
-            ],
-        },
-    });
-}, 0);
+console.log("FLOW WRITE INPUT");
+
+flow.input$.next({
+    name: "header",
+    payload: {
+        messages: [
+            {
+                role: "system",
+                content: [
+                    "The user will privde you with a set of requirements for a process operator.",
+                    "The user will then guide you step by step through the process of writing the operator.",
+                    "The requirements may include web links, which you should read via the readability function if and only if they are relevant to the current step.",
+                    "If you are uncertain whether a web link is relevant for a given step, you MUST read it.",
+                    "The user will provide you with a set of local document links that are relevant to the current step.",
+                    "You MUST invoke the fs tool to read these local documents BEFORE beginning work on the current step.",
+                    "You MUST output a thorough and complete implementation of the current step.",
+                    "You MUST read `process operators.md` with the fs tool before beginning work on the current step.",
+                ].join("\n"),
+            },
+            {
+                role: "user",
+                content: await getText(path),
+            },
+        ],
+    },
+});
 
 Node.$.subscribe((node) => {
     console.log("node", node.id);

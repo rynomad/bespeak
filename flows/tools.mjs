@@ -1,4 +1,4 @@
-import Node from "http://localhost:3002/modules/node.mjs";
+import Node from "http://localhost:3004/modules/node.mjs";
 import "../modules/bootload.mjs";
 import { getText } from "../modules/util.mjs";
 

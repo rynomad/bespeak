@@ -10,6 +10,8 @@ import {
     from,
 } from "rxjs";
 
+export const version = "0.0.1";
+export const key = "registrar";
 const description = `The primary functional requirement of the registrar.mjs module is to dynamically import JavaScript modules from a given path and store them in a collection.
 
 The specific requirements are as follows:
