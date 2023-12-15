@@ -1,5 +1,5 @@
-import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
-import slash from "https://deno.land/x/slash/mod.ts";
+// import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
+// import slash from "https://deno.land/x/slash/mod.ts";
 import Node from "http://localhost:3004/modules/node.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { config as dbConfig } from "./db.schemas.mjs";
@@ -14,14 +14,14 @@ import {
     map,
     catchError,
     toArray,
+    take,
 } from "rxjs";
-import { take } from "npm:rxjs@^7.8.1";
 const Imports = await import("./imports.mjs");
 const Registrar = await import("./registrar.mjs");
 const Validator = await import("./validator.mjs");
 const DB = await import("./db.mjs");
 
-const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
+// const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
 
 const systemTools = [
     {
@@ -75,7 +75,11 @@ Node.systemTools$.next(
         return node;
     })
 );
-
+function getAbsoluteUrl(relativeUrl) {
+    const baseUrl = new URL(".", import.meta.url).href;
+    const absoluteUrl = new URL(relativeUrl, baseUrl).href;
+    return absoluteUrl;
+}
 combineLatest(
     of([
         "./db.mjs",
@@ -94,9 +98,11 @@ combineLatest(
     Node.systemTools$
 )
     .pipe(
+        map(([paths, tools]) => [paths.map(getAbsoluteUrl), tools]),
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
-                map((p) => slash(path.resolve(__dirname, p))),
+                // map((p) => slash(path.resolve(__dirname, p))),
+
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 tools.find(({ id }) => id === "system:db").operator(),
                 catchError((error) => {
@@ -112,7 +118,7 @@ combineLatest(
         }),
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
-                map((p) => slash(path.resolve(__dirname, p))),
+                // map((p) => slash(path.resolve(__dirname, p))),
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 map(([{ params }]) => ({ module: params.id })),
                 tools.find(({ id }) => id === "system:imports").operator(),
@@ -136,7 +142,8 @@ combineLatest(
 Node.$.pipe(
     tap((node) => {
         node.log$.subscribe(({ message, value, callSite }) => {
-            const DEBUG = Deno.env.get("DEBUG");
+            const DEBUG = "";
+            //Deno.env.get("DEBUG");
             if (!DEBUG) return;
 
             if (DEBUG === "all") {

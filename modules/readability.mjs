@@ -1,8 +1,7 @@
 import { of } from "https://esm.sh/rxjs";
 import { switchMap } from "https://esm.sh/rxjs/operators";
 import { Readability } from "https://esm.sh/@mozilla/readability";
-import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
-import { pipe } from "npm:rxjs@^7.8.1";
+// import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 
 export const key = "readability";
 export const version = "0.0.1";
@@ -41,6 +40,7 @@ export const outputSchema = createSchema({
 });
 
 const replaceContent = (doc, selector, configKey, config, article) => {
+    console.log("REPLACE CONTENT", selector, configKey, config);
     if (!config[configKey]) return;
     doc.querySelectorAll(selector).forEach(({ textContent, outerHTML }) => {
         console.log("FOUND SELECTOR", selector, textContent, outerHTML);
@@ -62,15 +62,12 @@ const parseHTML =
                 const doc = new DOMParser().parseFromString(text, "text/html");
                 const article = new Readability(doc).parse();
                 // console.log("ARTICLE", article.textContent);
-                [("a", "img")].forEach((selector) =>
-                    replaceContent(
-                        doc,
-                        selector,
-                        selector === "a" ? "insertLinks" : "insertImages",
-                        config,
-                        article
-                    )
-                );
+                ["a", "img"].forEach((selector) => {
+                    const configKey =
+                        selector === "a" ? "insertLinks" : "insertImages";
+                    console.log("SELECTOR", selector, config[configKey]);
+                    replaceContent(doc, selector, configKey, config, article);
+                });
 
                 return { text: article?.textContent };
             })

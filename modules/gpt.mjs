@@ -10,7 +10,7 @@ import {
 import OpenAI from "openai";
 import Ajv from "https://esm.sh/ajv";
 import addFormats from "https://esm.sh/ajv-formats";
-import { combineLatest } from "npm:rxjs@^7.8.1";
+import { combineLatest } from "rxjs";
 const getText = async (path) => {
     try {
         const cwd = Deno.realPathSync(".");
@@ -73,7 +73,6 @@ const getModels = async ({ apiKey }) => {
             "gpt-4",
             "gpt-3.5-turbo-0613",
             "gpt-4-1106-preview",
-            "gpt-3.5-turbo-1106",
             "gpt-4-vision-preview",
         ];
     }
@@ -87,7 +86,6 @@ export const configSchema = ({ node, keys }) => {
               "gpt-4",
               "gpt-3.5-turbo-0613",
               "gpt-4-1106-preview",
-              "gpt-3.5-turbo-1106",
               "gpt-4-vision-preview",
           ]);
 
@@ -555,7 +553,7 @@ const callOpenAi = async (
             stream.on(eventType, async (data, snapshot) => {
                 const progressEvent = {
                     status: eventType,
-                    message: snapshot || `Event of type ${eventType} received`,
+                    message: `Event of type ${eventType} received`,
                     detail: data,
                 };
                 node.status$.next(progressEvent);

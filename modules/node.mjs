@@ -377,14 +377,14 @@ export default class Node {
                 (value) => {
                     this.log$.next({
                         message,
-                        value,
+                        detail: value,
                         callSite: error.stack.split("\n")[2]?.trim(),
                     });
                 },
                 (error) => {
                     this.log$.next({
                         message: `tap error at message: ${message}, error: ${error}`,
-                        value: error,
+                        detail: error,
                         callSite: error.stack.split("\n")[2]?.trim(),
                     });
                 },

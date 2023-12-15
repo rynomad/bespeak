@@ -14,8 +14,7 @@ import {
     catchError,
     debounceTime,
     filter,
-} from "https://esm.sh/rxjs";
-import { zip } from "npm:rxjs@^7.8.1";
+} from "rxjs";
 
 export const key = "flow";
 export const version = "0.0.1";
@@ -89,88 +88,129 @@ export function outputSchema({ node, config }) {
 }
 
 export function configSchema({ node }) {
-    node.tool$$("system:imports")
-        .pipe(
-            switchMap((imports) => {
-                return of({}).pipe(imports.operator());
-            }),
-            tap(console.log.bind(console, "FLOW GOT IMPORTS VALUE"))
-        )
-        .subscribe();
-
-    const schema = {
-        type: "object",
-        description: "nodes and connections.",
-        additionalProperties: true,
-        properties: {
-            nodes: {
-                type: "array",
-                items: {
-                    type: "object",
-                    properties: {
-                        system: {
+    return node.tool$$("system:imports").pipe(
+        switchMap((imports) => {
+            return of({}).pipe(
+                imports.operator(),
+                switchMap((map) => {
+                    return combineLatest(Array.from(map.values()));
+                })
+            );
+        }),
+        map((imports) => {
+            return imports.filter((i) => i.key !== "flow");
+        }),
+        switchMap((imports) => {
+            return zip(
+                of(imports),
+                of(imports).pipe(
+                    switchMap((imports) =>
+                        zip(
+                            imports.map(({ key, version, configSchema }) =>
+                                configSchema
+                                    ? configSchema({ node }).pipe(
+                                          map((schema) => ({
+                                              title: `process Schema for ${key}@${version}`,
+                                              ...schema,
+                                          }))
+                                      )
+                                    : of({
+                                          type: "object",
+                                          title: `process Schema for ${key}@${version}`,
+                                          additionalProperties: true,
+                                      })
+                            )
+                        ).pipe(take(1))
+                    )
+                )
+            );
+        }),
+        map(([modules, processSchemas]) => {
+            const schema = {
+                type: "object",
+                description: "nodes and connections.",
+                additionalProperties: true,
+                properties: {
+                    nodes: {
+                        type: "array",
+                        items: {
                             type: "object",
                             properties: {
-                                process: {
-                                    type: "string",
-                                    description: "the process operator.",
-                                    default: "chat-gpt@0.0.1",
+                                system: {
+                                    type: "object",
+                                    properties: {
+                                        process: {
+                                            description:
+                                                "which process operator to use.",
+                                            type: "string",
+                                            enum: modules.map(
+                                                (i) => `${i.key}@${i.version}`
+                                            ),
+                                            default: "chat-gpt@0.0.1",
+                                        },
+                                        ingress: {
+                                            type: "string",
+                                            description:
+                                                "the ingress operator.",
+                                            default: "default-ingress@0.0.1",
+                                        },
+                                        name: {
+                                            type: "string",
+                                        },
+                                        description: {
+                                            type: "string",
+                                        },
+                                    },
+                                    required: ["name"],
                                 },
-                                ingress: {
-                                    type: "string",
-                                    description: "the ingress operator.",
-                                    default: "default-ingress@0.0.1",
+                                processConfig: {
+                                    type: "object",
+                                    anyOf: processSchemas,
                                 },
-                                name: {
-                                    type: "string",
+                                ingressConfig: {
+                                    type: "object",
+                                    additionalProperties: true,
                                 },
-                                description: {
-                                    type: "string",
+                                tools: {
+                                    type: "array",
+                                    description:
+                                        "A list of other nodes in the flow that this node should use as tools.",
+                                    items: {
+                                        type: "string",
+                                        description:
+                                            "The system.name of the node.",
+                                    },
                                 },
-                            },
-                            required: ["name"],
-                        },
-                        processConfig: {
-                            type: "object",
-                            additionalProperties: true,
-                        },
-                        ingressConfig: {
-                            type: "object",
-                            additionalProperties: true,
-                        },
-                        tools: {
-                            type: "array",
-                            items: {
-                                type: "string",
-                                description:
-                                    "The name of the node to use as a tool.",
                             },
                         },
                     },
-                },
-            },
-            connections: {
-                type: "array",
-                items: {
-                    type: "object",
-                    properties: {
-                        from: {
-                            type: "string",
-                            description: "The name of the upstream node.",
-                        },
-                        to: {
-                            type: "string",
-                            description: "The name of the downstream node.",
+                    connections: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                from: {
+                                    type: "string",
+                                    description:
+                                        "The name of the upstream node.",
+                                },
+                                to: {
+                                    type: "string",
+                                    description:
+                                        "The name of the downstream node.",
+                                },
+                            },
+                            required: ["from", "to"],
                         },
                     },
-                    required: ["from", "to"],
                 },
-            },
-        },
-        // Define the properties of your config schema here
-    };
+                // Define the properties of your config schema here
+            };
 
-    return of(schema);
+            return schema;
+        }),
+        tap((schema) => console.log(JSON.stringify(schema, null, 2)))
+    );
 }
 
 const setup = ({ node, config }) => {

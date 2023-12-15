@@ -122,6 +122,12 @@ function dbOperation({ config, node }) {
                             const { operation, collection, params } =
                                 _operation;
 
+                            console.log(
+                                "dbOperation: operation",
+                                operation,
+                                collection,
+                                params
+                            );
                             let result = db[collection][operation](params);
                             result = result.$ || result;
                             // Ensure the result is an Observable
