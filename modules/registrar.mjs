@@ -43,7 +43,9 @@ export default function registerModule({ node }) {
                             type: "application/javascript",
                         });
                         const url = URL.createObjectURL(blob);
-                        return import(url);
+                        const prom = import(url);
+                        URL.revokeObjectURL(url);
+                        return from(prom);
                     })
                 ),
                 source: from(getText(path)),

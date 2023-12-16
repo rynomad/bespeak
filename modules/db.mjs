@@ -121,11 +121,10 @@ function dbOperation({ config, node }) {
                         try {
                             const { operation, collection, params } =
                                 _operation;
-
                             console.log(
-                                "dbOperation: operation",
-                                operation,
+                                "DB OPERATION",
                                 collection,
+                                operation,
                                 params
                             );
                             let result = db[collection][operation](params);

@@ -6,6 +6,7 @@ import "./yaml.mjs";
 import "./form.mjs";
 import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
+import { deepEqual } from "https://esm.sh/fast-equals";
 class LitOperable extends LitElement {
     static properties = {
         operable: { type: Object },
@@ -33,6 +34,9 @@ class LitOperable extends LitElement {
                 this.operable.status$.subscribe((status) => {
                     console.log("status", status);
                 }),
+                this.operable.error$.subscribe((error) => {
+                    this.error = error;
+                }),
             ];
         }
     }
@@ -58,7 +62,12 @@ class LitOperable extends LitElement {
                 slot="front"
                 style="min-width: ${!this.component?.icon
                     ? "40rem"
-                    : "20px"}; min-height: 20px; padding: 1.5rem; max-width: 50vw; max-height: 50vh; overflow: auto;"></div>
+                    : "20px"}; min-height: 20px; padding: 1.5rem; max-width: 50vw; max-height: 50vh; overflow: auto; ${this
+                    .error
+                    ? "background: red;"
+                    : ""}">
+                <slot></slot>
+            </div>
             <div slot="back" style="padding: 1.5rem">
                 <bespeak-operable-back
                     .operable=${this.operable}></bespeak-operable-back>
@@ -214,7 +223,6 @@ class LitOperableLogEntry extends LitElement {
             ? html`
                   <details>
                       <summary>${this.log.message}</summary>
-                      <yaml-renderer .data=${this.log.detail}></yaml-renderer>
                   </details>
               `
             : html`<pre>
@@ -232,6 +240,7 @@ class LitOperableForm extends LitElement {
         label: { type: String },
         schema: { type: Object },
         data: { type: Object },
+        basic: { type: Boolean },
     };
 
     static styles = css`
@@ -256,6 +265,13 @@ class LitOperableForm extends LitElement {
     }
 
     updated(changedProperties) {
+        console.log(
+            "updated",
+            this.operable,
+            this.label,
+            this.basic,
+            this.subscriptions
+        );
         if (this.operable && this.label && !this.subscriptions) {
             console.log("subscribing to", `${this.label.toLowerCase()}$`);
             const innerRole = this.label.toLowerCase();
@@ -293,18 +309,69 @@ class LitOperableForm extends LitElement {
         }
     }
 
+    get doBasic() {
+        return this.basic && this.schema.properties.basic;
+    }
+
+    get formData() {
+        return this.doBasic ? this.data?.basic : this.data;
+    }
+
+    set formData(data) {
+        if (this.doBasic) {
+            this.data = {
+                ...this.data,
+                basic: data,
+            };
+        } else {
+            this.data = data;
+        }
+    }
+
+    get formSchema() {
+        return this.doBasic ? this.schema.properties.basic : this.schema;
+    }
+
     render() {
         return this.schema
             ? html`<bespeak-form
                   .props=${{
-                      schema: this.schema,
+                      schema: this.formSchema,
                       uiSchema: {
                           "ui:widget": "textarea",
                       },
-                      formData: this.data,
+                      formData: this.formData,
                   }}
                   .onChange=${(e) => {
-                      console.log("changed", e);
+                      if (!this.formData) {
+                          this.formData = e.formData;
+                      }
+                      if (deepEqual(e.formData, this.formData)) {
+                          return;
+                      }
+                      this.formData = e.formData;
+                      if (["Input", "Output"].includes(this.label)) {
+                          console.log(
+                              "writing",
+                              this.label,
+                              e.formData,
+                              this.formData
+                          );
+                          this.operable[`${this.label.toLowerCase()}$`].next(
+                              this.data
+                          );
+                      } else if (this.label === "Ingress") {
+                          this.operable.write$$(`ingress:config`, e.formData);
+                      } else {
+                          this.operable
+                              .write$$(
+                                  `process:${this.label.toLowerCase()}`,
+                                  this.data
+                              )
+                              .subscribe(() => {
+                                  console.log("wrote", this.label);
+                              });
+                      }
                   }}></bespeak-form>`
             : html``;
     }

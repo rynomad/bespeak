@@ -71,7 +71,7 @@ Node.systemTools$.next(
     systemTools.map(({ id, process, system }) => {
         const node = new Node(`system:${id}`);
         node.process$.next(process);
-        node.system$.next(system);
+        // node.system$.next(system);
         return node;
     })
 );
@@ -122,6 +122,7 @@ combineLatest(
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 map(([{ params }]) => ({ module: params.id })),
                 tools.find(({ id }) => id === "system:imports").operator(),
+                tap((v) => console.log("REGISTRATION IMPORT CHECK", v.key)),
                 catchError((error) => {
                     console.error(
                         "Catastrophic Error In Registration Import flow: ",

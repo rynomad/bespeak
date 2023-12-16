@@ -22,7 +22,6 @@ const getText = async (path) => {
 
 export const key = "chat-gpt";
 export const version = "0.0.1";
-export const prompt = await getText(`prompts/gpt.md`);
 export const description = `The primary functional requirement of the @gpt.mjs module is to create a custom RxJS operator that interacts with the OpenAI API to generate responses based on a given prompt. This operator is designed to be used in a chat application where it can generate responses from the GPT model in real-time.
 
 The operator takes in a configuration object and an input object. The configuration object includes settings such as the role of the message sender, the temperature for randomness in the generation process, and the model to be used for generating responses. The input object includes a history of messages to be included in the prompt and optional overrides for the configured options.
@@ -57,16 +56,21 @@ function extractLastCodeBlock(str) {
     };
 }
 
+let models = null;
+
 const getModels = async ({ apiKey }) => {
-    const openai = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-    });
-    const response = await openai.models.list();
     try {
-        return response.data
-            .map((model) => model.id)
-            .filter((id) => id.startsWith("gpt"));
+        if (models) return await models;
+        const openai = new OpenAI({
+            apiKey,
+            dangerouslyAllowBrowser: true,
+        });
+        models = openai.models
+            .list()
+            .then((r) =>
+                r.data.map((m) => m.id).filter((id) => id.startsWith("gpt"))
+            );
+        return await models;
     } catch (e) {
         console.warn(e);
         return [
@@ -557,6 +561,14 @@ const callOpenAi = async (
                     detail: data,
                 };
                 node.status$.next(progressEvent);
+                if (snapshot && eventType === "content") {
+                    console.log("SNAPSHOT", eventType, snapshot);
+                    node.status$.next({
+                        status: "display",
+                        detail: snapshot,
+                        message: "got snapshot",
+                    });
+                }
 
                 if (eventType === "error") {
                     observer.error(data);

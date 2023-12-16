@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "https://esm.sh/lit@2.8.0";
-import { PropagationStopper } from "../mixins.js";
+import { PropagationStopper } from "../mixins.mjs";
 
 class NodesIcon extends PropagationStopper(LitElement) {
     static styles = css``;

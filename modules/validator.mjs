@@ -28,6 +28,32 @@ export const key = "validator";
 export const version = "0.0.1";
 export const prompt = await getText(`prompts/validator.md`);
 
+function cleanSchema(schema) {
+    if (typeof schema !== "object" || schema === null) {
+        return schema;
+    }
+
+    let newSchema = { ...schema };
+    delete newSchema.anyOf;
+    delete newSchema.items;
+
+    if (newSchema.properties) {
+        for (let key in newSchema.properties) {
+            newSchema.properties[key] = cleanSchema(newSchema.properties[key]);
+        }
+    }
+
+    return newSchema;
+}
+
+function safeJsonPreset(schema, data) {
+    let clean = cleanSchema(JSON.parse(JSON.stringify(schema)));
+    const r = jsonPreset(clean, data);
+    delete r.additionalProperties;
+    delete r.type;
+    return r;
+}
+
 export const configSchema = () => {
     return of({
         type: "object",
@@ -75,28 +101,28 @@ export const validator =
         return combineLatest(source$, node.schema$$(role)).pipe(
             node.log(`validator: start ${role}`),
             switchMap(([doc, schema]) => {
+                console.log("GOT SCHEMA FOR ROLE", role);
                 if (!doc) {
                     if (role.endsWith(":keys")) {
                         return of(null).pipe(filter(() => !schema));
                     }
                     doc = schema ? empty(schema) : {};
-                    // console.log("empty doc", doc);
+                    console.log("empty doc", doc);
                 }
 
                 const doc$ = doc?.get$ ? doc.get$("data") : of(doc);
 
                 return doc$.pipe(
-                    // tap((data) =>
-                    //     // console.log(
-                    //     //     "validator got data",
-                    //     //     data,
-                    //     //     JSON.stringify(schema, null, 4)
-                    //     // )
-                    // ),
+                    tap((data) =>
+                        console.log("validator got data", node.id, role, data)
+                    ),
                     map((data) =>
-                        !schema || skipPresets ? data : jsonPreset(schema, data)
+                        !schema || skipPresets
+                            ? data
+                            : safeJsonPreset(schema, data)
                     ),
                     map((data) => {
+                        console.log("post preset data", node.id, role, data);
                         for (const key in data) {
                             if (data[key]?.items) {
                                 delete data[key].items;
@@ -118,12 +144,15 @@ export const validator =
                                 `Input does not match schema: ${ajv.errorsText()}`
                             );
                         }
-                        // console.log(
-                        //     "Valid",
-                        //     valid,
-                        //     JSON.stringify(schema, null, 2),
-                        //     ajv.errorsText()
-                        // );
+                        console.log(
+                            "Valid",
+                            valid,
+                            "for",
+                            role,
+                            "with",
+                            node.id,
+                            data
+                        );
                         return valid;
                     })
                 );

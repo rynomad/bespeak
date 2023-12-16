@@ -82,6 +82,7 @@ export default class Node {
     setupSystemPipelines() {
         this.system$
             .pipe(
+                distinctUntilChanged(deepEqual),
                 systemToConfiguredModule({
                     node: this,
                     config: { role: "ingress" },
@@ -93,6 +94,7 @@ export default class Node {
 
         this.system$
             .pipe(
+                distinctUntilChanged(deepEqual),
                 systemToConfiguredModule({
                     node: this,
                     config: { role: "process" },
@@ -347,6 +349,7 @@ export default class Node {
             switchMap(([doc$]) => doc$),
             filter((doc) => !!doc),
             map((doc) => doc.toJSON()),
+            distinctUntilChanged(deepEqual),
             this.log(`read$$(${role}): got document`)
         );
     }

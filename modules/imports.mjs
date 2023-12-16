@@ -5,9 +5,16 @@ import {
     withLatestFrom,
     filter,
     of,
+    ReplaySubject,
 } from "https://esm.sh/rxjs";
 
 const memos = new Map();
+
+const memosSubject = new ReplaySubject(1);
+
+memosSubject.subscribe((memos) => {
+    console.log("memos", memos);
+});
 
 export const key = "memoizedImports";
 export const version = "0.0.1";
@@ -48,7 +55,7 @@ function memoizedImport({ node }) {
         }),
         switchMap((module) => {
             if (!module) {
-                return of(memos);
+                return memosSubject;
             }
 
             const id = module.get("id");
@@ -56,6 +63,7 @@ function memoizedImport({ node }) {
                 return memos.get(id);
             }
 
+            console.log("{}{}{}{}{} NO MEMO", id);
             const source = module.get("data");
             const blob = new Blob([source], {
                 type: "text/javascript",
@@ -64,6 +72,8 @@ function memoizedImport({ node }) {
             const import$ = from(import(url));
 
             memos.set(id, import$);
+            console.log("WRITE MEMO", id, memos);
+            memosSubject.next(memos);
             return import$;
         })
     );

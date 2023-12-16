@@ -12,9 +12,16 @@ import {
     shareReplay,
     withLatestFrom,
     catchError,
-    debounceTime,
+    zip,
+    pluck,
+    takeUntil,
+    distinctUntilChanged,
     filter,
 } from "rxjs";
+
+import { deepEqual } from "https://esm.sh/fast-equals";
+import { pluginMissing } from "rxdb";
+import { jsonDefault } from "https://esm.sh/v134/json-schema-default@1.0.1/denonext/json-schema-default.mjs";
 
 export const key = "flow";
 export const version = "0.0.1";
@@ -54,7 +61,6 @@ const getIOSchema = (role, { node, config }) => {
             });
         }),
         map(({ schemas, nodes }) => {
-            console.log(nodes);
             return {
                 type: "object",
                 properties: {
@@ -74,8 +80,7 @@ const getIOSchema = (role, { node, config }) => {
                 },
                 // Define the properties of your input schema here
             };
-        }),
-        tap(console.log.bind(console, "flow got config"))
+        })
     );
 };
 
@@ -93,11 +98,13 @@ export function configSchema({ node }) {
             return of({}).pipe(
                 imports.operator(),
                 switchMap((map) => {
+                    console.log("GOT IMPORTS MAP", map);
                     return combineLatest(Array.from(map.values()));
                 })
             );
         }),
         map((imports) => {
+            console.log("GOT IMPORTS", imports);
             return imports.filter((i) => i.key !== "flow");
         }),
         switchMap((imports) => {
@@ -208,10 +215,114 @@ export function configSchema({ node }) {
             };
 
             return schema;
-        }),
-        tap((schema) => console.log(JSON.stringify(schema, null, 2)))
+        })
     );
 }
+
+const NODES = new Map();
+
+const createSessionNode = ({ node, name, id }) => {
+    const nonce = Math.random().toString(36).substring(2, 15);
+    const _node = new Node(id);
+    NODES.set(id, _node);
+
+    node.destroy$.subscribe(() => {
+        _node.destroy$.next();
+    });
+
+    _node.destroy$.subscribe(() => {
+        NODES.delete(id);
+    });
+
+    _node.destroy$.subscribe(() => {
+        NODES.delete(id);
+    });
+
+    _node.status$.pipe(takeUntil(_node.destroy$)).subscribe((status) => {
+        node.status$.next({
+            status: "subnode-status",
+            detail: status,
+        });
+    });
+
+    const flowNodeConfig = combineLatest({
+        system: _node.read$$("system").pipe(
+            map(({ name, description, process, ingress }) => ({
+                name,
+                description,
+                process,
+                ingress,
+            })),
+            distinctUntilChanged(deepEqual),
+            tap((system) => console.log("SPAM SYSTEM", nonce, _node.id, system))
+        ),
+        tools: _node.flowTools$.pipe(
+            switchMap((tools) =>
+                combineLatest(
+                    tools.map((tool) =>
+                        tool.read$$("system").pipe(pluck("name"))
+                    )
+                )
+            ),
+            distinctUntilChanged(deepEqual),
+            tap((system) => console.log("SPAM TOOLS", nonce, _node.id, system))
+        ),
+        processConfig: _node.read$$("process:config").pipe(
+            pluck("data"),
+            distinctUntilChanged(deepEqual),
+            tap((system) =>
+                console.log("SPAM PROCESS CONFIG", nonce, _node.id, system)
+            )
+        ),
+        ingressConfig: _node.read$$("ingress:config").pipe(
+            pluck("data"),
+            distinctUntilChanged(deepEqual),
+            tap((system) =>
+                console.log("SPAM INGRESS CONFIG", nonce, _node.id, system)
+            )
+        ),
+    })
+        .pipe(
+            distinctUntilChanged(deepEqual),
+            tap((config) => console.log("SPAM", nonce, _node.id, config)),
+            takeUntil(_node.destroy$),
+            withLatestFrom(
+                node.read$$("process:config").pipe(
+                    pluck("data"),
+                    map((config) => {
+                        console.log("flow got process config", config);
+                        return config.nodes.find((n) => n.system.name === name);
+                    }),
+                    distinctUntilChanged(deepEqual)
+                )
+            ),
+            filter(
+                ([nodeConfig, flowNodeConfig]) =>
+                    !deepEqual(nodeConfig, flowNodeConfig)
+            ),
+            map(([nodeConfig]) => nodeConfig),
+            withLatestFrom(node.read$$("process:config").pipe(pluck("data"))),
+            switchMap(([nodeConfig, config]) => {
+                // replace the node in the config
+                const index = config.nodes.findIndex(
+                    (n) => n.system.name === nodeConfig.system.name
+                );
+                const nodes = [
+                    ...config.nodes.slice(0, index),
+                    nodeConfig,
+                    ...config.nodes.slice(index + 1),
+                ];
+
+                return node.write$$("process:config", {
+                    ...config,
+                    nodes,
+                });
+            })
+        )
+        .subscribe();
+
+    return _node;
+};
 
 const setup = ({ node, config }) => {
     console.log("SETUP", Node.ready$);
@@ -219,46 +330,46 @@ const setup = ({ node, config }) => {
         Node.ready$,
         zip(
             config.nodes.map(({ system, processConfig, ingressConfig }) => {
-                const _node = new Node(`${system.name}-${node.id}`);
+                const id = `${system.name}-${node.id}`;
+                const _node =
+                    NODES.get(id) ||
+                    createSessionNode({ node, config, name, id });
+
                 return _node.write$$("system", system).pipe(
+                    _node.log("wrote system data for flow node"),
                     switchMap((res) => {
                         return _node.process$.pipe(
-                            tap((sys) => {
-                                console.log(
-                                    "flow got process",
-                                    system.name,
-                                    system.process,
-                                    res.process,
-                                    sys.system.process
-                                );
-                            }),
+                            _node.log("got process$"),
                             filter(
                                 (e) =>
                                     e.system.process === system.process ||
                                     !system.process
-                            )
+                            ),
+                            take(1)
                         );
                     }),
+                    _node.log("process$ matches system.process"),
                     switchMap((sys) => {
                         console.log(
-                            "flow wrote system",
-                            system.name,
-                            system.process,
-                            sys.system.process
+                            "flow node writing configs",
+                            sys,
+                            processConfig,
+                            ingressConfig
                         );
                         return zip([
-                            _node.write$$("process:config", processConfig),
-                            _node.write$$("ingress:config", ingressConfig),
-                        ]);
+                            _node
+                                .write$$("process:config", processConfig || {})
+                                .pipe(
+                                    _node.log("flow node wrote process config")
+                                ),
+                            _node
+                                .write$$("ingress:config", ingressConfig || {})
+                                .pipe(
+                                    _node.log("flow node wrote ingress config")
+                                ),
+                        ]).pipe(take(1));
                     }),
-                    tap((written) =>
-                        console.log(
-                            "flow setup wrote configs",
-                            system.name,
-                            system.process,
-                            written[0].system.process
-                        )
-                    ),
+                    _node.log("wrote process and ingress config"),
                     catchError((e) => {
                         console.log("flow setup error", e);
                         return of(e);
@@ -269,11 +380,8 @@ const setup = ({ node, config }) => {
         ),
     ]).pipe(
         take(1),
-        tap(() => {
-            console.log("flow setup got nodes", config.nodes);
-        }),
+        node.log("got ready and all nodes"),
         tap(([_, nodes]) => {
-            console.log();
             config.nodes.forEach(({ tools = [] }, i) => {
                 const toolNodes = tools.map((tool) => {
                     return nodes.find((node) => node.id.startsWith(tool));
@@ -282,6 +390,7 @@ const setup = ({ node, config }) => {
                 nodes[i].flowTools$.next(toolNodes);
             });
         }),
+        node.log("set flow tools"),
         tap(([_, nodes]) => {
             nodes.forEach((node) => {
                 node.upstream$.next([]);
@@ -290,22 +399,13 @@ const setup = ({ node, config }) => {
                 const fromNode = nodes.find((node) => node.id.startsWith(from));
                 const toNode = nodes.find((node) => node.id.startsWith(to));
 
-                console.log(
-                    "flow setup got connection",
-                    from,
-                    to,
-                    !!fromNode,
-                    !!toNode
-                );
-
                 toNode.upstream$.pipe(take(1)).subscribe((upstream) => {
                     toNode.upstream$.next([...upstream, fromNode]);
                 });
             });
         }),
-        // debounceTime(500),
+        node.log("set upstreams, all nodes ready"),
         map(([_, nodes]) => {
-            console.log("MADE ALL NODES");
             return {
                 nodes,
             };
@@ -316,13 +416,9 @@ const setup = ({ node, config }) => {
 const status = ({ node, config }) => {
     return pipe(
         tap(({ nodes }) => {
-            nodes.forEach((_node) => {
-                _node.status$.subscribe((status) => {
-                    node.status$.next({
-                        status: "subnode-status",
-                        detail: status,
-                    });
-                });
+            node.status$.next({
+                status: "rebuild",
+                detail: nodes,
             });
         })
     );
@@ -341,12 +437,8 @@ function flowOperation({ node, config }) {
 
         combineLatest(input$, flow$)
             .pipe(
+                node.log("got input and flow"),
                 tap(([input, { nodes }]) => {
-                    console.log(
-                        "flow got input",
-                        input,
-                        nodes.map((node) => node.id)
-                    );
                     const target = nodes.find((node) =>
                         node.id.startsWith(input.name)
                     );
