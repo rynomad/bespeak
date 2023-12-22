@@ -7,6 +7,7 @@ import "./form.mjs";
 import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
 import { deepEqual } from "https://esm.sh/fast-equals";
+import { PropagationStopper } from "./mixins.mjs";
 class LitOperable extends LitElement {
     static properties = {
         operable: { type: Object },
@@ -15,9 +16,17 @@ class LitOperable extends LitElement {
     static styles = css`
         :host {
             display: block;
+            width: 100%;
+            height: 100%;
             position: relative;
             border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto; /* Add overflow-y to the content to create a scrollbar within the sidebar */
         }
     `;
 
@@ -28,12 +37,12 @@ class LitOperable extends LitElement {
             !this.subsciption
         ) {
             this.subscriptions = [
-                this.operable.log$.subscribe((log) => {
-                    // console.log("log", log);
-                }),
-                this.operable.status$.subscribe((status) => {
-                    console.log("status", status);
-                }),
+                // this.operable.log$.subscribe((log) => {
+                //     // console.log("log", log);
+                // }),
+                // this.operable.status$.subscribe((status) => {
+                //     console.log("status", status);
+                // }),
                 this.operable.error$.subscribe((error) => {
                     this.error = error;
                 }),
@@ -54,18 +63,8 @@ class LitOperable extends LitElement {
     }
 
     render() {
-        return html`<bespeak-flipper
-            @click=${() => console.log("click node flipper")}
-            class="front">
-            <div
-                class="container"
-                slot="front"
-                style="min-width: ${!this.component?.icon
-                    ? "40rem"
-                    : "20px"}; min-height: 20px; padding: 1.5rem; max-width: 50vw; max-height: 50vh; overflow: auto; ${this
-                    .error
-                    ? "background: red;"
-                    : ""}">
+        return html`<bespeak-flipper class="front">
+            <div class="container" slot="front">
                 <slot></slot>
             </div>
             <div slot="back" style="padding: 1.5rem">
@@ -78,7 +77,7 @@ class LitOperable extends LitElement {
 
 customElements.define("bespeak-operable", LitOperable);
 
-class LitOperableBack extends LitElement {
+class LitOperableBack extends PropagationStopper(LitElement) {
     static properties = {
         operable: { type: Object },
     };

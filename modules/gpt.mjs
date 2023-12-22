@@ -407,7 +407,7 @@ export const chatGPTOperator =
         });
 
         let abortController; // Store the AbortController
-        console.log("chatGPTOperator");
+        console.log("GPT OPERATOR CALLED", config);
         return combineLatest(
             source$,
             toolsToFunctionsOperator({ node, config })
@@ -555,6 +555,15 @@ const callOpenAi = async (
             "end",
         ].forEach((eventType) => {
             stream.on(eventType, async (data, snapshot) => {
+                if (observer.closed) {
+                    console.log("OBSERVER CLOSED");
+                    try {
+                        await stream.controller?.abort();
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                    return;
+                }
                 const progressEvent = {
                     status: eventType,
                     message: `Event of type ${eventType} received`,

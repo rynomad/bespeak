@@ -20,6 +20,8 @@ export class LitNode extends LitElement {
         .flex-column {
             display: flex;
             flex-direction: column;
+            min-width: 400px;
+            min-height: 400px;
         }
         .item {
             margin-bottom: 10px;

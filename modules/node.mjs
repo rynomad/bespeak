@@ -147,6 +147,11 @@ export default class Node {
                 filter((doc) => !!doc),
                 map((doc) => doc.toJSON()),
                 distinctUntilChanged(deepEqual),
+                map((system) => ({
+                    ...system,
+                    process: system.process || "chat-gpt@0.0.1",
+                    ingress: system.ingress || "default-ingress@0.0.1",
+                })),
                 this.log("found system data"),
                 takeTillDone({ node: this })
             )
@@ -252,6 +257,11 @@ export default class Node {
         if (functionRole === "system") {
             console.log("WRITE SYSTEM");
             return of(data).pipe(
+                map((data) => ({
+                    ...data,
+                    process: data.process || "chat-gpt@0.0.1",
+                    ingress: data.ingress || "default-ingress@0.0.1",
+                })),
                 tap((data) => this.system$.next(data)),
                 this.log(`write$$(${role}): wrote system data`)
             );
@@ -280,6 +290,13 @@ export default class Node {
                     }),
                     this.log(`validated write$$ data for role: ${role}`),
                     map((data) => {
+                        const module = system[functionRole];
+                        if (!module) {
+                            console.error(system, functionRole, module);
+                            throw new Error(
+                                `No module found for role: ${role}`
+                            );
+                        }
                         const params = {
                             module: system[functionRole],
                             data,
@@ -317,7 +334,7 @@ export default class Node {
         );
     }
 
-    read$$(role) {
+    read$$(role, allowNull = false) {
         const [functionRole, collection] = role.split(":");
 
         if (functionRole === "system") {
@@ -347,8 +364,8 @@ export default class Node {
                 ]).pipe(db.operator({ node: this }));
             }),
             switchMap(([doc$]) => doc$),
-            filter((doc) => !!doc),
-            map((doc) => doc.toJSON()),
+            filter((doc) => allowNull || !!doc),
+            map((doc) => (doc ? doc.toJSON() : doc)),
             distinctUntilChanged(deepEqual),
             this.log(`read$$(${role}): got document`)
         );
@@ -428,10 +445,7 @@ const applyModule = ({
     node,
     config: { module$, stream$, role, strict, skipValidation, skipPresets },
 }) => {
-    return combineLatest(
-        node.$,
-        module$.pipe(distinctUntilChanged(deepEqual))
-    ).pipe(
+    return combineLatest(node.$, module$).pipe(
         withLatestFrom(node.tool$$("system:validator")),
         switchMap(([[node, { module, config, keys, system }], validator]) => {
             const _operator = module.default({
@@ -553,6 +567,7 @@ const systemToConfiguredModule =
                             switchMap(([config$, keys$]) => {
                                 return combineLatest([
                                     config$.pipe(
+                                        distinctUntilChanged(deepEqual),
                                         node.log(
                                             `systemToConfiguredModule ${role} got config document`
                                         ),
@@ -567,6 +582,7 @@ const systemToConfiguredModule =
                                         )
                                     ),
                                     keys$.pipe(
+                                        distinctUntilChanged(deepEqual),
                                         node.log(
                                             `systemToConfiguredModule ${role} got keys document`
                                         ),
@@ -606,7 +622,7 @@ function validateObject(baseObject, objectToValidate) {
     for (const key in baseObject) {
         if (baseObject.hasOwnProperty(key)) {
             // Check if both objects have the key
-            if (!objectToValidate.hasOwnProperty(key)) {
+            if (!objectToValidate?.hasOwnProperty(key)) {
                 return false;
             }
 

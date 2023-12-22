@@ -21,9 +21,12 @@ Node.$.subscribe((node) => {
         }
     });
 
-    // node.log$.subscribe(({ message, detail, callSite }) => {
-    //     // console.log(node.id, message, detail, callSite);
-    // });
+    node.log$.subscribe(({ message, detail, callSite }) => {
+        if (node.id === "flowui") {
+            console.log(node.id, message);
+        }
+        // console.log(node.id, message, detail, callSite);
+    });
 
     node.input$.subscribe((input) => {
         console.log("input", input);
@@ -34,13 +37,14 @@ Node.$.subscribe((node) => {
     });
 });
 
-const node = new Node();
+const node = new Node("flowui");
 
-// node.write$$("process:keys", {
-//     apiKey: "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",
-// }).subscribe(() => {
-//     console.log("wrote keys");
-// });
+const gpt = new Node();
+gpt.write$$("process:keys", {
+    apiKey: "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",
+}).subscribe(() => {
+    console.log("wrote keys");
+});
 
 const config = {
     nodes: [
@@ -63,7 +67,7 @@ const config = {
             },
             processConfig: {
                 basic: {
-                    prompt: "Read the article and list all citation links, as well as state the claim that they are supposed to support",
+                    prompt: "write me a haiku about the subject above",
                 },
                 advanced: {
                     model: "gpt-4-1106-preview",
@@ -80,7 +84,7 @@ const config = {
             },
             processConfig: {
                 basic: {
-                    prompt: "Check each citation and report whether it supports the claim",
+                    prompt: "write me a sonnet about the same subject",
                 },
                 advanced: {
                     model: "gpt-4-1106-preview",
@@ -139,18 +143,20 @@ Node.ready$
         ),
         tap(() => {
             console.log("send input");
-            // node.input$.next({
-            //     name: "getCitations",
-            //     payload: {
-            //         messages: [
-            //             {
-            //                 role: "user",
-            //                 content:
-            //                     "https://quillette.com/2023/12/10/the-carbon-neutral-dumpster-fire/",
-            //             },
-            //         ],
-            //     },
-            // });
+            node.input$.next({
+                name: "getCitations",
+                payload: {
+                    messages: [
+                        {
+                            role: "user",
+                            content:
+                                "https://quillette.com/2023/12/10/the-carbon-neutral-dumpster-fire/",
+                        },
+                    ],
+                },
+            });
+
+            node.output$.pipe(take(1)).subscribe(() => {});
         })
     )
     .subscribe();

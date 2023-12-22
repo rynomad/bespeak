@@ -1,4 +1,4 @@
-import { of } from "https://esm.sh/rxjs";
+import { of, catchError } from "https://esm.sh/rxjs";
 import { switchMap } from "https://esm.sh/rxjs/operators";
 import { Readability } from "https://esm.sh/@mozilla/readability";
 // import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
@@ -70,6 +70,11 @@ const parseHTML =
                 });
 
                 return { text: article?.textContent };
+            }),
+            catchError((error) => {
+                return {
+                    text: `Error: ${error}`,
+                };
             })
         );
 

@@ -11,17 +11,18 @@ import {
     switchMap,
     shareReplay,
     withLatestFrom,
+    startWith,
     catchError,
     zip,
+    mergeMap,
     pluck,
     takeUntil,
     distinctUntilChanged,
     filter,
+    debounceTime,
 } from "rxjs";
 
 import { deepEqual } from "https://esm.sh/fast-equals";
-import { pluginMissing } from "rxdb";
-import { jsonDefault } from "https://esm.sh/v134/json-schema-default@1.0.1/denonext/json-schema-default.mjs";
 
 export const key = "flow";
 export const version = "0.0.1";
@@ -325,7 +326,7 @@ const createSessionNode = ({ node, name, id }) => {
 };
 
 const setup = ({ node, config }) => {
-    console.log("SETUP", Node.ready$);
+    console.log("SETUP", config);
     return zip([
         Node.ready$,
         zip(
@@ -335,38 +336,91 @@ const setup = ({ node, config }) => {
                     NODES.get(id) ||
                     createSessionNode({ node, config, name, id });
 
-                return _node.write$$("system", system).pipe(
-                    _node.log("wrote system data for flow node"),
-                    switchMap((res) => {
-                        return _node.process$.pipe(
-                            _node.log("got process$"),
-                            filter(
-                                (e) =>
-                                    e.system.process === system.process ||
-                                    !system.process
-                            ),
-                            take(1)
-                        );
-                    }),
-                    _node.log("process$ matches system.process"),
-                    switchMap((sys) => {
+                return _node.read$$("system").pipe(
+                    startWith({}),
+                    debounceTime(100),
+                    take(1),
+                    switchMap((_system) => {
+                        const { name, description, process, ingress } = _system;
                         console.log(
-                            "flow node writing configs",
-                            sys,
-                            processConfig,
-                            ingressConfig
+                            "READ$$ SYSTEM",
+                            name,
+                            description,
+                            process,
+                            ingress,
+                            system
                         );
+                        if (
+                            !deepEqual(system, {
+                                name,
+                                description,
+                                process,
+                                ingress,
+                            })
+                        ) {
+                            return _node.write$$("system", system).pipe(
+                                switchMap((res) => {
+                                    return _node.process$.pipe(
+                                        _node.log("got process$"),
+                                        filter(
+                                            (e) =>
+                                                e.system.process ===
+                                                    system.process ||
+                                                !system.process
+                                        ),
+                                        take(1),
+                                        map(() => _system)
+                                    );
+                                })
+                            );
+                        } else {
+                            return of(_system);
+                        }
+                    }),
+                    switchMap(() => {
                         return zip([
-                            _node
-                                .write$$("process:config", processConfig || {})
-                                .pipe(
-                                    _node.log("flow node wrote process config")
-                                ),
-                            _node
-                                .write$$("ingress:config", ingressConfig || {})
-                                .pipe(
-                                    _node.log("flow node wrote ingress config")
-                                ),
+                            _node.read$$("process:config", true).pipe(
+                                take(1),
+                                switchMap((res) => {
+                                    console.log(
+                                        "READ PROCESS CONFIG",
+                                        res.data,
+                                        processConfig
+                                    );
+                                    if (
+                                        !res ||
+                                        !deepEqual(res.data, processConfig)
+                                    ) {
+                                        return _node.write$$(
+                                            "process:config",
+                                            processConfig || {}
+                                        );
+                                    }
+
+                                    return of(res);
+                                })
+                            ),
+                            _node.read$$("ingress:config", true).pipe(
+                                take(1),
+                                switchMap((res) => {
+                                    console.log(
+                                        "READ INGRESS CONFIG",
+                                        res.data,
+                                        processConfig
+                                    );
+                                    if (
+                                        !res ||
+                                        !deepEqual(res.data, ingressConfig)
+                                    ) {
+                                        return _node.write$$(
+                                            "ingress:config",
+                                            ingressConfig || {}
+                                        );
+                                    }
+
+                                    return of(res);
+                                })
+                            ),
                         ]).pipe(take(1));
                     }),
                     _node.log("wrote process and ingress config"),
@@ -418,7 +472,10 @@ const status = ({ node, config }) => {
         tap(({ nodes }) => {
             node.status$.next({
                 status: "rebuild",
-                detail: nodes,
+                detail: {
+                    nodes: nodes,
+                    config,
+                },
             });
         })
     );
@@ -426,36 +483,30 @@ const status = ({ node, config }) => {
 
 function flowOperation({ node, config }) {
     console.log("REBUILD FLOW", config);
+
     return (input$) => {
-        console.log("REINVOKE FLOW", config.nodes.length);
-        const flow$ = setup({ node, config }).pipe(shareReplay(1));
-        console.log("FLOW$", flow$);
+        const flow$ = setup({ node, config }).pipe(
+            status({ node, config }),
+            startWith({ nodes: [] })
+        );
 
-        flow$.pipe(status({ node, config })).subscribe(({ nodes }) => {
-            console.log("flow got status", nodes);
-        });
+        const inputFlow$ = input$.pipe(
+            withLatestFrom(flow$),
+            tap(([input, { nodes }]) => {
+                console.log("FLOW GOT INPUT", input);
+                const target = nodes.find((node) =>
+                    node.id.startsWith(input.name)
+                );
+                if (target) {
+                    console.log("FOUND TARGET, SENDING INPUT", input);
+                    target.input$.next(input.payload);
+                }
+            }),
+            filter(() => false)
+        );
 
-        combineLatest(input$, flow$)
-            .pipe(
-                node.log("got input and flow"),
-                tap(([input, { nodes }]) => {
-                    const target = nodes.find((node) =>
-                        node.id.startsWith(input.name)
-                    );
-                    if (target) {
-                        console.log(
-                            "flow found target",
-                            target.id,
-                            input.payload
-                        );
-                        target.input$.next(input.payload);
-                    }
-                })
-            )
-            .subscribe();
-
-        return flow$.pipe(
-            switchMap(({ nodes }) => {
+        const outputFlow$ = flow$.pipe(
+            mergeMap(({ nodes }) => {
                 return merge(
                     ...nodes.map((node) =>
                         node.output$.pipe(
@@ -468,6 +519,8 @@ function flowOperation({ node, config }) {
                 );
             })
         );
+
+        return merge(inputFlow$, outputFlow$);
     };
 }
 

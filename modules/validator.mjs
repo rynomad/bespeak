@@ -101,7 +101,7 @@ export const validator =
         return combineLatest(source$, node.schema$$(role)).pipe(
             node.log(`validator: start ${role}`),
             switchMap(([doc, schema]) => {
-                console.log("GOT SCHEMA FOR ROLE", role);
+                // console.log("GOT SCHEMA FOR ROLE", role);
                 if (!doc) {
                     if (role.endsWith(":keys")) {
                         return of(null).pipe(filter(() => !schema));

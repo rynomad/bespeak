@@ -7,10 +7,11 @@ export class ReteNode extends Classic.Node {
         return this.ide.db;
     }
 
-    constructor(id, operable, socket = new Classic.Socket("default")) {
+    constructor(id, operable, editor, socket = new Classic.Socket("default")) {
         super();
         this.id = id || this.id;
         this.operable = operable;
+        this.editor = editor;
 
         this.addInput("input", new Classic.Input(socket, "input", true));
         this.addOutput("output", new Classic.Output(socket, "output"));
@@ -144,7 +145,7 @@ export class LitNode extends LitPresets.classic.Node {
         await this.updateComplete;
 
         this.reteNode.litNode = this;
-        this.updateComponent();
+        // this.updateComponent();
     }
 
     static get styles() {

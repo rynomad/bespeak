@@ -25,7 +25,25 @@ import {
     Presets as ConnectionPresets,
 } from "https://esm.sh/rete-connection-plugin?deps=rete-area-plugin@2.0.0";
 
-import { Subject, debounceTime } from "https://esm.sh/rxjs";
+import {
+    Subject,
+    debounceTime,
+    withLatestFrom,
+    concatMap,
+    window,
+    mergeMap,
+    combineLatest,
+    takeUntil,
+    buffer,
+    of,
+    ReplaySubject,
+    fromEventPattern,
+    toArray,
+    skip,
+    tap,
+    take,
+    switchMap,
+} from "https://esm.sh/rxjs";
 
 import { ReteNode, LitNode } from "../rete/nodes.mjs";
 import "../icons/nodes.mjs";
@@ -41,11 +59,15 @@ export class Flow extends LitElement {
 
     static get styles() {
         return css`
-            :host,
+            :host {
+                height: 100%;
+                width: 100%;
+            }
             .content {
                 display: block;
                 position: relative;
                 width: 100%;
+                flex-grow: 1;
             }
 
             .column {
@@ -134,7 +156,7 @@ export class Flow extends LitElement {
 
         area.use(litRender);
         area.use(contextMenu);
-        // area.use(minimap);
+        area.use(minimap);
         area.use(connection);
         // litRender.use(reroutePlugin);
         litRender.addPreset(
@@ -217,12 +239,7 @@ export class Flow extends LitElement {
     }
 
     async removeNode(nodeId) {
-        for (const connection of node.getConnections()) {
-            if (connection.source === nodeId || connection.target === nodeId) {
-                await this.removeConnection(connection);
-            }
-        }
-        await this.editor.removeNode(node);
+        // await this.editor.removeNode(node);
     }
 
     async addConnection(connection) {
@@ -234,6 +251,7 @@ export class Flow extends LitElement {
     }
 
     getConnection(connection) {
+        console.error("GET CONNECTION", connection, this.editor.connections);
         return this.editor.connections.find(
             (conn) =>
                 conn.source === connection.source &&
@@ -244,87 +262,254 @@ export class Flow extends LitElement {
     async initialize(container) {
         await this.createEditor(container);
 
+        const editorEvents$ = new ReplaySubject(1);
+        const debouncedWindow$ = editorEvents$.pipe(
+            window(editorEvents$.pipe(debounceTime(1000))),
+            mergeMap((window$) => window$.pipe(toArray())),
+            skip(1)
+        );
         this.subscriptions = [
+            fromEventPattern(
+                (handler) => {
+                    this.editor.addPipe((ctx) => {
+                        if (
+                            [
+                                "nodecreated",
+                                "noderemoved",
+                                "connectioncreated",
+                                "connectionremoved",
+                            ].includes(ctx.type)
+                        ) {
+                            handler(ctx);
+                        }
+                        return ctx;
+                    });
+                    this.area.addPipe((ctx) => {
+                        // handler(ctx);
+                        return ctx;
+                    });
+                },
+                (handler) => this.editor.removePipe?.(handler)
+            ).subscribe(editorEvents$),
+
+            debouncedWindow$
+                .pipe(
+                    withLatestFrom(this.operable.read$$("process:config")),
+                    concatMap(([events, { data: config }]) => {
+                        console.log("EVENT", events, config);
+                        const newConfig = { ...config };
+
+                        for (const event of events) {
+                            if (event.type === "noderemoved") {
+                                newConfig.nodes = newConfig.nodes.filter(
+                                    (_node) =>
+                                        !event.data.id.startsWith(
+                                            _node.system.name
+                                        )
+                                );
+                            } else if (event.type === "connectionremoved") {
+                                const {
+                                    source,
+                                    target,
+                                    sourceOutput,
+                                    targetInput,
+                                } = event.data;
+
+                                if (sourceOutput === "tools") {
+                                    newConfig.nodes = newConfig.nodes.map(
+                                        (node) => {
+                                            if (
+                                                source.startsWith(
+                                                    node.system.name
+                                                )
+                                            ) {
+                                                return {
+                                                    ...node,
+                                                    tools: node.tools.filter(
+                                                        (tool) =>
+                                                            !target.startsWith(
+                                                                tool
+                                                            )
+                                                    ),
+                                                };
+                                            }
+
+                                            return node;
+                                        }
+                                    );
+                                } else {
+                                    newConfig.connections =
+                                        newConfig.connections.filter(
+                                            (c) =>
+                                                !(
+                                                    source.startsWith(c.from) &&
+                                                    target.startsWith(c.to)
+                                                )
+                                        );
+                                }
+                            } else if (event.type === "connectioncreated") {
+                                const {
+                                    source,
+                                    target,
+                                    sourceOutput,
+                                    targetInput,
+                                } = event.data;
+
+                                if (sourceOutput === "tools") {
+                                    newConfig.nodes = newConfig.nodes.map(
+                                        (node) => {
+                                            if (
+                                                source.startsWith(
+                                                    node.system.name
+                                                )
+                                            ) {
+                                                console.log(
+                                                    "toolnode change",
+                                                    node
+                                                );
+                                                return {
+                                                    ...node,
+                                                    tools: [
+                                                        ...node.tools,
+                                                        target.split("-")[0],
+                                                    ],
+                                                };
+                                            }
+
+                                            return node;
+                                        }
+                                    );
+                                } else {
+                                    newConfig.connections =
+                                        newConfig.connections.concat([
+                                            {
+                                                from: event.data.source.split(
+                                                    "-"
+                                                )[0],
+                                                to: event.data.target.split(
+                                                    "-"
+                                                )[0],
+                                            },
+                                        ]);
+                                }
+                            }
+                        }
+
+                        return this.operable
+                            .write$$("process:config", newConfig)
+                            .pipe(take(1));
+                    }),
+                    takeUntil(this.operable.destroy$)
+                )
+                .subscribe(),
             this.operable.status$
                 .pipe(
                     filter(({ status }) => status === "rebuild"),
                     pluck("detail"),
-                    withLatestFrom(
-                        this.operable.read("process:config").pipe(pluck("data"))
-                    )
-                )
-                .subscribe(async ([operables, { nodes, connections }]) => {
-                    const liveConnections = [];
-                    for (const _node of nodes) {
-                        const id = `${_node.system.name}-${this.operable.id}`;
-                        let node = this.getNode(id);
-                        if (!node) {
-                            node = new ReteNode(
-                                id,
-                                operables.find((o) => o.id === id)
+                    concatMap(
+                        async ({
+                            nodes: operables,
+                            config: { nodes, connections },
+                        }) => {
+                            console.error(
+                                "REBUILD",
+                                operables,
+                                nodes,
+                                connections
                             );
-                            await this.addNode(node);
-                        }
+                            const liveConnections = [];
+                            for (const _node of nodes) {
+                                const id = `${_node.system.name}-${this.operable.id}`;
+                                let node = this.getNode(id);
+                                if (!node) {
+                                    console.log(
+                                        "CREATE NODE",
+                                        id,
+                                        operables.find((o) => o.id === id),
+                                        _node
+                                    );
+                                    node = new ReteNode(
+                                        id,
+                                        operables.find((o) => o.id === id),
+                                        this
+                                    );
+                                    await this.addNode(node);
+                                }
 
-                        for (const tool of _node.tools) {
-                            const toolId = `${tool}-${this.operable.id}`;
-                            const conn = {
-                                source: id,
-                                target: toolId,
-                                sourceOutput: "tools",
-                                targetInput: "tool",
-                            };
-                            liveConnections.push(conn);
+                                for (const tool of _node.tools) {
+                                    const toolId = `${tool}-${this.operable.id}`;
+                                    const connection = {
+                                        id: `${id}-${toolId}`,
+                                        source: id,
+                                        target: toolId,
+                                        sourceOutput: "tools",
+                                        targetInput: "tool",
+                                    };
+                                    liveConnections.push(connection);
 
-                            const toolConnection = this.getConnection(conn);
-                            if (!toolConnection) {
-                                await this.addConnection(conn);
+                                    const toolConnection =
+                                        this.getConnection(connection);
+                                    if (!toolConnection) {
+                                        await this.addConnection(
+                                            connection
+                                        ).catch((e) => {
+                                            console.error(e, connection);
+                                        });
+                                    }
+                                }
+                            }
+
+                            for (const _connection of connections) {
+                                const connection = {
+                                    id: `${_connection.from}-${_connection.to}-${this.operable.id}`,
+                                    source: `${_connection.from}-${this.operable.id}`,
+                                    target: `${_connection.to}-${this.operable.id}`,
+                                    sourceOutput: "output",
+                                    targetInput: "input",
+                                };
+                                liveConnections.push(connection);
+                                const nodeConnection =
+                                    this.getConnection(connection);
+                                if (!nodeConnection) {
+                                    await this.addConnection(connection).catch(
+                                        (e) => {
+                                            console.error(e, connection);
+                                        }
+                                    );
+                                }
+                            }
+
+                            const reteNodes = this.editor.nodes;
+
+                            for (const node of reteNodes) {
+                                if (
+                                    !nodes.find(
+                                        (n) =>
+                                            `${n.system.name}-${this.operable.id}` ===
+                                            node.id
+                                    )
+                                ) {
+                                    await this.removeNode(node.id);
+                                }
+                            }
+
+                            const reteConnections = this.editor.connections;
+
+                            for (const connection of reteConnections) {
+                                if (
+                                    !liveConnections.find(
+                                        (c) =>
+                                            c.source === connection.source &&
+                                            c.target === connection.target
+                                    )
+                                ) {
+                                    await this.removeConnection(connection.id);
+                                }
                             }
                         }
-                    }
-
-                    for (const _connection of connections) {
-                        const connection = {
-                            source: `${_connection.from}-${this.operable.id}`,
-                            target: `${_connection.to}-${this.operable.id}`,
-                            sourceOutput: "output",
-                            targetInput: "input",
-                        };
-                        liveConnections.push(connection);
-                        const nodeConnection = this.getConnection(connection);
-                        if (!nodeConnection) {
-                            await this.addConnection(connection);
-                        }
-                    }
-
-                    const reteNodes = this.editor.nodes;
-
-                    for (const node of reteNodes) {
-                        if (
-                            !nodes.find(
-                                (n) =>
-                                    `${n.system.name}-${this.operable.id}` ===
-                                    node.id
-                            )
-                        ) {
-                            await this.removeNode(node.id);
-                        }
-                    }
-
-                    const reteConnections = this.editor.connections;
-
-                    for (const connection of reteConnections) {
-                        if (
-                            !liveConnections.find(
-                                (c) =>
-                                    c.source === connection.source &&
-                                    c.target === connection.target
-                            )
-                        ) {
-                            await this.removeConnection(connection.id);
-                        }
-                    }
-                }),
+                    )
+                )
+                .subscribe(),
         ];
     }
 
@@ -348,9 +533,7 @@ export class Flow extends LitElement {
     render() {
         return html`
             <div class="column">
-                <bespeak-operable .operable=${this.operable}>
-                    <div class="content"></div>
-                </bespeak-operable>
+                <div class="content"></div>
             </div>
         `;
     }
