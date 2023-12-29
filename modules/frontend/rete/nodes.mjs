@@ -308,9 +308,9 @@ export class LitNode extends LitPresets.classic.Node {
                             data-testid="output-socket"></ref-element>`}
                     </div>
                     <div>
-                        <bespeak-lit-node
+                        <bespeak-iframe
                             .operable=${this.reteNode
-                                .operable}></bespeak-lit-node>
+                                .operable}></bespeak-iframe>
                     </div>
                 </bespeak-compass>
             </div>
@@ -318,6 +318,51 @@ export class LitNode extends LitPresets.classic.Node {
     }
 }
 customElements.define("bespeak-rete-node", LitNode);
+
+class IFrames extends LitElement {
+    static get styles() {
+        return css`
+            :host {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+            }
+            iframe {
+                border: none;
+                margin: 5rem;
+                width: 50rem;
+                height: 40rem;
+            }
+        `;
+    }
+
+    static get properties() {
+        return {
+            operable: { type: Object },
+        };
+    }
+
+    firstUpdated() {
+        const iframe = this.shadowRoot.querySelector("iframe");
+        iframe.onload = () => {
+            alert("iframe loaded" + this.operable?.id);
+            iframe.contentWindow.postMessage(
+                { id: this.operable?.id },
+                window.location.origin
+            );
+        };
+    }
+
+    render() {
+        return html`<iframe
+            src=${`${location.origin}/operable.html`}></iframe>`;
+    }
+}
+
+customElements.define("bespeak-iframe", IFrames);
 class FiveSlotElement extends LitElement {
     static styles = css`
         :host {

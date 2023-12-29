@@ -9,26 +9,30 @@
 4. The module uses the role to determine the schema to use for validation.
 
 5. The module logs the start and end of the validation process.
-
-# Dependencies
-
+edit
+- testing
+-
+- # Dependencies
 - json-schema-preset: Used to create a default object based on the JSON schema.
 - json-schema-empty: Used to create an empty object if no initial data is provided and no schema is available.
 - ajv: A JSON schema validator.
-
-# Config Schema
-
+- # Input Schema
+  
+  the input is the data to be validated against the role schema
+- # Output Schema
+  
+  The output is the data, augmented with defaults via empty and jsonPreset
+- # Config Schema
 - strict (boolean): If true, will throw an error on invalid data. Otherwise the offending event will just be ignored. Default is true.
 - role (string): The schema key to use.
 - data (object): The initial data to use.
 - skipValidation (boolean): If true, skips the validation process. Default is false.
 - ajv (object): JSON schema validator options. Allows additional properties.
-
-# relevant docs
-
-```json
-[
+- # relevant docs
+  
+  ```json
+  [
     "https://www.npmjs.com/package/json-schema-preset",
     "https://www.npmjs.com/package/json-schema-empty"
-]
-```
+  ]
+  ```

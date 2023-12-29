@@ -57,7 +57,10 @@ export class Editor extends LitElement {
 
     static get styles() {
         return css`
-            :host,
+            :host {
+                height: 100%;
+                width: 100%;
+            }
             .content {
                 display: block;
                 position: relative;

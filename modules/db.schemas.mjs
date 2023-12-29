@@ -79,7 +79,7 @@ const systemSchema = {
         ingress: {
             type: "string",
             maxLength: 255,
-            default: `${DefaultIngress.key}@${DefaultIngress.version}`,
+            default: `default-ingress@0.0.1`,
         },
         name: {
             type: "string",
@@ -130,7 +130,7 @@ const moduleSchema = {
 };
 
 export const config = {
-    dbName: "requine",
+    dbName: "operable",
     collections: {
         keys: {
             schema: keySchema,

@@ -294,7 +294,8 @@ const createSessionNode = ({ node, name, id }) => {
                         console.log("flow got process config", config);
                         return config.nodes.find((n) => n.system.name === name);
                     }),
-                    distinctUntilChanged(deepEqual)
+                    distinctUntilChanged(deepEqual),
+                    debounceTime(500)
                 )
             ),
             filter(
@@ -302,7 +303,11 @@ const createSessionNode = ({ node, name, id }) => {
                     !deepEqual(nodeConfig, flowNodeConfig)
             ),
             map(([nodeConfig]) => nodeConfig),
-            withLatestFrom(node.read$$("process:config").pipe(pluck("data"))),
+            withLatestFrom(
+                node
+                    .read$$("process:config")
+                    .pipe(pluck("data"), debounceTime(500))
+            ),
             switchMap(([nodeConfig, config]) => {
                 // replace the node in the config
                 const index = config.nodes.findIndex(
@@ -340,6 +345,11 @@ const setup = ({ node, config }) => {
                     startWith({}),
                     debounceTime(100),
                     take(1),
+                    map((s) => ({
+                        process: "chat-gpt@0.0.1",
+                        ingress: "default-ingress@0.0.1",
+                        ...s,
+                    })),
                     switchMap((_system) => {
                         const { name, description, process, ingress } = _system;
                         console.log(
@@ -351,12 +361,19 @@ const setup = ({ node, config }) => {
                             system
                         );
                         if (
-                            !deepEqual(system, {
-                                name,
-                                description,
-                                process,
-                                ingress,
-                            })
+                            !deepEqual(
+                                {
+                                    process: "chat-gpt@0.0.1",
+                                    ingress: "default-ingress@0.0.1",
+                                    ...system,
+                                },
+                                {
+                                    name,
+                                    description,
+                                    process,
+                                    ingress,
+                                }
+                            )
                         ) {
                             return _node.write$$("system", system).pipe(
                                 switchMap((res) => {
@@ -389,8 +406,12 @@ const setup = ({ node, config }) => {
                                     );
                                     if (
                                         !res ||
-                                        !deepEqual(res.data, processConfig)
+                                        !validateObject(processConfig, res.data)
                                     ) {
+                                        console.log(
+                                            "REWRITE NODE CONFIG",
+                                            processConfig
+                                        );
                                         return _node.write$$(
                                             "process:config",
                                             processConfig || {}
@@ -409,9 +430,17 @@ const setup = ({ node, config }) => {
                                         processConfig
                                     );
                                     if (
-                                        !res ||
-                                        !deepEqual(res.data, ingressConfig)
+                                        ingressConfig &&
+                                        (!res ||
+                                            !validateObject(
+                                                ingressConfig,
+                                                res.data
+                                            ))
                                     ) {
+                                        console.log(
+                                            "REWRITE NODE INGRESS CONFIG",
+                                            processConfig
+                                        );
                                         return _node.write$$(
                                             "ingress:config",
                                             ingressConfig || {}
@@ -441,21 +470,50 @@ const setup = ({ node, config }) => {
                     return nodes.find((node) => node.id.startsWith(tool));
                 });
 
-                nodes[i].flowTools$.next(toolNodes);
+                nodes[i].flowTools$
+                    .pipe(
+                        startWith([]),
+                        debounceTime(100),
+                        take(1),
+                        filter(
+                            (e) =>
+                                !deepEqual(
+                                    e.map(({ id }) => id),
+                                    toolNodes.map(({ id }) => id)
+                                )
+                        )
+                    )
+                    .subscribe(() => {
+                        console.log("SET FLOW TOOLS", toolNodes);
+                        nodes[i].flowTools$.next(toolNodes);
+                    });
             });
         }),
         node.log("set flow tools"),
         tap(([_, nodes]) => {
             nodes.forEach((node) => {
-                node.upstream$.next([]);
-            });
-            config.connections.forEach(({ from, to }) => {
-                const fromNode = nodes.find((node) => node.id.startsWith(from));
-                const toNode = nodes.find((node) => node.id.startsWith(to));
+                const upstreams = config.connections
+                    .filter(({ to }) => node.id.startsWith(to))
+                    .map(({ from }) => {
+                        return nodes.find((node) => node.id.startsWith(from));
+                    });
 
-                toNode.upstream$.pipe(take(1)).subscribe((upstream) => {
-                    toNode.upstream$.next([...upstream, fromNode]);
-                });
+                node.upstream$
+                    .pipe(
+                        startWith([]),
+                        debounceTime(100),
+                        take(1),
+                        filter(
+                            (e) =>
+                                !deepEqual(
+                                    e.map(({ id }) => id),
+                                    upstreams.map(({ id }) => id)
+                                )
+                        )
+                    )
+                    .subscribe(() => {
+                        node.upstream$.next(upstreams);
+                    });
             });
         }),
         node.log("set upstreams, all nodes ready"),
@@ -525,3 +583,29 @@ function flowOperation({ node, config }) {
 }
 
 export default flowOperation;
+function validateObject(baseObject, objectToValidate) {
+    for (const key in baseObject) {
+        if (baseObject.hasOwnProperty(key)) {
+            // Check if both objects have the key
+            if (!objectToValidate?.hasOwnProperty(key)) {
+                return false;
+            }
+
+            // If the value is an object, recurse
+            if (
+                typeof baseObject[key] === "object" &&
+                typeof objectToValidate[key] === "object"
+            ) {
+                if (!validateObject(baseObject[key], objectToValidate[key])) {
+                    return false;
+                }
+            } else {
+                // Direct value comparison
+                if (baseObject[key] !== objectToValidate[key]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}

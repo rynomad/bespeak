@@ -7472,10 +7472,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         return a;
                     (a += this.stringifyProperty("attribute").length),
                         (a += s.after.length);
-                    var o = this._spacesFor("operator");
+                    var o = this._spacesFor("process");
                     a += o.before.length;
-                    var u = this.stringifyProperty("operator");
-                    if (n === "operator") return u ? a : -1;
+                    var u = this.stringifyProperty("process");
+                    if (n === "process") return u ? a : -1;
                     (a += u.length), (a += o.after.length);
                     var c = this._spacesFor("value");
                     a += c.before.length;
@@ -7497,7 +7497,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         ),
                         this.operator &&
                             (this.value || this.value === "") &&
-                            (a.push(this._stringFor("operator")),
+                            (a.push(this._stringFor("process")),
                             a.push(this._stringFor("value")),
                             a.push(
                                 this._stringFor(
@@ -8319,7 +8319,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                                 break;
                             case T.asterisk:
                                 if (y[A.FIELDS.TYPE] === T.equals)
-                                    (s.operator = h), (f = "operator");
+                                    (s.operator = h), (f = "process");
                                 else if (
                                     (!s.namespace ||
                                         (f === "namespace" && !p)) &&
@@ -8364,21 +8364,21 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                                 }
                             case T.caret:
                                 y[A.FIELDS.TYPE] === T.equals &&
-                                    ((s.operator = h), (f = "operator")),
+                                    ((s.operator = h), (f = "process")),
                                     (p = !1);
                                 break;
                             case T.combinator:
                                 if (
                                     (h === "~" &&
                                         y[A.FIELDS.TYPE] === T.equals &&
-                                        ((s.operator = h), (f = "operator")),
+                                        ((s.operator = h), (f = "process")),
                                     h !== "|")
                                 ) {
                                     p = !1;
                                     break;
                                 }
                                 y[A.FIELDS.TYPE] === T.equals
-                                    ? ((s.operator = h), (f = "operator"))
+                                    ? ((s.operator = h), (f = "process"))
                                     : !s.namespace &&
                                       !s.attribute &&
                                       (s.namespace = !0),
@@ -8506,7 +8506,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                                         { index: d[A.FIELDS.START_POS] }
                                     );
                                 (s.operator = s.operator ? s.operator + h : h),
-                                    (f = "operator"),
+                                    (f = "process"),
                                     (p = !1);
                                 break;
                             case T.comment:
@@ -14763,15 +14763,13 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         let b = u(x, {});
                         e.candidateRuleMap.has(b) ||
                             e.candidateRuleMap.set(b, []),
-                            e.candidateRuleMap
-                                .get(b)
-                                .push([
-                                    {
-                                        sort: n.create("defaults"),
-                                        layer: "defaults",
-                                    },
-                                    w,
-                                ]);
+                            e.candidateRuleMap.get(b).push([
+                                {
+                                    sort: n.create("defaults"),
+                                    layer: "defaults",
+                                },
+                                w,
+                            ]);
                     }
                 },
                 addComponents(d, h) {
@@ -14789,16 +14787,14 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         a.add(b),
                             e.candidateRuleMap.has(b) ||
                                 e.candidateRuleMap.set(b, []),
-                            e.candidateRuleMap
-                                .get(b)
-                                .push([
-                                    {
-                                        sort: n.create("components"),
-                                        layer: "components",
-                                        options: h,
-                                    },
-                                    w,
-                                ]);
+                            e.candidateRuleMap.get(b).push([
+                                {
+                                    sort: n.create("components"),
+                                    layer: "components",
+                                    options: h,
+                                },
+                                w,
+                            ]);
                     }
                 },
                 addUtilities(d, h) {
@@ -14816,16 +14812,14 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         a.add(b),
                             e.candidateRuleMap.has(b) ||
                                 e.candidateRuleMap.set(b, []),
-                            e.candidateRuleMap
-                                .get(b)
-                                .push([
-                                    {
-                                        sort: n.create("utilities"),
-                                        layer: "utilities",
-                                        options: h,
-                                    },
-                                    w,
-                                ]);
+                            e.candidateRuleMap.get(b).push([
+                                {
+                                    sort: n.create("utilities"),
+                                    layer: "utilities",
+                                    options: h,
+                                },
+                                w,
+                            ]);
                     }
                 },
                 matchUtilities: function (d, h) {
@@ -17286,7 +17280,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                 id(i) {
                     return Nn.default.attribute({
                         attribute: "id",
-                        operator: "=",
+                        process: "=",
                         value: i.value,
                         quoteMark: '"',
                     });
