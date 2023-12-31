@@ -1,0 +1,13 @@
+- Instructions for writing [[process operators]] module according to our conventions
+	- Write the header: import any dependencies, export key, version, and description
+	- Write the [[schema operators]] for any necessary [[schema roles]]
+	- if necessary, write a [[setup operator]]
+	- if necessary, write a [[tool operator]]
+	- if necessary, write a [[status operator]]
+	- write the actual process operator, composing any setup, tool, and status operators to achieve the desired functionality.
+	- review for adherence to requirements and documentation.
+		- provide fixes if needed
+	- bring together all of the code into a complete module.
+		- It's imperative that there are no omissions, the code at this step must be a complete artifact, with all text included inline, even if it's a repetition of code provided earlier.
+		- The code should all be in a single module file that respects the export signature of [[process operators]]
+	-

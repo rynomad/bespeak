@@ -1,0 +1,33 @@
+template::  process operator requirements
+
+	- # Requirements Document Template for Process Operator Development
+	- ## Introduction
+		- Provide a brief introduction to the process operator being developed, including its purpose and potential use cases.
+	- ## Operator Identification
+		- **Key**: A unique identifier for the operator.
+		- **Version**: The semantic versioning (semver) of the operator.
+		- **Description**: A clear and concise description of what the operator does.
+	- ## Dependencies
+		- List any external dependencies required by the operator, including libraries, frameworks, or other operators.
+		- Include links to relevant web documentation
+	- ## Schema Definitions
+		- **Input Schema**:
+			- Define the expected input data to the operator.
+		- **Output Schema**:
+			- Define the output data from the operator.
+		- **Config Schema**:
+			- Define the configuration used to construct an instance of the operator.
+		- **Keys Schema**:
+			- Define the keys shared by all instances of the operator.
+	- ## Operator Components
+		- **Setup Operator**:
+			- Describe any setup required before the operator can function.
+		- **Tool Operator**:
+			- Describe any tools that the operator will use to perform its tasks.
+		- **Status Operator**:
+			- Describe how the operator will report its status or handle errors.
+	- ## Process Operator Logic
+		- Describe the logic and flow of the process operator, including how it will compose the setup, tool, and status operators to achieve the desired functionality.
+	- ## Logging
+		- Outline the logging strategy for the operator, including what information will be logged and at what level (e.g., debug, info, error).
+	-

@@ -1,0 +1,2 @@
+- Flows are scripts that configure and pipe together one or more [[nodes]] to orchestrate a multistep workflow.
+- here's an example of

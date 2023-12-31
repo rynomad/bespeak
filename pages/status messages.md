@@ -1,0 +1,6 @@
+- status messages are useful for providing progress while an operator is running.
+- status messages are emitted on the `node.status$` [[interface]]
+- a status message object has three top level properties:
+	- status - a one word status type
+	- message - a short useful message
+	- detail - any arbitrary data specific to the status type

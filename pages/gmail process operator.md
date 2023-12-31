@@ -1,0 +1,36 @@
+## Introduction
+The Gmail Search Operator is designed to allow users to search through their Gmail accounts using specific queries. This operator will enable users to filter their emails based on various criteria such as sender, date, subject, and keywords. The potential use cases include finding specific emails quickly, organizing inbox, and automating email management tasks.
+- ## Operator Identification
+- **Key**: `gmail-search-operator`
+- **Version**: `1.0.0`
+- **Description**: This operator allows users to search and retrieve emails from their Gmail account based on user-defined search queries.
+- ## Dependencies
+- Google API Client Libraries: Required for authenticating and interfacing with the Gmail API.
+	- Documentation: [Google API Client Libraries](https://developers.google.com/api-client-library)
+- OAuth 2.0 Authorization Framework: For secure access to user's Gmail account.
+	- Documentation: [OAuth 2.0](https://oauth.net/2/)
+- ## Schema Definitions
+- **Input Schema**:
+	- `query`: The search query string in Gmail search syntax.
+	- `maxResults`: (Optional) Maximum number of email results to return.
+- **Output Schema**:
+	- `emails`: An array of email objects, each containing:
+		- `id`: The unique identifier of the email.
+		- `threadId`: The thread identifier to which this email belongs.
+		- `snippet`: A brief snippet of the email content.
+		- `labels`: An array of label identifiers applied to the email.
+- **Config Schema**:
+	- `credentials`: User's OAuth 2.0 credentials for Gmail API access.
+	- `token`: Access token for the user's Gmail account.
+- **Keys Schema**:
+	- `apiKey`: The API key for the Gmail API.
+	- `clientSecret`: The client secret for the Gmail API.
+- ## Operator Components
+- **Setup Operator**:
+	- Responsible for obtaining and refreshing OAuth 2.0 credentials.
+- **Tool Operator**:
+	- Utilizes the Gmail API to execute search queries and retrieve email data.
+- **Status Operator**:
+	- Reports the status of the search operation and handles any errors encountered during the process.
+- ## Process Operator Logic
+- The Gmail Search Operator will start by using the Setup Operator to ensure that valid OAuth 2.0 credentials are available. It will then pass the search query to the Tool Operator, which interacts with the Gmail API to fetch the emails that match the query. The Status Operator will monitor the operation, handle any exceptions, and provide feedback on the operation's success or failure.

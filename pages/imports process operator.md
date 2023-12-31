@@ -1,0 +1,31 @@
+## Introduction
+The "Memoized Imports" operator is designed to efficiently handle the importation of modules by memoizing the results. This process operator is particularly useful in scenarios where modules are repeatedly imported, as it caches the imported modules to avoid redundant network requests or processing. It is applicable in systems that dynamically load modules at runtime and require optimization to improve performance.
+- ## Operator Identification
+- **Key**: `imports`
+- **Version**: `0.0.1`
+- **Description**:  imports takes an array of module documents and returns an array of imported modules.
+- ## Dependencies
+- **rxjs**: A library for reactive programming using Observables, to make it easier to compose asynchronous or callback-based code. [RxJS Documentation](https://rxjs.dev/guide/overview)
+- ## Schema Definitions
+- **Input Schema**:
+	- Type: `array`
+	- Items:
+		- Type: `object`
+		- Properties:
+			- `id`: A string identifier for the module.
+			- `data`: A string containing the module data.
+- **Output Schema**:
+	- an array of imported modules.
+- **Config Schema**:
+	- There is no config schema, export `null`
+- **Keys Schema**:
+	- There is no keys schema, export `null`
+- ## Operator Components
+- **Setup Operator**:
+	- setup memoization
+- **Tool Operator**:
+	- The operator uses the `system:db` tool to interact with a database for fetching module documents.
+- **Status Operator**:
+	- The operator uses logging with the `node.log("memoizedImport")` method to report its status or handle errors.
+- ## Process Operator Logic
+- The operator works by taking an array of module identifiers or documents, checking if the module has already been memoized, and if not, fetching the module document from the database, creating a blob from the module data, generating a URL for the blob, and dynamically importing the module. The imported module is then memoized to optimize subsequent imports.

@@ -1,0 +1,3 @@
+- Bespeak is an isomorphic JavaScript library for creating and composing [[flows]] for data-processing with AI.
+- Flows are scripts that instanstiate and wire together [[nodes]]
+-

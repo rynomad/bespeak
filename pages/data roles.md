@@ -1,0 +1,12 @@
+- [[nodes]] have 5 data roles which are used to store configuration and parameterization which defines the nodes behavior
+	- `node` - entry point which declares the following:
+		- id - string
+		- ingress - `module@version`
+		- process - `module@version`
+		- name - optional human readable name
+		- description - optional contextual description of what the node is for.
+	- `ingress:config`, `ingress:keys`, `process:config`, and `process:keys`
+		- `:config`: per-node config for the respective operator
+			- defined by the `:config` [[schema roles]]
+			-
+		- `:keys`: shared keydata for all instances of the operator

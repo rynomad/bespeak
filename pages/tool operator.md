@@ -1,0 +1,2 @@
+- a tool operator is a helper to present operable tools in the fashion that they are needed for another use.
+- operable tools are accessed via the `io.tool$` BehaviorSubject, which will either be `null` or an array of [[operable]] instances

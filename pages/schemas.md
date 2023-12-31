@@ -1,0 +1,7 @@
+- Schemas are defined as zod schemas.
+- `schema.parse` is the preferred way to validate/parse data.
+- Schemas make liberal use of titles, defaults, descriptions, examples, and enums to aid in the procedural generation of form UI and generation of default data objects.
+- Schemas are thorough, but not insane: if a schema needs to define a property that is a complex object (say, an observable or websocket connection), it shoulds simply note in the description what it is, ducktype a couple parameters, and allow for additional properties
+- Schemas have an object root, never an array or primitive value.
+	- sometimes this seems excessive when an operator only cares about a single value, but knowing that we're always dealing with objects gives us more flexibility to add things later without breaking changes.
+- The object root of the schema always allows additional properties

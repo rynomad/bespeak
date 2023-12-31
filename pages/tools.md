@@ -1,0 +1,11 @@
+- Tools are [[nodes]] that are used by other nodes as bare operators.
+- they are accessed one of two ways:
+	- by the `tool$$()` helper method
+		- `tool$(toolID)` - this function returns an observable that emits the appropriate tool.
+	- by the `tool$` interface
+		- [[interfaces]]
+- Using a tool involves invoking it via the `operator()` method:
+	- ((656e5315-9475-429c-ab44-3c2634f2635e))
+- {{embed [[system tools]]}}
+	-
+	-
