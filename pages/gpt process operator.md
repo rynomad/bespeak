@@ -13,13 +13,13 @@
 		- It lists all the events you'll need to listen for.
 	- https://www.npmjs.com/package/@deboxsoft/zod-to-json-schema
 		- converts tool input zod schemas to json schemas for openai
-		- see https://github.com/openai/openai-node/blob/HEAD/helpers.md#integrate-with-zod
 	-
 - ## Schema Definitions
 - **Input Schema**:
-	- `messages`: a message array to be used as history
+	- `messages`: an array of message objects, as expected by the openai api.
 - **Output Schema**:
 	- `messages`: The total message array, including all received messages, optionally filtered based on configuration
+	- `code`: the contents of the last markdown code block in the final message, if any.
 - **Config Schema**:
 	- `prompt`: The prompt content to be appended to the incoming message array.
 	- `role`: The role to be used with the prompt content, can be "user", "assistant", or "system".
@@ -55,19 +55,24 @@
 - **Setup Operator**:
 	- configure the openai client with dangerouslyAllowBrowser: true and the api keys
 - **Tool Operator**:
-	- Transforms node [[tools]] into the expected format for the `runFunctions` call.
+	- Transforms node [[tools]] into the expected format for the `runTools` call.
 		- name: node.id
-		- function: an async wrapper function around a single invocation of the `toolNode.operator()`
-		- parse: JSON.parse
-		- description: systemData.description
-		- parameters: inputSchema
+		- function: an async wrapper function around a single invocation of the `toolNode.invokeAsFunction()` with a try/catch.
+		- parse: schema.parse
+			- https://github.com/openai/openai-node/blob/HEAD/helpers.md#integrate-with-zod
+		- description: description from operable.meta$
+		- parameters: input zod schema converted to json schema
+			- https://www.npmjs.com/package/@deboxsoft/zod-to-json-schema
+			-
 	- https://github.com/openai/openai-node/blob/HEAD/helpers.md
-		- This documents the api for using functiona
+		- This documents the api for using functions
+	- see https://github.com/openai/openai-node/blob/HEAD/helpers.md#integrate-with-zod
+		- This documents how to use zod schemas (which we use with operables) into function calls.
 - **Status Operator**:
 	- take the runner returned from the the and listen to all the events and emit them on the status$ interface.
 	- Make sure to consult this document before writing the status operator:
 		- https://github.com/openai/openai-node/blob/HEAD/helpers.md
-			- this gives details on how to use the runner returned by the `stream()` and `runFunctions()`
+			- this gives details on how to use the runner returned by the `stream()` and `runTools()`
 			- It lists all the events you'll need to listen for.
 - ## Process Operator Logic
 - with latest from setup and tool operators

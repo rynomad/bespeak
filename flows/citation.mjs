@@ -1,4 +1,4 @@
-import Node from "http://localhost:3004/modules/node.mjs";
+import Node from "./node.mjs";
 import "../modules/bootload.mjs";
 
 const KEY = Deno.env.get("OPENAI_KEY");

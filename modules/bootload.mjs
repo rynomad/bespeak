@@ -1,6 +1,6 @@
-// import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
-// import slash from "https://deno.land/x/slash/mod.ts";
-import Node from "http://localhost:3004/modules/node.mjs";
+import * as path from "https://deno.land/std@0.188.0/path/mod.ts";
+import slash from "https://deno.land/x/slash/mod.ts";
+import Node from "./node.mjs";
 import * as DefaultIngress from "./ingress.mjs";
 import { config as dbConfig } from "./db.schemas.mjs";
 
@@ -21,7 +21,7 @@ const Registrar = await import("./registrar.mjs");
 const Validator = await import("./validator.mjs");
 const DB = await import("./db.mjs");
 
-// const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
+const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
 
 const systemTools = [
     {
@@ -93,15 +93,15 @@ combineLatest(
         "./configurableOperator.mjs",
         "./readability.mjs",
         "./fs.mjs",
-        "./flow.mjs",
+        "./ls.mjs",
     ]),
     Node.systemTools$
 )
     .pipe(
-        map(([paths, tools]) => [paths.map(getAbsoluteUrl), tools]),
+        // map(([paths, tools]) => [paths.map(getAbsoluteUrl), tools]),
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
-                // map((p) => slash(path.resolve(__dirname, p))),
+                map((p) => slash(path.resolve(__dirname, p))),
 
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 tools.find(({ id }) => id === "system:db").operator(),
@@ -118,7 +118,7 @@ combineLatest(
         }),
         concatMap(([paths, tools]) => {
             return from(paths).pipe(
-                // map((p) => slash(path.resolve(__dirname, p))),
+                map((p) => slash(path.resolve(__dirname, p))),
                 tools.find(({ id }) => id === "system:registrar").operator(),
                 map(([{ params }]) => ({ module: params.id })),
                 tools.find(({ id }) => id === "system:imports").operator(),
@@ -136,7 +136,7 @@ combineLatest(
         })
     )
     .subscribe((v) => {
-        console.log("Registration Complete", v);
+        console.log("Registration Complete");
         Node.ready$.next(true);
     });
 

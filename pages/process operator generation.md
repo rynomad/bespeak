@@ -31,7 +31,7 @@
 - Relevant docs to read with fs tool:
 - writing a process operator.md
 - tool operator.md
-- nodes.md
+- operables.md
 - schema roles.md
 - data roles.md
   
@@ -42,9 +42,9 @@
 - writing a process operator.md
 - status operator.md
 - status messages.md
-- nodes.md
+- operable.md
   
-  6. Main
+  6. main
 - Write the entire process operator, composing any setup, tool, and status operators to achieve the desired functionality.
 - Relevant docs to read with fs tool:
 - writing a process operator.md

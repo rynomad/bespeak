@@ -1,4 +1,4 @@
-import Node from "../modules/node.mjs";
+import Node from "../node.mjs";
 import "../modules/bootload.mjs";
 import schinquirer from "https://esm.sh/@luismayo/schinquirer";
 import { take } from "npm:rxjs@^7.8.1";

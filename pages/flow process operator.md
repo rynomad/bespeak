@@ -1,15 +1,15 @@
 # Requirements Document for Process Operator Development
 - ## Introduction
-  The process operator to be developed is designed to take a serialized flow of nodes, along with their configuration, system, and key data, and construct a flow out of them. This operator will be a crucial component in managing and orchestrating the flow of data between different nodes in a system.
+  The process operator to be developed is designed to take a serialized flow of operables, along with their configuration, meta, and key data, and construct a flow out of them. This operator will be a crucial component in managing and orchestrating the flow of data between different nodes in a system.
 - ## Operator Identification
 - **Key**: FlowConstructor
 - **Version**: 1.0.0
-- **Description**: This operator takes a serialized flow of nodes, along with their associated configuration, system, and key data, and constructs a flow out of them.
+- **Description**: This operator takes a serialized flow of nodes, along with their associated configuration, meta, and key data, and constructs a flow out of them.
 - ## Dependencies
 - This operator relies on the following external dependencies:
 - ## Schema Definitions
-- **Config Schema**: The configuration used to construct an instance of this operator includes the serialized flow of nodes. This includes a list of nodes and a list of connections between these nodes. Each node is represented as an object with properties for the node's configuration and system data.
-	- each node will have a `name` in its system data that can be used to reference the node in connections. The `id` of each internal node will be `flowId-name`.
+- **Config Schema**: The configuration used to construct an instance of this operator includes the serialized flow of operables. This includes a list of operables and a list of connections between these operables. Each is represented as an object with properties for the configuration and meta data.
+	- each node will have a `name` in its meta data that can be used to reference the node in connections. The `id` of each internal node will be `flowId-name`.
 - **Keys Schema**: The keys shared by all instances of this operator include a key for every name@version combination found in the config nodes. These keys could be API keys or other credentials required to interact with external systems or services.
 	- The keys schema is constructed dynamically based on the value of the config
 - **Input Schema**: an object with `id` and `payload`, payload must match the input schema of the given internal node. The input is routed to the appropriate internal node

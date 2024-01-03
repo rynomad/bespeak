@@ -1,4 +1,4 @@
-import Node from "../modules/node.mjs";
+import Node from "../node.mjs";
 import "../modules/bootload.mjs";
 
 const crawler = new Node("crawler");
@@ -95,8 +95,11 @@ crawler
                     content: [
                         `entry points:`,
                         `Templates.md`,
-                        `fs.mjs`,
-                        `Please provide a requirements document based on the template as it would look for the given source file. this is a reverse engineering exercise, your goal is to provide the requirements document that could be used to rewrite the source code`, //`please augment the db process operator file to match the template. don't lose any information, but feel free to reorganize it as you see fit`,
+                        `Please give be a requirements document based on the template based on the following functionality:`,
+                        `flow operator takes a declarative description of a flow and constructs that flow`,
+                        `keys operator `,
+                        // `fs.mjs`,
+                        // `Please provide a requirements document based on the template as it would look for the given source file. this is a reverse engineering exercise, your goal is to provide the requirements document that could be used to rewrite the source code`, //`please augment the db process operator file to match the template. don't lose any information, but feel free to reorganize it as you see fit`,
                         // `The file above constitute a logseq knowledge base that is in progress for an isomorphic javascript framework. the files have been concatenated for convenience. Please analyze the project and provide an introduction page to the documentation that would be useful for a new user.`,
                     ].join("\n"),
                 },

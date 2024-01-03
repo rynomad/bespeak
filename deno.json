@@ -1,9 +1,12 @@
 {
     "imports": {
-        "openai": "https://deno.land/x/openai/mod.ts",
+        "openai": "https://deno.land/x/openai@v4.20.1/mod.ts",
         "rxjs": "https://esm.sh/rxjs",
         "rxdb": "npm:rxdb@15.0.0-beta.29",
         "rxdb/plugins/dev-mode": "npm:rxdb@15.0.0-beta.29/plugins/dev-mode",
-        "rxdb/plugins/storage-memory": "npm:rxdb@15.0.0-beta.29/plugins/storage-memory"
+        "rxdb/plugins/storage-memory": "npm:rxdb@15.0.0-beta.29/plugins/storage-memory",
+        "@deboxsoft/zod-to-json-schema": "https://esm.sh/@deboxsoft/zod-to-json-schema",
+        "openai-node": "https://deno.land/x/openai@v4.20.1/mod.ts",
+        "zod": "https://esm.sh/zod"
     }
 }

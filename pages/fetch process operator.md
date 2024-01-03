@@ -9,8 +9,6 @@
 - ## Dependencies
 - **readability.js**: A library for parsing HTML content and extracting the main body of text in a readable format.
 	- Documentation: [Readability.js GitHub Repository](https://github.com/mozilla/readability)
-- **node-fetch**: A light-weight module that brings `window.fetch` to Node.js.
-	- Documentation: [node-fetch NPM Package](https://www.npmjs.com/package/node-fetch)
 - ## Schema Definitions
 - **Input Schema**:
 	- `url`: The URL of the web page to fetch and parse (string, required).
@@ -27,7 +25,7 @@
 	- `userAgent`: The user agent string to use when making the fetch request (string, optional).
 	- `timeout`: The maximum time to wait for a response (number, optional, default: 5000ms).
 - **Keys Schema**:
-	- No shared keys are required for this operator.
+	- `proxy`: (optional) configuration for an authenticated cors proxy.
 - ## Operator Components
 - **Setup Operator**:
 	- Initialize the readability.js library and configure the node-fetch module with the provided user agent and timeout.

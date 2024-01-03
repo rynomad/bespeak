@@ -5,10 +5,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <title>Editor</title>
-        <script type="module" src="/index.js"></script>
-        <script type="module" src="/bespeak/index.js"></script>
+        <script type="importmap">
+            {
+                "imports": {
+                    "rxjs": "https://esm.sh/rxjs",
+                    "rxdb": "https://esm.sh/rxdb",
+                    "rxdb/plugins/storage-dexie": "https://esm.sh/rxdb/plugins/storage-dexie",
+                    "rxdb/plugins/dev-mode": "https://esm.sh/rxdb/plugins/dev-mode",
+                    "openai": "https://cdn.jsdelivr.net/npm/openai/+esm"
+                }
+            }
+        </script>
+        <script type="module" src="/modules/frontend/index.mjs"></script>
     </head>
-    <body style="margin: 0px; font-family: sans-serif">
+    <body style="margin: 0px; font-family: sans-serif; height: 100vh">
         <style>
             @font-face {
                 font-family: "Font Awesome 5 Brands";

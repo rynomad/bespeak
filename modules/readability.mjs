@@ -1,7 +1,7 @@
 import { of, catchError } from "https://esm.sh/rxjs";
 import { switchMap } from "https://esm.sh/rxjs/operators";
 import { Readability } from "https://esm.sh/@mozilla/readability";
-// import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 
 export const key = "readability";
 export const version = "0.0.1";

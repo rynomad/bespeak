@@ -1,4 +1,4 @@
-import Node from "http://localhost:3004/modules/node.mjs";
+import Node from "../modules/node.mjs";
 import "../modules/bootload.mjs";
 import { getText } from "../modules/util.mjs";
 
@@ -37,6 +37,7 @@ if (!KEY) {
     throw new Error("OPENAI_KEY environment variable not set");
 }
 const path = Deno.args[0];
+const num = Deno.args[1];
 
 const keys = {
     apiKey: KEY,
@@ -82,6 +83,8 @@ schemas
                 `writing a process operator.md`,
                 `schema operators.md`,
                 `schema roles.md`,
+                `schemas.md`,
+                `process operators.md`,
                 `remember to read all links provided in the requirements with the readability tool`,
                 `remember to read all documentation provided above with the fs tool`,
                 `remember to provide a complete and thorough implementation of the current step`,
@@ -134,9 +137,9 @@ tools
                 `Relevant docs to read with fs tool:`,
                 `writing a process operator.md`,
                 `tool operator.md`,
-                `nodes.md`,
+                `operable.md`,
                 `schema roles.md`,
-                `data roles.md`,
+                `schemas.md`,
                 `remember to read all links provided in the requirements with the readability tool`,
                 `remember to read all documentation provided above with the fs tool`,
                 `remember to provide a complete and thorough implementation of the current step`,
@@ -166,7 +169,7 @@ status
                 `writing a process operator.md`,
                 `status operator.md`,
                 `status messages.md`,
-                `nodes.md`,
+                `operable.md`,
                 `remember to read all links provided in the requirements with the readability tool`,
                 `remember to read all documentation provided above with the fs tool`,
                 `remember to provide a complete and thorough implementation of the current step`,
@@ -301,6 +304,14 @@ status.upstream$.next([tools]);
 main.upstream$.next([status]);
 unify.upstream$.next([main]);
 review.upstream$.next([unify]);
+
+review.output$.subscribe((output) => {
+    const filename = `./modules/${
+        path.split("/").pop().split(" ")[0]
+    }.${num}.mjs`;
+    Deno.writeTextFileSync(filename, output.code);
+    Deno.exit();
+});
 
 header
     .write$$("process:config", {

@@ -1,5 +1,0 @@
-- These system [[tools]] are always available via the [[tools interface]]:
-	- [[system:validator]] - validate a payload against a [[schema role]]
-	- [[system:db]] - perform a database operation
-	- [[system:imports]] - import a JavaScript module from the database
-	- [[system:registrar]] - register a JavaScript module to the database

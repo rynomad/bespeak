@@ -44,7 +44,7 @@ export default function registerModule({ node }) {
                         });
                         const url = URL.createObjectURL(blob);
                         const prom = import(url);
-                        URL.revokeObjectURL(url);
+                        // URL.revokeObjectURL(url);
                         return from(prom);
                     })
                 ),

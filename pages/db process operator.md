@@ -20,12 +20,13 @@ The `dbOperation` function is part of a database module that utilizes the RxDB l
 - ## Schema Definitions
 - ### Input Schema
   
-  An array of operations to be performed on the database, with each operation being an object that contains:
+  an object that contains:
 - `operation`: The type of operation (e.g., 'findOne', 'upsert', 'patch').
 - `collection`: The target collection for the operation.
 - `params`: The parameters for the operation.
 - ### Output Schema
-- The output is an Observable that emits the result of the database operation.
+- The output is the result of the database operation.
+	- in the case of find, findOne, rxdb supports returning an observable of updates any time the data changes. we wrap this in a higher order observable and return the document contents as plain JSON.
 - ### Config Schema
 	- Configuration object for the database module:
 		- `dbName`: The name of the database.
@@ -38,5 +39,5 @@ The `dbOperation` function is part of a database module that utilizes the RxDB l
 - ## Process Operator Logic
 - get the db instance
 - execute the operation on the appropriate collection
-- if the operation is a query, return it's observable form `$`
-- if the operation is an insert/upsert, wrap the result in an observable
+- if the operation is a query, use it's observable form `$` and emit all events
+-

@@ -1,0 +1,19 @@
+- How are the `schema` properties within the `Operable` class utilized during the processing of data, and how do they interact with the `process` and `ingress` modules? Refer to [[schemas]] for more details.
+	- #answer
+		- `data.input$` is parsed by the input schema, before being processed by the process operator, the output of which is parsed by the output schema before being sent to `data.output$`
+		- schemas are only relevant for process operators, ingress operators don't declare them.
+- What is the purpose of the `status$` BehaviorSubject in the `Operable` class, and how should it be used when writing process operators?
+	- #answer the status$ Behavior subject is used to emit status events or intermediate results. it is a general purpose interface for out of band communications. status events should have a `type`, `message`, and optional `detail` object.
+- In the context of Operable, what is the difference between a tool operator and a setup operator, and when should each be used?
+	- #answer this is mostly just a semantic distinction, setup is where you would initialize any necessary client sdks that are 1 time setup tasks. tool operator maps any tools from the tools$ interface to whatever format they are needed elsewhere.
+- How do the `schema` properties within the `Operable` class interact with the `ingress` module, given that schemas are only relevant for process operators?
+	- #answer the ingress module is built based on the schemas inspected from `upstream$` operables and `schema.input$`, then the ingress operator maps the upstream operables into the input$
+- Given that the `io` object in the `Operable` class contains BehaviorSubjects for managing IO streams, how should they be utilized when writing process operators to handle data flow?
+	- #answer the process operator rarely has to care about the io object, with the exception of if it wants to use tools.
+- Can you provide an example of how a status operator might be used in conjunction with a tool operator to enhance the functionality of a process operator?
+	- #answer the status operator might `tap` the setup operator to map events on a lower level sdk and surface them to the operable.
+	- #answer the tool operator might be used to adapt operables for use into a lower level plugin system.
+	- #answer status and tool operators will typically be handling different concerns.
+- How can the `schema` properties within the `Operable` class be leveraged to validate and parse data when writing process operators?
+	- #answer I've changed my mind. the Operable class will handle using the schemas to parse all data. The process operator will just be responsible from pulling the latest config/keys data as necessary when processing incoming input.
+-

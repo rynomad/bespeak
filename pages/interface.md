@@ -1,0 +1,1 @@
+- An interface in the context of Operable refers to a point of interaction or communication between different parts of the system, such as between operators and the Operable instance, or between the Operable instance and external systems.

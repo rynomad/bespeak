@@ -1,0 +1,8 @@
+- This knowledge base documents an isomorphic javascript library for use in Deno and the Browser.
+- The [[Operable]] is the central class in this library
+- Other pages have to do with [[writing a process operator]]
+	- scan these pages before starting
+- Your job is to identify inconsistencies or ambiguities and ask me questions via the [[questions]] page.
+	- I will provide answers on that page by using the #answer tag
+- Use references where appropriate so I can view what you are asking questions about.
+- You MUST use any provided answers to old questions to update the documentation before completing.

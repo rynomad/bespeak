@@ -1,23 +1,20 @@
-- process operators are the unit of the system. they are used in [[nodes]]  `process` role
+- process operators do the work of an [[operable]]
   title:: process operators
-public:: true
-title:: operators
-
 - operators are defined as an ECMAScript17 JavaScript ESM Module with the following export signature:
 	- Mandatory exports
 		- `default` - the operator factory function which returns an operator instance
 			- `(operable) => operator`
 				- `operable` - the [[operable]] instance that is using this operator
-			- see [[nodes]] for details on the node object
+			- see [[operable]] for details on the operable object
 			- see [[schema roles]] for details on the config and keys object
 		- `key` - a unique key for the operator
 		- `version` - semver version of the operator.
 		- `description` - a clear and concise description of what the operator does.
 		- [[schema operators]] for each of the [[schema roles]]
 			- `input`
-			- `output` - `output` role
-			- `config` - `config` role
-			- `keys` - `keys` role (optional if keys are not relevant)
+			- `output`
+			- `config`
+			- `keys`
 - Runtimes:
 	- process operators should aim to support, or gracefully fail, in the following runtimes:
 		- modern web browsers
@@ -39,7 +36,7 @@ title:: operators
    import { createRxDatabase, addRxPlugin } from "rxdb";
    import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
    import { z } from 'zod';
-
+  
    addRxPlugin(RxDBDevModePlugin);
    
    

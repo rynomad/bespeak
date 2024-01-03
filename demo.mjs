@@ -1,4 +1,4 @@
-import NodeWrapper from "./modules/node.mjs";
+import Node from "./node.mjs";
 import "./modules/bootload.mjs";
 
 const KEY = Deno.env.get("OPENAI_KEY");
@@ -11,8 +11,8 @@ const keys = {
     apiKey: KEY,
 };
 
-const gpt = new NodeWrapper("test");
-const gpt2 = new NodeWrapper("test2");
+const gpt = new Node("test");
+const gpt2 = new Node("test2");
 
 // log full output objects
 gpt.output$.subscribe((output) => {
@@ -41,7 +41,7 @@ gpt.input$.next({
 });
 
 // configure gpt2 so it has a prompt to write a limmerick as followup to existing thread
-gpt2.write$$("operator:config", {
+gpt2.write$$("process:config", {
     basic: {
         prompt: "write me a limmerick about the same subject",
     },
@@ -66,17 +66,17 @@ gpt2.output$.subscribe((output) => {
 
 // configure keys, only needs to be done once for any node (they'll share the same keys)
 
-gpt.write$$("operator:keys", keys).subscribe(() => {
+gpt.write$$("process:keys", keys).subscribe(() => {
     console.log("\nnode 1: write operator keys document");
 });
 
 // log the input and config schemas
 
-gpt.schema$$("operator:input").subscribe((schema) => {
+gpt.schema$$("process:input").subscribe((schema) => {
     console.log("\ngpt input schema", schema);
 });
 
-gpt.schema$$("operator:config").subscribe((schema) => {
+gpt.schema$$("process:config").subscribe((schema) => {
     console.log("\ngpt config schema", schema);
 });
 
@@ -85,11 +85,11 @@ gpt.read$$("system").subscribe((system) => {
     console.log("\nnode 1: read system document", system);
 });
 
-gpt.read$$("operator:config").subscribe((data) => {
+gpt.read$$("process:config").subscribe((data) => {
     console.log("\nnode 1: read operator config document", data);
 });
 
-gpt.read$$("operator:keys").subscribe((data) => {
+gpt.read$$("process:keys").subscribe((data) => {
     console.log("\nnode 1: read operator keys document", data);
 });
 
@@ -101,7 +101,7 @@ gpt.read$$("ingress:keys").subscribe((data) => {
     console.log("\nnode 1: read ingress keys document", data);
 });
 
-gpt.write$$("operator:keys", keys).subscribe(() => {
+gpt.write$$("process:keys", keys).subscribe(() => {
     console.log("\nnode 1: write operator keys document");
 });
 

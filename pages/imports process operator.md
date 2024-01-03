@@ -3,29 +3,27 @@ The "Memoized Imports" operator is designed to efficiently handle the importatio
 - ## Operator Identification
 - **Key**: `imports`
 - **Version**: `0.0.1`
-- **Description**:  imports takes an array of module documents and returns an array of imported modules.
+- **Description**:  imports takes a module document and returns a memoized import
 - ## Dependencies
 - **rxjs**: A library for reactive programming using Observables, to make it easier to compose asynchronous or callback-based code. [RxJS Documentation](https://rxjs.dev/guide/overview)
 - ## Schema Definitions
 - **Input Schema**:
-	- Type: `array`
-	- Items:
-		- Type: `object`
-		- Properties:
-			- `id`: A string identifier for the module.
-			- `data`: A string containing the module data.
+	- Type: `object`
+	- Properties:
+		- `id`: A string identifier for the module.
+		- `data`: A string containing the module data.
 - **Output Schema**:
-	- an array of imported modules.
+	- an imported module
 - **Config Schema**:
-	- There is no config schema, export `null`
+	- There is no config schema
 - **Keys Schema**:
-	- There is no keys schema, export `null`
+	- There is no keys schema
 - ## Operator Components
 - **Setup Operator**:
 	- setup memoization
 - **Tool Operator**:
-	- The operator uses the `system:db` tool to interact with a database for fetching module documents.
+	- N/A
 - **Status Operator**:
-	- The operator uses logging with the `node.log("memoizedImport")` method to report its status or handle errors.
+	- N/A
 - ## Process Operator Logic
-- The operator works by taking an array of module identifiers or documents, checking if the module has already been memoized, and if not, fetching the module document from the database, creating a blob from the module data, generating a URL for the blob, and dynamically importing the module. The imported module is then memoized to optimize subsequent imports.
+- The operator works by taking a module document, checking if the module has already been memoized, and if not, creating a blob from the module data, generating a URL for the blob, and dynamically importing the module. The imported module is then memoized to optimize subsequent imports. Since importing is async, the import promise should be memoized immediately and then awaited when returned to avoid race conditions causing multiple imports.

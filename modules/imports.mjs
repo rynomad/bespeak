@@ -63,7 +63,6 @@ function memoizedImport({ node }) {
                 return memos.get(id);
             }
 
-            console.log("{}{}{}{}{} NO MEMO", id);
             const source = module.get("data");
             const blob = new Blob([source], {
                 type: "text/javascript",
@@ -72,7 +71,6 @@ function memoizedImport({ node }) {
             const import$ = from(import(url));
 
             memos.set(id, import$);
-            console.log("WRITE MEMO", id, memos);
             memosSubject.next(memos);
             return import$;
         })

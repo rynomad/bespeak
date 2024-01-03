@@ -1,4 +1,4 @@
-import Node from "http://localhost:3004/modules/node.mjs";
+import Node from "./node.mjs";
 
 import {
     combineLatest,

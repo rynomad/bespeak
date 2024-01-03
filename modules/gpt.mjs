@@ -322,6 +322,7 @@ export const toolsToFunctionsOperator = ({ node, config }) => {
         ),
         node.log("toolsToFunctionsprocess: filtered tools"),
         switchMap((tools) => {
+            console.log("TOOLS", tools);
             if (tools.length === 0) {
                 return of({ tools: [] });
             }
@@ -571,7 +572,6 @@ const callOpenAi = async (
                 };
                 node.status$.next(progressEvent);
                 if (snapshot && eventType === "content") {
-                    console.log("SNAPSHOT", eventType, snapshot);
                     node.status$.next({
                         status: "display",
                         detail: snapshot,
