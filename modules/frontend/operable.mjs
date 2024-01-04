@@ -34,7 +34,7 @@ class LitOperable extends LitElement {
         if (
             changedProperties.has("operable") &&
             this.operable &&
-            !this.subsciption
+            !this.subsciptions
         ) {
             this.subscriptions = [
                 // this.operable.log$.subscribe((log) => {
@@ -102,12 +102,11 @@ class LitOperableBack extends PropagationStopper(LitElement) {
         }
     `;
 
-    tabs = ["Input", "Config", "Keys", "Output", "Status", "Log"];
+    tabs = ["Meta", "Input", "Config", "Keys", "Output", "Status", "Log"];
 
     render() {
         return html`
             <div class="content">
-                <!-- Render the data as JSON for demonstration -->
                 <dile-tabs
                     id="select2"
                     attrForSelected="name"
@@ -273,38 +272,17 @@ class LitOperableForm extends LitElement {
         );
         if (this.operable && this.label && !this.subscriptions) {
             console.log("subscribing to", `${this.label.toLowerCase()}$`);
-            const innerRole = this.label.toLowerCase();
-            if (["input", "output"].includes(innerRole)) {
-                this.subscriptions = [
-                    this.operable
-                        .schema$$(`process:${innerRole}`)
-                        .subscribe((schema) => {
-                            console.log("schema", schema);
-                            this.schema = schema;
-                        }),
-                    this.operable[`${this.label.toLowerCase()}$`].subscribe(
-                        (data) => {
-                            // console.log("log", log);
-                            this.data = data;
-                        }
-                    ),
-                ];
-            } else {
-                const role =
-                    this.label === "Ingress"
-                        ? "ingress:config"
-                        : `process:${innerRole}`;
-                this.subscriptions = [
-                    this.operable.schema$$(role).subscribe((schema) => {
-                        console.log("schema", schema);
-                        this.schema = schema;
-                    }),
-                    this.operable.read$$(role).subscribe(({ data }) => {
-                        console.log("data", data);
-                        this.data = data;
-                    }),
-                ];
-            }
+            const role = this.label.toLowerCase();
+            this.subscriptions = [
+                this.operable.schema[`${role}$`].subscribe((schema) => {
+                    console.log("schema", schema);
+                    this.schema = schema;
+                }),
+                this.operable.read[`${role}$`].subscribe((data) => {
+                    // console.log("log", log);
+                    this.data = data;
+                }),
+            ];
         }
     }
 

@@ -9,17 +9,21 @@ import {
     combineLatest,
     ReplaySubject,
     distinctUntilChanged,
+    tap,
+    takeUntil,
+    Subject,
 } from "https://esm.sh/rxjs@7.8.1";
 
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
-import { tap } from "npm:rxjs@^7.8.1";
 import { deepEqual } from "https://esm.sh/fast-equals";
+import { z } from "https://esm.sh/zod@3.22.4";
 
 export default class Operable {
-    constructor(id = uuidv4()) {
+    static $ = new ReplaySubject(1);
+
+    constructor(id = uuidv4(), start = true) {
         // Initialize interfaces
         this.id = id;
-        this.meta$ = new BehaviorSubject(null);
         this.process = {
             module$: new BehaviorSubject(null),
             operator$: new BehaviorSubject(null),
@@ -35,28 +39,54 @@ export default class Operable {
             tools$: new BehaviorSubject(null),
         };
         this.schema = {
-            input$: new BehaviorSubject(null),
-            output$: new BehaviorSubject(null),
-            config$: new BehaviorSubject(null),
-            keys$: new BehaviorSubject(null),
+            meta$: new BehaviorSubject(
+                z.object({
+                    id: z.string().default(id),
+                    name: z.string().optional(),
+                    description: z.string().optional(),
+                    ingress: z.string().default("default-ingress@0.0.1"),
+                    process: z.string().default("gpt@0.0.1"),
+                })
+            ),
+            input$: new ReplaySubject(1),
+            output$: new ReplaySubject(1),
+            config$: new ReplaySubject(1),
+            keys$: new ReplaySubject(1),
         };
         this.write = {
+            meta$: new ReplaySubject(1),
             input$: new ReplaySubject(1),
             output$: new ReplaySubject(1),
             config$: new ReplaySubject(1),
             keys$: new ReplaySubject(1),
         };
         this.read = {
-            input$: new BehaviorSubject(null),
-            output$: new BehaviorSubject(null),
-            config$: new BehaviorSubject(null),
+            meta$: new ReplaySubject(1),
+            input$: new ReplaySubject(1),
+            output$: new ReplaySubject(1),
+            config$: new ReplaySubject(1),
             keys$: new BehaviorSubject(null),
         };
-        this.status$ = new BehaviorSubject(null);
-        this.log$ = new BehaviorSubject(null);
+        this.status$ = new ReplaySubject(1);
+        this.error$ = new ReplaySubject(1);
+        this.log$ = new ReplaySubject(1);
+        this.destroy$ = new Subject();
+        this.ioReset$ = new Subject();
 
+        Operable.$.next(this);
+        this.rolesIO();
+        if (start) {
+            this.start();
+        }
+    }
+
+    start() {
         this.initModules();
         this.initPipelines();
+    }
+
+    stop() {
+        this.destroy$.next();
     }
 
     initModules() {
@@ -64,19 +94,21 @@ export default class Operable {
             this[key].module$
                 .pipe(
                     filter((module) => module?.default),
-                    map((module) => module.default(this)),
-                    tap((operator) =>
-                        console.log("operator", operator, "key", key)
-                    )
+                    map((module) => module.default(this))
                 )
                 .subscribe(this[key].operator$);
         });
-
         ["input", "output", "config", "keys"].forEach((key) => {
             this.process.module$
                 .pipe(
-                    filter((module) => module?.[key]),
-                    switchMap((module) => module[key](this))
+                    filter((module) => module),
+                    switchMap((module) => {
+                        if (module[key]) {
+                            return module[key](this);
+                        } else {
+                            return of(z.any());
+                        }
+                    })
                 )
                 .subscribe(this.schema[`${key}$`]);
         });
@@ -98,17 +130,27 @@ export default class Operable {
                 })
             )
             .subscribe(this.write.output$);
+    }
 
-        ["config", "keys", "input", "output"].forEach((key) => {
+    rolesIO(
+        fn = (key) => {
             combineLatest(this.write[`${key}$`], this.schema[`${key}$`])
                 .pipe(
                     map(([data, schema]) =>
-                        schema?.parse ? schema.parse(data) : data
+                        schema?.parse
+                            ? schema.safeParse(data)
+                            : { success: true, data }
                     ),
-                    distinctUntilChanged(deepEqual)
+                    map((res) => (res.success ? res.data : null)),
+                    filter((data) => !!data),
+                    distinctUntilChanged(deepEqual),
+                    takeUntil(this.ioReset$)
                 )
                 .subscribe(this.read[`${key}$`]);
-        });
+        }
+    ) {
+        this.ioReset$.next();
+        ["config", "keys", "input", "output", "meta"].forEach(fn);
     }
 
     // RxJS interoperability functions
@@ -127,7 +169,11 @@ export default class Operable {
     }
 
     asOperator() {
-        return this.process.operator.getValue();
+        return (input$) =>
+            combineLatest(
+                input$,
+                this.process.operator$.pipe(filter((e) => e))
+            ).pipe(switchMap(([input, operator]) => of(input).pipe(operator)));
     }
 
     async invokeAsFunction(input) {

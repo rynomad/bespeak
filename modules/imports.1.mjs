@@ -1,47 +1,53 @@
-import { of, from, pipe, mergeMap } from "https://esm.sh/rxjs";
+import { of, switchMap, catchError, pipe } from "https://esm.sh/rxjs";
 import { z } from "https://esm.sh/zod";
 
 export const key = "imports";
 export const version = "0.0.1";
-export const description = "imports takes a module document and returns a memoized import";
+export const description =
+    "imports takes a module document and returns a memoized import";
 
 export const input = () => {
-  const schema = z.object({
-    id: z.string(),
-    data: z.string(),
-  });
-  return of(schema);
+    const schema = z.object({
+        data: z.string(),
+    });
+    return of(schema);
 };
 
 export const output = () => {
-  const schema = z.object({}).passthrough();
-  return of(schema);
-};
-
-export const config = () => {
-  const schema = z.object({});
-  return of(schema);
+    const schema = z.any();
+    return of(schema);
 };
 
 const memoizationCache = new Map();
 
+export const setupOperator = () => {
+    return of(memoizationCache);
+};
+
 const processOperator = (operable) => {
-  return pipe(
-    mergeMap(({ id, data }) => {
-      if (memoizationCache.has(id)) {
-        return from(memoizationCache.get(id));
-      } else {
-        const blob = new Blob([data], { type: 'text/javascript' });
-        const url = URL.createObjectURL(blob);
-        const importPromise = import(url).then(module => {
-          URL.revokeObjectURL(url);
-          return module;
-        });
-        memoizationCache.set(id, importPromise);
-        return from(importPromise);
-      }
-    })
-  );
+    return pipe(
+        switchMap(async (input) => {
+            const { data } = input;
+            if (memoizationCache.has(data)) {
+                return await memoizationCache.get(data);
+            } else {
+                const blob = new Blob([data], {
+                    type: "application/javascript",
+                });
+                const url = URL.createObjectURL(blob);
+                try {
+                    const module = import(url);
+                    memoizationCache.set(data, module);
+                    return await module;
+                } catch (error) {
+                    throw new Error(`Error importing module: ${error.message}`);
+                }
+            }
+        }),
+        catchError((error) => {
+            throw error;
+        })
+    );
 };
 
 export default processOperator;

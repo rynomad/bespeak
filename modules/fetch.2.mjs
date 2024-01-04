@@ -1,18 +1,18 @@
 import { z } from 'zod';
-import { combineLatest, map, tap, of, throwError, catchError, switchMap } from 'rxjs';
-import { functions } from './functions';
+import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
 
-export const key = "fetch-readability-operator";
-export const version = "1.0.0";
-export const description = "An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.";
+export const key = 'fetch-readability-operator';
+export const version = '1.0.0';
+export const description = 'An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.';
 
-export const input = z.object({
+export const inputSchema = z.object({
   url: z.string().url(),
   includeImages: z.boolean().optional().default(false),
   includeLinks: z.boolean().optional().default(false),
 });
 
-export const output = z.object({
+export const outputSchema = z.object({
   title: z.string(),
   content: z.string(),
   textContent: z.string(),
@@ -21,109 +21,76 @@ export const output = z.object({
   siteName: z.string(),
 });
 
-export const config = z.object({
-  userAgent: z.string().optional(),
-  timeout: z.number().optional().default(5000),
+export const configSchema = z.object({});
+
+export const keysSchema = z.object({
+  proxy: z.string().url().optional(),
 });
 
-export const keys = z.object({
-  proxy: z.object({
-    url: z.string().url(),
-    auth: z.object({
-      username: z.string(),
-      password: z.string(),
-    }),
-  }).optional(),
-});
-
-const setupOperator = (operable) => {
-  return combineLatest(of(operable.data.config))
-    .pipe(
-      map(([config]) => {
-        const fetchOptions = {
-          headers: {}
-        };
-        if (config.userAgent) {
-          fetchOptions.headers['User-Agent'] = config.userAgent;
-        }
-        if (config.timeout) {
-          fetchOptions.timeout = config.timeout;
-        }
-        return fetchOptions;
-      })
-    );
-};
-
-const toolOperator = (operable) => {
-  return operable.io.tool$.pipe(
-    switchMap((tools) => {
-      const { readability } = tools.reduce((acc, tool) => {
-        acc[tool.key] = tool;
-        return acc;
-      }, {});
-
-      return operable.read.input$.pipe(
-        switchMap((input) => {
-          return functions.readability({ url: input.url }).pipe(
-            catchError((error) => {
-              return throwError(() => new Error(`Failed to fetch or parse content: ${error.message}`));
-            }),
-            map((parsedContent) => {
-              if (input.includeImages) {
-                // Logic to reinsert images goes here
-              }
-              if (input.includeLinks) {
-                // Logic to reinsert links goes here
-              }
-              return {
-                title: parsedContent.title,
-                content: parsedContent.content,
-                textContent: parsedContent.textContent,
-                length: parsedContent.textContent.length,
-                excerpt: parsedContent.excerpt,
-                siteName: parsedContent.siteName,
-              };
-            })
-          );
-        })
-      );
-    })
-  );
-};
+let DOMParser;
+if (typeof window === 'undefined') {
+  DOMParser = new JSDOM().window.DOMParser;
+} else {
+  DOMParser = window.DOMParser;
+}
 
 const statusOperator = (operable) => {
-  return tap({
-    next: (value) => {
+  return {
+    emitSuccess: (message, detail) => {
       operable.status$.next({
         status: 'success',
-        message: 'Content fetched and parsed successfully',
-        detail: value
+        message: message,
+        detail: detail
       });
     },
-    error: (error) => {
+    emitError: (error, detail) => {
       operable.status$.next({
         status: 'error',
-        message: 'Error occurred during fetch and parse',
-        detail: error.message
-      });
-    },
-    complete: () => {
-      operable.status$.next({
-        status: 'complete',
-        message: 'Fetch and parse operation completed',
-        detail: null
+        message: error.message,
+        detail: detail
       });
     }
-  });
+  };
 };
 
 export default function fetchReadabilityOperator(operable) {
-  return combineLatest(
-    setupOperator(operable),
-    toolOperator(operable).pipe(statusOperator(operable))
-  ).pipe(
-    switchMap(([fetchOptions, content]) => {
-      return of(content);
-    })
-  );
+  const status = statusOperator(operable);
+
+  return async (input) => {
+    try {
+      const { url, includeImages, includeLinks } = inputSchema.parse(input);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const html = await response.text();
+
+      const doc = new JSDOM(html, { url }).window.document;
+      const reader = new Readability(doc);
+      const article = reader.parse();
+
+      if (!article) {
+        throw new Error('Failed to parse the article using Readability');
+      }
+
+      status.emitSuccess('Content fetched and parsed successfully', {
+        title: article.title,
+        length: article.length,
+        siteName: article.siteName
+      });
+
+      return outputSchema.parse({
+        title: article.title,
+        content: article.content,
+        textContent: article.textContent,
+        length: article.length,
+        excerpt: article.excerpt,
+        siteName: article.siteName
+      });
+    } catch (error) {
+      status.emitError(error, { url: input.url });
+      throw error;
+    }
+  };
 }

@@ -8,6 +8,8 @@ class FlipperComponent extends LitElement {
             position: relative;
             border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
+            width: 100%;
+            height: 100%;
         }
 
         :host(.front) {
@@ -124,8 +126,8 @@ class FlipperComponent extends LitElement {
                 maxHeight = Math.max(maxHeight, box.offsetHeight);
             });
 
-            this.style.width = `${maxWidth}px`;
-            this.style.height = `${maxHeight}px`;
+            // this.style.width = `${maxWidth}px`;
+            // this.style.height = `${maxHeight}px`;
         });
 
         boxes.forEach((box) => {

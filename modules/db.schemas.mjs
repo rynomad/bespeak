@@ -15,6 +15,60 @@ const keySchema = {
             type: "object",
             additionalProperties: true,
         },
+        session: {
+            type: "string",
+        },
+    },
+};
+
+const inputSchema = {
+    title: "input",
+    version: 0,
+    type: "object",
+    primaryKey: "operable",
+    properties: {
+        operable: {
+            type: "string",
+            final: true,
+            maxLength: 255,
+        },
+        data: {
+            type: "object",
+            additionalProperties: true,
+        },
+        module: {
+            type: "string",
+            maxLength: 255,
+            final: true,
+        },
+        session: {
+            type: "string",
+        },
+    },
+};
+
+const outputSchema = {
+    title: "output",
+    version: 0,
+    type: "object",
+    primaryKey: "operable",
+    properties: {
+        operable: {
+            type: "string",
+            final: true,
+            maxLength: 255,
+        },
+        data: {
+            type: "object",
+            additionalProperties: true,
+        },
+        module: {
+            type: "string",
+            maxLength: 255,
+        },
+        session: {
+            type: "string",
+        },
     },
 };
 
@@ -26,7 +80,7 @@ const configSchema = {
         // where should the composed string be stored
         key: "id",
         // fields that will be used to create the composed key
-        fields: ["node", "module"],
+        fields: ["operable", "module"],
         // separator which is used to concat the fields values.
         separator: "|",
     },
@@ -36,7 +90,7 @@ const configSchema = {
             final: true,
             maxLength: 255,
         },
-        node: {
+        operable: {
             type: "string",
             maxLength: 255,
             final: true,
@@ -51,41 +105,43 @@ const configSchema = {
             additionalProperties: true,
         },
     },
-    required: ["node", "module"],
-    indexes: ["node", "module"],
+    required: ["operable", "module"],
+    indexes: ["operable", "module"],
 };
 
-const systemSchema = {
-    title: "system schema",
+const metaSchema = {
+    title: "meta schema",
     version: 0,
     type: "object",
-    primaryKey: "id",
+    primaryKey: "operable",
     properties: {
-        id: {
+        operable: {
             type: "string",
             final: true,
             maxLength: 255,
         },
-        process: {
-            type: "string",
-            maxLength: 255,
-            default: `${GPT.key}@${GPT.version}`,
-        },
-        ingress: {
-            type: "string",
-            maxLength: 255,
-            default: `default-ingress@0.0.1`,
-        },
-        name: {
-            type: "string",
-            maxLength: 255,
-        },
-        description: {
-            type: "string",
+        data: {
+            type: "object",
+            properties: {
+                process: {
+                    type: "string",
+                    maxLength: 255,
+                },
+                ingress: {
+                    type: "string",
+                    maxLength: 255,
+                },
+                name: {
+                    type: "string",
+                    maxLength: 255,
+                },
+                description: {
+                    type: "string",
+                },
+            },
         },
     },
-    required: ["process", "ingress"],
-    indexes: ["process", "ingress"],
+    required: ["data"],
 };
 
 const moduleSchema = {
@@ -120,8 +176,7 @@ const moduleSchema = {
             type: "string",
         },
     },
-    required: ["id", "version"],
-    indexes: ["version"],
+    required: ["id"],
 };
 
 export const config = {
@@ -133,11 +188,17 @@ export const config = {
         config: {
             schema: configSchema,
         },
-        system: {
-            schema: systemSchema,
+        meta: {
+            schema: metaSchema,
         },
         modules: {
             schema: moduleSchema,
+        },
+        input: {
+            schema: inputSchema,
+        },
+        output: {
+            schema: outputSchema,
         },
     },
 };

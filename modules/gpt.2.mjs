@@ -19,10 +19,10 @@ import {
     filter,
     buffer,
     Subject,
+    take,
 } from "rxjs";
-import { take } from "npm:rxjs@^7.8.1";
 
-export const key = "GPT Operator";
+export const key = "gpt";
 export const version = "0.0.1";
 export const description =
     "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.";
@@ -115,9 +115,6 @@ export const setupOperator = (operable) => {
     return operable.read.keys$.pipe(
         filter((keys) => keys?.apiKey),
         map((keys) => {
-            if (!keys || !keys.apiKey) {
-                throw new Error("API key is required for the OpenAI client.");
-            }
             const client = new OpenAI({
                 apiKey: keys.apiKey,
                 dangerouslyAllowBrowser: true,
@@ -140,10 +137,7 @@ export const toolOperator = (operable) => {
                         try {
                             return await toolNode.invokeAsFunction(args);
                         } catch (error) {
-                            console.error(
-                                `Error invoking tool function: ${error}`
-                            );
-                            throw error;
+                            return `Error invoking tool function: ${error}`;
                         }
                     };
 
@@ -151,12 +145,10 @@ export const toolOperator = (operable) => {
                         name: toolNode.id,
                         function: toolFunction,
                         parse: (args) =>
-                            toolNode.process.operator$
-                                .getValue()
-                                .schema.parse(args),
+                            toolNode.schema.input$.getValue().parse(args),
                         description: toolNode.meta$.getValue().description,
                         parameters: zodToJsonSchema(
-                            toolNode.process.operator$.getValue().schema
+                            toolNode.schema.input$.getValue()
                         ),
                     };
 
@@ -203,17 +195,6 @@ export const statusOperator = (operable, runner) => {
                 });
             });
         },
-    });
-};
-
-const bufferUntil = (notifier) => (source) => {
-    return new Observable((subscriber) => {
-        const buffer$ = source.pipe(buffer(notifier), take(1), share());
-        const passthrough$ = source.pipe(skipUntil(buffer$.toPromise()));
-
-        concat(buffer$.pipe(switchMap((inputs) => from(inputs))), passthrough$)
-            .pipe(tap((i) => console.log("bufferUntil", i)))
-            .subscribe(subscriber);
     });
 };
 

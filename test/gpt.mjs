@@ -1,7 +1,6 @@
 import Operable from "../modules/operable.mjs";
 
 const gpt = await import("../modules/gpt.2.mjs");
-const dbModule = await import("../modules/db.1.mjs");
 const { config: dbConfig } = await import("../modules/db.schemas.mjs");
 
 const testop = new Operable();
@@ -33,8 +32,3 @@ const keys = {
 };
 
 testop.write.keys$.next(keys);
-
-const db = new Operable();
-
-db.process.module$.next(dbModule);
-db.write.config$.next(dbConfig);
