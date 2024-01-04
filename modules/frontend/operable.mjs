@@ -19,7 +19,6 @@ class LitOperable extends LitElement {
             width: 100%;
             height: 100%;
             position: relative;
-            border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
         }
 
@@ -27,6 +26,13 @@ class LitOperable extends LitElement {
             width: 100%;
             height: 100%;
             overflow-y: auto; /* Add overflow-y to the content to create a scrollbar within the sidebar */
+        }
+
+        .inner {
+            width: 100%;
+            height: 100%;
+            padding-left: 2rem;
+            padding-right: 2rem;
         }
     `;
 
@@ -64,10 +70,10 @@ class LitOperable extends LitElement {
 
     render() {
         return html`<bespeak-flipper class="front">
-            <div class="container" slot="front">
+            <div class="inner" class="container" slot="front">
                 <slot></slot>
             </div>
-            <div slot="back" style="padding: 1.5rem">
+            <div class="inner" slot="back">
                 <bespeak-operable-back
                     .operable=${this.operable}></bespeak-operable-back>
             </div>
@@ -84,9 +90,9 @@ class LitOperableBack extends PropagationStopper(LitElement) {
 
     static styles = css`
         :host {
+            height: 100%;
             display: block;
             position: relative;
-            border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
         }
 
@@ -111,6 +117,7 @@ class LitOperableBack extends PropagationStopper(LitElement) {
                     id="select2"
                     attrForSelected="name"
                     selectorId="selector"
+                    style="flex-flow: row wrap;"
                     selected="${this.openTab || "Config"}">
                     ${this.tabs.map(
                         (label, index) => html`
@@ -158,7 +165,6 @@ class LitOperableLog extends LitElement {
         :host {
             display: block;
             position: relative;
-            border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
         }
     `;

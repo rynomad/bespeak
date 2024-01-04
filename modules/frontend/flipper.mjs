@@ -6,7 +6,6 @@ class FlipperComponent extends LitElement {
         :host {
             display: block;
             position: relative;
-            border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
             width: 100%;
             height: 100%;
@@ -30,6 +29,8 @@ class FlipperComponent extends LitElement {
             transition: transform 0.5s;
         }
         .box {
+            width: 100%;
+            height: 100%;
             position: absolute;
             transform: translate(-50%, -50%);
             top: 50%;
@@ -41,13 +42,22 @@ class FlipperComponent extends LitElement {
             overflow: hidden;
         }
 
+        .max {
+            width: 100%;
+            height: 100%;
+        }
+
         .element {
+            width: 100%;
+            height: 100%;
             backface-visibility: hidden;
             transition: transform 0.5s, opacity 0.5s 0.25s;
         }
 
         .front-mirror,
         .back-mirror {
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center; /* Center horizontally */
             align-items: center; /* Center vertically */
@@ -206,8 +216,8 @@ class FlipperComponent extends LitElement {
 
         const boxes = Array.from(this.shadowRoot.querySelectorAll(".box"));
         boxes.forEach((box) => {
-            box.style.setProperty("width", `${target.clientWidth}px`);
-            box.style.setProperty("height", `${target.clientHeight}px`);
+            // box.style.setProperty("width", `${target.clientWidth}px`);
+            // box.style.setProperty("height", `${target.clientHeight}px`);
         });
 
         this.transparent();
