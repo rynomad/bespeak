@@ -21,7 +21,12 @@ testop.read.output$.subscribe((output) => {
     }
     // console.log("gpt", gpt.default);
 });
-const KEY = Deno.env.get("OPENAI_KEY");
+const KEY =
+    localStorage.getItem("OPENAI_KEY") ||
+    prompt("OPENAI_KEY") ||
+    Deno.env.get("OPENAI_KEY");
+
+localStorage.setItem("OPENAI_KEY", KEY);
 
 if (!KEY) {
     throw new Error("OPENAI_KEY environment variable not set");

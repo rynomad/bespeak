@@ -25,10 +25,10 @@ const getText = async (path) => {
     }
 };
 
-const imports = new Operable();
+const imports = new Operable("system:imports");
 imports.process.module$.next(importsModule);
 
-const db = new Operable();
+const db = new Operable("system:db");
 db.process.module$.next(dbModule);
 db.write.config$.next(dbConfig);
 

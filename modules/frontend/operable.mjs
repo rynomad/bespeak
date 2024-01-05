@@ -8,6 +8,7 @@ import "https://esm.sh/@dile/dile-pages/dile-pages.js";
 import "https://esm.sh/@dile/dile-tabs/dile-tabs.js";
 import { deepEqual } from "https://esm.sh/fast-equals";
 import { PropagationStopper } from "./mixins.mjs";
+import { zodToJsonSchema } from "@deboxsoft/zod-to-json-schema";
 class LitOperable extends LitElement {
     static properties = {
         operable: { type: Object },
@@ -106,6 +107,12 @@ class LitOperableBack extends PropagationStopper(LitElement) {
             height: 100%;
             overflow-y: auto; /* Add overflow-y to the content to create a scrollbar within the sidebar */
         }
+
+        .page {
+            height: 100%;
+            width: 100%;
+            background-color: lightgray;
+        }
     `;
 
     tabs = ["Meta", "Input", "Config", "Keys", "Output", "Status", "Log"];
@@ -133,9 +140,8 @@ class LitOperableBack extends PropagationStopper(LitElement) {
                 ${this.tabs.map(
                     (label, index) => html`<dile-pages
                         attrForSelected="name"
-                        selectorId="selector"
-                        selected="${this.openTab}">
-                        <div name=${label}>
+                        selectorId="selector">
+                        <div class="page" name=${label}>
                             ${["Status", "Log"].includes(label)
                                 ? html`<bespeak-operable-log
                                       .label=${label}
@@ -249,9 +255,10 @@ class LitOperableForm extends LitElement {
 
     static styles = css`
         :host {
+            width: 100%;
+            height: 100%;
             display: block;
             position: relative;
-            border: 2px solid black;
             transition: transform 1s 0s; // Added 0s delay
         }
     `;
@@ -282,7 +289,7 @@ class LitOperableForm extends LitElement {
             this.subscriptions = [
                 this.operable.schema[`${role}$`].subscribe((schema) => {
                     console.log("schema", schema);
-                    this.schema = schema;
+                    this.schema = zodToJsonSchema(schema);
                 }),
                 this.operable.read[`${role}$`].subscribe((data) => {
                     // console.log("log", log);
@@ -293,7 +300,7 @@ class LitOperableForm extends LitElement {
     }
 
     get doBasic() {
-        return this.basic && this.schema.properties.basic;
+        return this.basic && this.schema.properties?.basic;
     }
 
     get formData() {
@@ -333,28 +340,9 @@ class LitOperableForm extends LitElement {
                           return;
                       }
                       this.formData = e.formData;
-                      if (["Input", "Output"].includes(this.label)) {
-                          console.log(
-                              "writing",
-                              this.label,
-                              e.formData,
-                              this.formData
-                          );
-                          this.operable[`${this.label.toLowerCase()}$`].next(
-                              this.data
-                          );
-                      } else if (this.label === "Ingress") {
-                          this.operable.write$$(`ingress:config`, e.formData);
-                      } else {
-                          this.operable
-                              .write$$(
-                                  `process:${this.label.toLowerCase()}`,
-                                  this.data
-                              )
-                              .subscribe(() => {
-                                  console.log("wrote", this.label);
-                              });
-                      }
+                      const role = this.label.toLowerCase();
+                      console.log("writing", this.formData);
+                      this.operable.write[`${role}$`].next(this.formData);
                   }}></bespeak-form>`
             : html``;
     }

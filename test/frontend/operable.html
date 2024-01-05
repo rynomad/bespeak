@@ -72,7 +72,7 @@
             import "./modules/frontend/operable.mjs";
             import Operable from "./modules/operable.mjs";
 
-            const operable = new Operable();
+            const operable = new Operable("test-operable-back");
             const el = document.createElement("bespeak-operable");
             el.operable = operable;
             document.body.appendChild(el);

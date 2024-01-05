@@ -73,11 +73,13 @@ export default class Operable {
         this.destroy$ = new Subject();
         this.ioReset$ = new Subject();
 
-        Operable.$.next(this);
         this.rolesIO();
+
         if (start) {
             this.start();
         }
+
+        Operable.$.next(this);
     }
 
     start() {
@@ -132,8 +134,10 @@ export default class Operable {
             .subscribe(this.write.output$);
     }
 
-    rolesIO(
-        fn = (key) => {
+    rolesIO(fn) {
+        const nonce = uuidv4();
+        console.log("ROLE IO", this.id, nonce, fn?.toString().length);
+        fn ||= (key) => {
             combineLatest(this.write[`${key}$`], this.schema[`${key}$`])
                 .pipe(
                     map(([data, schema]) =>
@@ -144,12 +148,12 @@ export default class Operable {
                     map((res) => (res.success ? res.data : null)),
                     filter((data) => !!data),
                     distinctUntilChanged(deepEqual),
-                    takeUntil(this.ioReset$)
+                    takeUntil(this.ioReset$),
+                    tap(() => console.log(key, nonce, 'THIS SHOULDN"T BE HERE'))
                 )
-                .subscribe(this.read[`${key}$`]);
-        }
-    ) {
-        this.ioReset$.next();
+                .subscribe((data) => this.read[`${key}$`].next(data));
+        };
+        this.ioReset$.next(true);
         ["config", "keys", "input", "output", "meta"].forEach(fn);
     }
 

@@ -8,6 +8,7 @@ import {
     filter,
     switchMap,
     withLatestFrom,
+    startWith,
     tap,
 } from "rxjs";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
@@ -31,24 +32,29 @@ const session = uuidv4();
 sessionStorage.setItem(SESSION_KEY, session);
 
 Operable.$.subscribe((operable) => {
-    if (operable.id === "system:db") {
+    if (operable.id.startsWith("system")) {
         return;
     }
 
     operable.rolesIO((collection) => {
         combineLatest(
             operable.write[`${collection}$`],
-            operable.schema[`${collection}$`]
+            operable.schema[`${collection}$`],
+            operable.process.module$.pipe(
+                filter((f) => !!f),
+                startWith({})
+            )
         )
             .pipe(
                 distinctUntilChanged(deepEqual),
-                map(([data, schema]) =>
-                    schema?.parse
+                map(([data, schema, module]) => {
+                    const res = schema?.parse
                         ? schema.safeParse(data)
-                        : { success: true, data }
-                ),
-                withLatestFrom(operable.process.module$),
-                map(([{ data }, module]) => ({
+                        : { success: true, data };
+
+                    return { module, ...res };
+                }),
+                map(({ data, module }) => ({
                     collection,
                     operation: "upsert",
                     params: {
@@ -64,6 +70,7 @@ Operable.$.subscribe((operable) => {
                         data,
                     },
                 })),
+                tap(console.log.bind(console, collection, "to db")),
                 db.asOperator(),
                 takeUntil(operable.destroy$)
             )
@@ -71,7 +78,10 @@ Operable.$.subscribe((operable) => {
 
         operable.process.module$
             .pipe(
-                filter((module) => !!module),
+                tap(
+                    console.log.bind(console, operable.id, "persist got module")
+                ),
+                filter((module) => !!module || collection === "meta"),
                 switchMap((module) => {
                     let selector = {};
                     switch (collection) {
@@ -107,7 +117,16 @@ Operable.$.subscribe((operable) => {
                         },
                     });
                 }),
+                tap(
+                    console.log.bind(
+                        console,
+                        collection,
+                        operable.id,
+                        "from db query"
+                    )
+                ),
                 db.asOperator(),
+                tap(console.log.bind(console, collection, "from db")),
                 filter((e) => e),
                 map(({ data }) => data),
                 takeUntil(operable.destroy$)
@@ -118,6 +137,7 @@ Operable.$.subscribe((operable) => {
             ["process", "ingress"].forEach((key) => {
                 operable.read.meta$
                     .pipe(
+                        tap(console.log.bind(console, "[[[[meta")),
                         pluck(key),
                         distinctUntilChanged(),
                         switchMap((id) => {
@@ -129,6 +149,7 @@ Operable.$.subscribe((operable) => {
                                 },
                             });
                         }),
+                        tap(console.log.bind(console, "module from db query")),
                         db.asOperator(),
                         filter((e) => e),
                         imports.asOperator(),
