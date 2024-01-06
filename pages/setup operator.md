@@ -2,10 +2,10 @@
 - For example, you may use a setup operator to initialize an api client:
 - ```javascript
   const setupOperator = (operable) => {
-    return combineLatest(operable.data.keys)
+    return combineLatest(operable.read.keys$)
     			.pipe(
       			map((keys) => new Client(keys)),
-      			withLatestFrom(operable.data.config),
+      			withLatestFrom(operable.read.config$),
       			tap(([client,config]) => client.setConfig(config.clientConfig)),
                   map(([client]) => client),
     			)

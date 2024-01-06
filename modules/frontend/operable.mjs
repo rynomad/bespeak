@@ -110,7 +110,6 @@ class LitOperableBack extends PropagationStopper(LitElement) {
 
         .page {
             height: 100%;
-            width: 100%;
             background-color: lightgray;
         }
     `;
@@ -333,9 +332,6 @@ class LitOperableForm extends LitElement {
                       formData: this.formData,
                   }}
                   .onChange=${(e) => {
-                      if (!this.formData) {
-                          this.formData = e.formData;
-                      }
                       if (deepEqual(e.formData, this.formData)) {
                           return;
                       }

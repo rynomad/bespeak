@@ -49,10 +49,7 @@ export const RJSFComponent = PropagationStopper(
             bootstrapCss,
             css`
                 :host {
-                    width: 100%;
-                    height: 100%;
                     display: block;
-                    overflow: auto;
                     margin: 0;
                 }
             `,

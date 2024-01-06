@@ -74,6 +74,7 @@ export default class Operable {
         this.ioReset$ = new Subject();
 
         this.rolesIO();
+        this.initModules();
 
         if (start) {
             this.start();
@@ -83,7 +84,6 @@ export default class Operable {
     }
 
     start() {
-        this.initModules();
         this.initPipelines();
     }
 

@@ -100,19 +100,27 @@
    
        return of(schema);
    }
+  
+  function setupDb(operable){
+  	return operable.read.config$.pipe(
+      	switchMap(config => {
+              const db = memos.get(config.dbName) || getDB(config.dbName, config.collections);
+       		memos.set(config.dbName, db);
+             return of(db)
+          })
+      )
+  }
    
-   function dbOperation({ config, node }) {
-       const db =
-           memos.get(config.dbName) || getDB(config.dbName, config.collections);
-       memos.set(config.dbName, db);
+   function dbOperation(operable) {
        return pipe(
-           mergeMap((operations) => {
+         	 withLatestFrom(setupDB(operable))
+           mergeMap(([operation, db]) => {
                return combineLatest({
-                   operations: of(operations),
+                   operations: of(operation),
                    db: from(db),
                }).pipe(
-                   map(({ operations, db }) => {
-                       return operations.map((_operation) => {
+                   map(({ operation, db }) => {
+                      
                            try {
                                const { operation, collection, params } =
                                    _operation;
@@ -132,9 +140,8 @@
                                    `Error in dbOperation: ${err.message}`
                                );
                            }
-                       });
+                       
                    }),
-                   node.log("dbOperation: mapped operations")
                );
            })
        );

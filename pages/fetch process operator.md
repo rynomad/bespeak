@@ -9,6 +9,7 @@
 - ## Dependencies
 - **readability.js**: A library for parsing HTML content and extracting the main body of text in a readable format.
 	- Documentation: [Readability.js GitHub Repository](https://github.com/mozilla/readability)
+- DOMParser (Deno only): In the browser,
 - ## Schema Definitions
 - **Input Schema**:
 	- `url`: The URL of the web page to fetch and parse (string, required).
@@ -22,26 +23,27 @@
 	- `excerpt`: A short excerpt or summary of the content (string).
 	- `siteName`: The name of the website or publication (string).
 - **Config Schema**:
-	- `userAgent`: The user agent string to use when making the fetch request (string, optional).
-	- `timeout`: The maximum time to wait for a response (number, optional, default: 5000ms).
+	- N/A
 - **Keys Schema**:
-	- `proxy`: (optional) configuration for an authenticated cors proxy.
+	- `proxy`: (optional) url for a cors anywhere proxy.
 - ## Operator Components
 - **Setup Operator**:
-	- Initialize the readability.js library and configure the node-fetch module with the provided user agent and timeout.
+	- Initialize the readability.js library and either pass in the browser provided DOMParser or DOMParser for Deno
+		- ```javascript
+		  const { DOMParser } = await import("https://deno.land/x/deno_dom/deno-dom-wasm.ts")
+		  ```
 - **Tool Operator**:
-	- Use node-fetch to retrieve HTML content from the specified URL.
-	- Pass the fetched HTML content to readability.js for parsing.
-	- Reinsert images and/or links into the parsed content if the respective flags are set.
+	- N/A
 - **Status Operator**:
-	- The operator will return a status object indicating success or failure.
+	- The operator will emit status events indicating success or failure.
 	- In case of errors, the status object will include an error message and code.
 - ## Process Operator Logic
   
   1. Receive input parameters including the URL and optional flags for images and links.
-  2. Perform an HTTP GET request to the URL using node-fetch.
-  3. On successful retrieval, pass the HTML content to readability.js for parsing.
-  4. If `includeImages` is true, reinsert `<img>` tags into the content at their original location.
+  2. Perform an HTTP GET request to the URL using fetch
+	- If `operable.read.keys` has a cors-proxy url, use it.
+- 3. On successful retrieval, pass the HTML content to readability.js for parsing.
+- 4. If `includeImages` is true, reinsert `<img>` tags into the content at their original location.
   5. If `includeLinks` is true, reinsert `<a>` tags into the content at their original location.
   6. Return the parsed content along with metadata such as title, excerpt, and site name.
   7. Handle any errors that occur during the fetch or parsing process and return a status object with error details.

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>Editor</title>
+        <base href="/" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "rxjs": "https://esm.sh/rxjs",
+                    "rxdb": "https://esm.sh/rxdb",
+                    "rxdb/plugins/storage-dexie": "https://esm.sh/rxdb/plugins/storage-dexie",
+                    "rxdb/plugins/storage-memory": "https://esm.sh/rxdb/plugins/storage-memory",
+                    "zod": "https://esm.sh/zod",
+                    "rxdb/plugins/dev-mode": "https://esm.sh/rxdb/plugins/dev-mode",
+                    "@deboxsoft/zod-to-json-schema": "https://esm.sh/@deboxsoft/zod-to-json-schema",
+                    "openai": "https://cdn.jsdelivr.net/npm/openai/+esm"
+                }
+            }
+        </script>
+    </head>
+    <body style="margin: 0px; font-family: sans-serif; height: 100vh">
+        <script type="module">
+            import "./modules/install.mjs";
+            import "./modules/persist.mjs";
+            import "./modules/frontend/operable.mjs";
+            import "./modules/frontend/rete/nodes.mjs";
+            import Operable from "./modules/operable.mjs";
+
+            const operable = new Operable("test-operable-back");
+            const el = document.createElement("bespeak-iframe");
+            el.operable = operable;
+            document.body.appendChild(el);
+        </script>
+    </body>
+</html>
