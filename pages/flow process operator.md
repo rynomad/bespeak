@@ -4,24 +4,22 @@
 - ## Operator Identification
 - **Key**: FlowConstructor
 - **Version**: 1.0.0
-- **Description**: This operator takes a serialized flow of nodes, along with their associated configuration, meta, and key data, and constructs a flow out of them.
+- **Description**: This operator encapsulates a flow of other operables.
 - ## Dependencies
-- This operator relies on the following external dependencies:
+- You'll need familiarity with the [[operable]] interface
 - ## Schema Definitions
-- **Config Schema**: The configuration used to construct an instance of this operator includes the serialized flow of operables. This includes a list of operables and a list of connections between these operables. Each is represented as an object with properties for the configuration and meta data.
-	- each node will have a `name` in its meta data that can be used to reference the node in connections. The `id` of each internal node will be `flowId-name`.
-- **Keys Schema**: The keys shared by all instances of this operator include a key for every name@version combination found in the config nodes. These keys could be API keys or other credentials required to interact with external systems or services.
-	- The keys schema is constructed dynamically based on the value of the config
-- **Input Schema**: an object with `id` and `payload`, payload must match the input schema of the given internal node. The input is routed to the appropriate internal node
-	- The input schema is constructed dynamically based on the value of the config
-- **Output Schema**: on object with id and payload, any time any internal node emits, the output is reflected on the flow output
-	- The output schema is constructed dynamically based on the value of the config
+- **Config Schema**:
+	- operables: a list of operable `names`
+	- connections: lists of `to` and `from` pairs of names, in two categories
+		- stream - denoting upstream/downstream connections between operables
+		- tools - denoting tool/user connections between operables
+	- input: the name of the operable that is piped directly to the flow input
+	- output: the name of the operable that is piped directly to the flow output
+- **Keys Schema**: N/A
+- **Input Schema**: the schema of the input operable.
+- **Output Schema**: the schema of the output operable.
 - ## Operator Components
 - **Status Operator**: The status operator will mirror the status events of every internal node. it will augment the `detail` property with the id of the internal node that created the event.
 - ## Process Operator Logic
-- The process operator will start constructing each of the [[nodes]] and writing their respective system, process:config, and process:keys data. then for each connection it will provide the
-- ## Logging
-  The operator will log information at various levels to help with debugging and performance monitoring. This includes:
-- **Debug**: Detailed information about the flow construction process for debugging purposes.
-- **Info**: High-level information about the progress of the flow construction.
-- **Error**: Information about any errors that occur during the flow construction.
+- The process operator will subscribe to the config of its operable and use it to manage its own tools, inserting or removing operables to the tools interface to keep in sync with the present state of the config. all tool operables will have the id `[flow-id]-[name]`. stream connections will be kept in sync via the `connect` and `disconnect` operable methods. tool connections will be kept in sync via the `use` and `discard` operable methods.
+- flow inputs will be piped to the configured input, and return the configured output.
