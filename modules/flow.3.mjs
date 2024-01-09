@@ -215,7 +215,7 @@ export default function FlowConstructor(operable) {
         ).pipe(
             tap(([inputValue, target]) => {
                 if (target) {
-                    target.input$.next(inputValue);
+                    target.write.input$.next(inputValue);
                 }
             }),
             filter(() => false)
@@ -223,7 +223,7 @@ export default function FlowConstructor(operable) {
 
         const outputFlow$ = getIOTool(operable, "output").pipe(
             switchMap((target) => {
-                return target ? target.output$ : of(null);
+                return target ? target.read.output$ : of(null);
             })
         );
 

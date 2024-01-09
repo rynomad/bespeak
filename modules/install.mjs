@@ -37,6 +37,7 @@ const paths = [
     "./modules/imports.1.mjs",
     "./modules/gpt.2.mjs",
     "./modules/flow.3.mjs",
+    "./modules/ingress.mjs",
 ];
 
 from(paths)

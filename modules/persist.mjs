@@ -118,16 +118,7 @@ Operable.$.subscribe((operable) => {
                         },
                     });
                 }),
-                tap(
-                    console.log.bind(
-                        console,
-                        collection,
-                        operable.id,
-                        "from db query"
-                    )
-                ),
                 db.asOperator(),
-                tap(console.log.bind(console, collection, "from db")),
                 filter((e) => e),
                 map(({ data }) => data),
                 takeUntil(operable.destroy$)
@@ -138,7 +129,6 @@ Operable.$.subscribe((operable) => {
             ["process", "ingress"].forEach((key) => {
                 operable.read.meta$
                     .pipe(
-                        tap(console.log.bind(console, "[[[[meta")),
                         pluck(key),
                         distinctUntilChanged(),
                         switchMap((id) => {
@@ -150,7 +140,6 @@ Operable.$.subscribe((operable) => {
                                 },
                             });
                         }),
-                        tap(console.log.bind(console, "module from db query")),
                         db.asOperator(),
                         filter((e) => e),
                         imports.asOperator(),
