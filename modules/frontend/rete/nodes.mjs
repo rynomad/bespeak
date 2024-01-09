@@ -68,8 +68,6 @@ export class LitNode extends LitPresets.classic.Node {
         const input = this.reteNode?.inputs?.input || {};
         const output = this.reteNode?.outputs?.output || {};
 
-        console.log(this.reteNode);
-
         return html`
             <bespeak-compass>
                 <div slot="north">
@@ -162,11 +160,9 @@ class IFrames extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        console.log("DISCONNECTED");
     }
 
     firstUpdated() {
-        console.log("CONSTRUCTED");
         const iframe = this.shadowRoot.querySelector("iframe");
         iframe.onload = () => {
             self.addEventListener("message", (event) => {

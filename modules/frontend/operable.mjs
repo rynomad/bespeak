@@ -275,13 +275,6 @@ class LitOperableForm extends LitElement {
     }
 
     updated(changedProperties) {
-        console.log(
-            "updated",
-            this.operable,
-            this.label,
-            this.basic,
-            this.subscriptions
-        );
         if (this.operable && this.label && !this.subscriptions) {
             console.log("subscribing to", `${this.label.toLowerCase()}$`);
             const role = this.label.toLowerCase();

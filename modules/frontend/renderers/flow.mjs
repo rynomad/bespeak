@@ -160,7 +160,6 @@ export class Flow extends LitElement {
     }
 
     async addNode(node) {
-        console.log("ADD NODE", node);
         return await this.editor.addNode(node);
     }
 
@@ -178,6 +177,18 @@ export class Flow extends LitElement {
 
     async initialize(container) {
         await this.createEditor(container);
+
+        this.editor.addPipe((event) => {
+            if (
+                event.type === "connectioncreated" ||
+                event.type === "connectionremoved" ||
+                event.type === "noderemoved"
+            ) {
+                this.events$.next(event);
+            }
+
+            return event;
+        });
     }
 
     handleDragOver(event) {
