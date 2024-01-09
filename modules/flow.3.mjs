@@ -214,6 +214,7 @@ export default function FlowConstructor(operable) {
             getIOTool(operable, "input")
         ).pipe(
             tap(([inputValue, target]) => {
+                console.log("input", inputValue, target);
                 if (target) {
                     target.write.input$.next(inputValue);
                 }
