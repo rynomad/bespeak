@@ -129,7 +129,7 @@ const dbOperation = (operable) => {
 
                 return result;
             }),
-            map((result) => (result ? result.toJSON?.() : result))
+            map((result) => (result ? result.toMutableJSON?.() : result))
         );
 };
 

@@ -16,6 +16,18 @@ export class ReteNode extends Classic.Node {
     }
 
     data() {}
+
+    get selected() {
+        return this._selected;
+    }
+
+    set selected(value) {
+        this._selected = value;
+
+        if (this.litNode) {
+            this.litNode.selected = value;
+        }
+    }
 }
 
 export class LitNode extends LitPresets.classic.Node {
@@ -42,7 +54,19 @@ export class LitNode extends LitPresets.classic.Node {
     }
 
     static get styles() {
-        return css``;
+        return css`
+            .container {
+                padding: 2rem;
+                width: 40rem;
+                height: 30rem;
+                border: 1px solid #ccc;
+                background-color: #fff;
+            }
+
+            .selected {
+                background-color: #ccc;
+            }
+        `;
     }
 
     static get properties() {
@@ -122,7 +146,7 @@ export class LitNode extends LitPresets.classic.Node {
                         .emit=${this.emit}
                         data-testid="output-socket"></ref-element>`}
                 </div>
-                <div>
+                <div class="container ${this.selected ? "selected" : ""}">
                     <bespeak-iframe
                         .operable=${this.reteNode.operable}></bespeak-iframe>
                 </div>
@@ -144,10 +168,9 @@ class IFrames extends LitElement {
                 height: 100%;
             }
             iframe {
+                width: 100%;
+                height: 100%;
                 border: none;
-                margin: 5rem;
-                width: 50rem;
-                height: 40rem;
             }
         `;
     }

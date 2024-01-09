@@ -84,6 +84,9 @@ export class Flow extends LitElement {
 
     constructor() {
         super();
+
+        const editor = new NodeEditor();
+        this.editor = editor;
         this.events$ = new ReplaySubject();
     }
 
@@ -92,23 +95,35 @@ export class Flow extends LitElement {
 
         this.addEventListener("dragover", this.handleDragOver);
         this.addEventListener("drop", this.handleDrop);
+        self.addEventListener("keydown", this.handleKeyPress);
 
         await this.updateComplete;
 
         this.initialize(this.shadowRoot.querySelector(".content"));
     }
+    handleKeyPress = async (event) => {
+        // Check if 'delete' key was pressed
+
+        if (event.shiftKey && ["Backspace", "Delete"].includes(event.key)) {
+            // Iterate over selected nodes and remove them
+            for (const node of this.selector.entities.values()) {
+                await this.removeNode(node.id);
+            }
+        }
+    };
 
     disconnectedCallback() {
         super.disconnectedCallback();
 
         this.area?.destroy();
         this.subscriptions?.forEach((sub) => sub.unsubscribe());
+        window.removeEventListener("keydown", this.handleKeyPress);
     }
 
     async createEditor(container) {
-        const editor = new NodeEditor();
+        const editor = this.editor;
+
         const area = new AreaPlugin(container);
-        this.editor = editor;
         this.area = area;
         const litRender = new LitPlugin();
         const connection = new ConnectionPlugin();
@@ -132,7 +147,7 @@ export class Flow extends LitElement {
 
         const selector = AreaExtensions.selector();
         const accumulating = AreaExtensions.accumulateOnCtrl();
-
+        this.selector = selector;
         AreaExtensions.selectableNodes(area, selector, {
             accumulating,
         });
@@ -184,6 +199,7 @@ export class Flow extends LitElement {
                 event.type === "connectionremoved" ||
                 event.type === "noderemoved"
             ) {
+                console.log("EDITOR EVENT", event);
                 this.events$.next(event);
             }
 
