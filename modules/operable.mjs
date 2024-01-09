@@ -33,10 +33,10 @@ export default class Operable {
             operator$: new BehaviorSubject(null),
         };
         this.io = {
-            upstream$: new BehaviorSubject(null),
-            downstream$: new BehaviorSubject(null),
-            users$: new BehaviorSubject(null),
-            tools$: new BehaviorSubject(null),
+            upstream$: new BehaviorSubject([]),
+            downstream$: new BehaviorSubject([]),
+            users$: new BehaviorSubject([]),
+            tools$: new BehaviorSubject([]),
         };
         this.schema = {
             meta$: new BehaviorSubject(
@@ -178,6 +178,46 @@ export default class Operable {
                 input$,
                 this.process.operator$.pipe(filter((e) => e))
             ).pipe(switchMap(([input, operator]) => of(input).pipe(operator)));
+    }
+
+    connect(operable) {
+        operable.io.upstream$.next(
+            Array.from(new Set([...operable.io.upstream$.getValue(), this]))
+        );
+        this.io.downstream$.next(
+            Array.from(new Set([...this.io.downstream$.getValue(), operable]))
+        );
+    }
+
+    disconnect(operable) {
+        operable.io.upstream$.next(
+            operable.io.upstream$.getValue().filter((e) => e !== this)
+        );
+        this.io.downstream$.next(
+            this.io.downstream$.getValue().filter((e) => e !== operable)
+        );
+    }
+
+    use(operable) {
+        operable.io.users$.next(
+            Array.from(new Set([...operable.io.users$.getValue(), this]))
+        );
+        this.io.tools$.next(
+            Array.from(new Set([...this.io.tools$.getValue(), operable]))
+        );
+    }
+
+    remove(operable) {
+        operable.io.users$.next(
+            operable.io.users$.getValue().filter((e) => e !== this)
+        );
+        this.io.tools$.next(
+            this.io.tools$.getValue().filter((e) => e !== operable)
+        );
+    }
+
+    destroy() {
+        this.destroy$.next(true);
     }
 
     async invokeAsFunction(input) {

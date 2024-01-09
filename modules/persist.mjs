@@ -54,6 +54,7 @@ Operable.$.subscribe((operable) => {
 
                     return { module, ...res };
                 }),
+                filter(({ success }) => success),
                 map(({ data, module }) => ({
                     collection,
                     operation: "upsert",

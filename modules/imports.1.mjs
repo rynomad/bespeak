@@ -40,6 +40,7 @@ const processOperator = (operable) => {
                     memoizationCache.set(data, module);
                     return await module;
                 } catch (error) {
+                    console.error(error);
                     throw new Error(`Error importing module: ${error.message}`);
                 }
             }
