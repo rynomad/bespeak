@@ -162,7 +162,6 @@ const moduleSchema = {
         type: {
             type: "string",
             maxLength: 255,
-            final: true,
         },
         name: {
             type: "string",
@@ -174,6 +173,29 @@ const moduleSchema = {
         },
         data: {
             type: "string",
+        },
+    },
+    required: ["id"],
+};
+
+const stateSchema = {
+    title: "state schema",
+    version: 0,
+    type: "object",
+    primaryKey: "operable",
+    properties: {
+        operable: {
+            type: "string",
+            final: true,
+            maxLength: 255,
+        },
+        session: {
+            type: "string",
+            maxLength: 255,
+        },
+        data: {
+            type: "object",
+            additionalProperties: true,
         },
     },
     required: ["id"],
@@ -199,6 +221,9 @@ export const config = {
         },
         output: {
             schema: outputSchema,
+        },
+        state: {
+            schema: stateSchema,
         },
     },
 };

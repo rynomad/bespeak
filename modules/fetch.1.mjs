@@ -10,8 +10,9 @@ import {
 } from "https://esm.sh/rxjs";
 import { Readability } from "https://esm.sh/@mozilla/readability";
 
-export const key = "fetch-readability-operator";
+export const key = "fetch";
 export const version = "1.0.0";
+export const type = "process";
 export const description =
     "An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.";
 

@@ -38,6 +38,7 @@ const paths = [
     "./modules/gpt.2.mjs",
     "./modules/flow.3.mjs",
     "./modules/ingress.mjs",
+    "./modules/fetch.1.mjs",
 ];
 
 from(paths)
@@ -61,6 +62,7 @@ from(paths)
                     description: module.description,
                     key: module.key,
                     version: module.version,
+                    type: module.type || "",
                     data,
                 },
             };

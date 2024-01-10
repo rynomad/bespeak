@@ -24,6 +24,7 @@ import {
 
 export const key = "gpt";
 export const version = "0.0.1";
+export const type = "process";
 export const description =
     "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.";
 

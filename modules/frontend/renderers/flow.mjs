@@ -214,6 +214,7 @@ export class Flow extends LitElement {
     async handleDrop(event) {
         event.preventDefault();
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        console.log("DROP", data);
         this.events$.next({
             type: "drop",
             data,

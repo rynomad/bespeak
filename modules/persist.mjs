@@ -10,6 +10,7 @@ import {
     withLatestFrom,
     startWith,
     tap,
+    take,
 } from "rxjs";
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
 import { deepEqual } from "https://esm.sh/fast-equals";
@@ -62,7 +63,7 @@ Operable.$.subscribe((operable) => {
                         ...(collection === "keys"
                             ? {}
                             : { operable: operable.id }),
-                        ...(["input", "output"].includes(collection)
+                        ...(["input", "output", "state"].includes(collection)
                             ? { session: sessionStorage.getItem(SESSION_KEY) }
                             : {}),
                         ...(collection !== "meta"
@@ -71,17 +72,13 @@ Operable.$.subscribe((operable) => {
                         data,
                     },
                 })),
-                tap(console.log.bind(console, collection, "to db")),
                 db.asOperator(),
                 takeUntil(operable.destroy$)
             )
-            .subscribe((res) => console.log("wrote", collection, res));
+            .subscribe();
 
         operable.process.module$
             .pipe(
-                tap(
-                    console.log.bind(console, operable.id, "persist got module")
-                ),
                 filter((module) => !!module || collection === "meta"),
                 switchMap((module) => {
                     let selector = {};
@@ -102,6 +99,7 @@ Operable.$.subscribe((operable) => {
                             break;
                         case "input":
                         case "output":
+                        case "state":
                             selector = {
                                 operable: operable.id,
                                 session: sessionStorage.getItem(SESSION_KEY),
@@ -143,11 +141,12 @@ Operable.$.subscribe((operable) => {
                         db.asOperator(),
                         filter((e) => e),
                         imports.asOperator(),
+                        take(1),
+                        tap(console.log.bind(console, "got module")),
                         takeUntil(operable.destroy$)
                     )
                     .subscribe(operable[key].module$);
             });
         }
     });
-    console.log("id", operable.id);
 });

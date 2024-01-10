@@ -9,6 +9,7 @@ import {
     withLatestFrom,
     combineLatest,
     map,
+    tap,
 } from "rxjs";
 import { createRxDatabase, addRxPlugin } from "rxdb";
 import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
@@ -69,9 +70,12 @@ export const inputSchema = (operable) => {
 
 export const outputSchema = (operable) => {
     return of(
-        z.object({
-            result: z.any(),
-        })
+        z.union([
+            z.object({
+                result: z.any(),
+            }),
+            z.array(z.any()),
+        ])
     );
 };
 
@@ -129,12 +133,17 @@ const dbOperation = (operable) => {
 
                 return result;
             }),
-            map((result) => (result ? result.toMutableJSON?.() : result))
+            map((result) => {
+                return result?.toMutableJSON
+                    ? result.toMutableJSON()
+                    : result?.map((r) => r.toMutableJSON?.() || r);
+            })
         );
 };
 
 export const key = "dbOperation";
 export const version = "0.0.1";
 export const description = "Performs operations on a database using RxDB.";
+export const pallet = false;
 
 export default dbOperation;

@@ -59,6 +59,7 @@ export default class Operable {
             output$: new ReplaySubject(1),
             config$: new ReplaySubject(1),
             keys$: new ReplaySubject(1),
+            state$: new ReplaySubject(1),
         };
         this.read = {
             meta$: new ReplaySubject(1),
@@ -66,6 +67,7 @@ export default class Operable {
             output$: new ReplaySubject(1),
             config$: new ReplaySubject(1),
             keys$: new BehaviorSubject(null),
+            state$: new ReplaySubject(1),
         };
         this.status$ = new ReplaySubject(1);
         this.error$ = new ReplaySubject(1);
