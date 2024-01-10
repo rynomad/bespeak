@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>Editor</title>
+        <base href="/" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "rxjs": "https://esm.sh/rxjs",
+                    "rxdb": "https://esm.sh/rxdb",
+                    "rxdb/plugins/storage-dexie": "https://esm.sh/rxdb/plugins/storage-dexie",
+                    "rxdb/plugins/storage-memory": "https://esm.sh/rxdb/plugins/storage-memory",
+                    "zod": "https://esm.sh/zod",
+                    "rxdb/plugins/dev-mode": "https://esm.sh/rxdb/plugins/dev-mode",
+                    "@deboxsoft/zod-to-json-schema": "https://esm.sh/@deboxsoft/zod-to-json-schema",
+                    "openai": "https://cdn.jsdelivr.net/npm/openai/+esm"
+                }
+            }
+        </script>
+    </head>
+    <body style="margin: 0px; font-family: sans-serif; height: 100vh">
+        <script type="module">
+            import "./modules/install.mjs";
+            import "./modules/persist.mjs";
+            import "./modules/frontend/operable.mjs";
+            import "./modules/frontend/renderers/flow.mjs";
+            import { ReteNode } from "./modules/frontend/rete/nodes.mjs";
+            import Operable from "./modules/operable.mjs";
+            import {
+                withLatestFrom,
+                mergeMap,
+                map,
+                filter,
+                take,
+                tap,
+                debounceTime,
+                EMPTY,
+                merge,
+            } from "rxjs";
+            import operable from "./test/flow.mjs";
+
+            const el = document.createElement("bespeak-flow");
+
+            const dedupeJSONArray = (array) => {
+                const seen = new Set();
+                return array.filter((item) => {
+                    const k = JSON.stringify(item);
+                    return seen.has(k) ? false : seen.add(k);
+                });
+            };
+
+            operable.io.tools$.pipe(debounceTime(100)).subscribe((tools) => {
+                tools.forEach((tool) => {
+                    if (el.editor.nodes.find((node) => node.id === tool.id)) {
+                        return;
+                    }
+
+                    el.editor.addNode(new ReteNode(tool));
+                });
+            });
+
+            operable.read.config$
+                .pipe(debounceTime(100))
+                .subscribe(({ connections, operables }) => {
+                    operables.forEach((_operable) => {
+                        if (
+                            el.editor.nodes.find(
+                                (node) => node.id.split("-").pop() === _operable
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const tool = operable.io.tools$
+                            .getValue()
+                            .find(
+                                (tool) => tool.id.split("-").pop() === _operable
+                            );
+
+                        if (tool) {
+                            el.editor.addNode(new ReteNode(tool));
+                        }
+                    });
+
+                    el.editor.nodes.forEach((node) => {
+                        const { id } = node;
+                        const operable = id.split("-").pop();
+                        if (!operables.includes(operable)) {
+                            el.editor.removeNode(id);
+                        }
+                    });
+
+                    connections.stream.forEach((connection) => {
+                        const { from, to } = connection;
+                        const source = `${operable.id}-${from}`;
+                        const target = `${operable.id}-${to}`;
+                        const reteConnection = el.editor.connections.find(
+                            (connection) =>
+                                connection.source === source &&
+                                connection.target === target &&
+                                connection.sourceOutput === "output"
+                        );
+
+                        if (reteConnection) {
+                            return;
+                        }
+
+                        el.addConnection({
+                            id: `${source}-${target}-stream`,
+                            source,
+                            target,
+                            sourceOutput: "output",
+                            targetInput: "input",
+                        });
+                    });
+
+                    connections.tools.forEach((connection) => {
+                        const { from, to } = connection;
+                        const source = `${operable.id}-${from}`;
+                        const target = `${operable.id}-${to}`;
+                        const reteConnection = el.editor.connections.find(
+                            (connection) =>
+                                connection.source === source &&
+                                connection.target === target &&
+                                connection.sourceOutput === "tools"
+                        );
+
+                        if (reteConnection) {
+                            return;
+                        }
+
+                        el.addConnection({
+                            id: `${source}-${target}-tools`,
+                            source,
+                            target,
+                            sourceOutput: "tools",
+                            targetInput: "input",
+                        });
+                    });
+
+                    el.editor.connections.forEach((connection) => {
+                        const { source, target, sourceOutput } = connection;
+                        const from = source.split("-").pop();
+                        const to = target.split("-").pop();
+
+                        const streamConnection = connections.stream.find(
+                            (connection) =>
+                                connection.from === from && connection.to === to
+                        );
+
+                        const toolsConnection = connections.tools.find(
+                            (connection) =>
+                                connection.from === from && connection.to === to
+                        );
+
+                        if (sourceOutput === "output" && !streamConnection) {
+                            console.log("REMOVE CONNECTION", connection);
+                            el.editor.removeConnection(connection.id);
+                        } else if (
+                            sourceOutput === "tools" &&
+                            !toolsConnection
+                        ) {
+                            el.editor.removeConnection(connection.id);
+                        } else {
+                            console.log("KEEP CONNECTION", connection);
+                        }
+                    });
+                });
+
+            el.events$
+                .pipe(
+                    tap((event) =>
+                        console.log("GOT EVENT IN FLOW.HTML", event)
+                    ),
+                    withLatestFrom(
+                        merge(operable.read.config$, operable.write.config$)
+                    ),
+                    mergeMap(([event, config]) => {
+                        console.log("GOT EVENT IN FLOW.HTML", event);
+                        let sourceId, targetId, sourceOutput;
+                        if (
+                            event.type === "connectioncreated" ||
+                            event.type === "connectionremoved"
+                        ) {
+                            sourceId = event.data.source;
+                            targetId = event.data.target;
+                            sourceOutput = event.data.sourceOutput;
+                        }
+                        switch (event.type) {
+                            case "drop":
+                                const { data } = event;
+                                config.operables.push(data.name);
+                                operable.write.config$.next(config);
+                                return operable.io.tools$.pipe(
+                                    map((tools) =>
+                                        tools.find(
+                                            (tool) =>
+                                                tool.id.split("-").pop() ===
+                                                data.name
+                                        )
+                                    ),
+                                    filter((tool) => tool !== undefined),
+                                    take(1),
+                                    tap((tool) => tool.write.meta$.next(data))
+                                );
+                                break;
+                            case "connectioncreated":
+                                if (sourceOutput === "output") {
+                                    config.connections.stream.push({
+                                        from: sourceId.split("-").pop(),
+                                        to: targetId.split("-").pop(),
+                                    });
+                                } else if (sourceOutput === "tools") {
+                                    config.connections.tools.push({
+                                        from: sourceId.split("-").pop(),
+                                        to: targetId.split("-").pop(),
+                                    });
+                                }
+
+                                config.connections.stream = dedupeJSONArray(
+                                    config.connections.stream
+                                );
+                                config.connections.tools = dedupeJSONArray(
+                                    config.connections.tools
+                                );
+                                operable.write.config$.next(config);
+                                break;
+                            case "connectionremoved":
+                                const { connections } = config;
+
+                                if (sourceOutput === "output") {
+                                    const index = connections.stream.findIndex(
+                                        (connection) =>
+                                            connection.from ===
+                                                sourceId.split("-").pop() &&
+                                            connection.to ===
+                                                targetId.split("-").pop()
+                                    );
+                                    if (index !== -1) {
+                                        console.log(
+                                            "REMOVE CONNECTION",
+                                            connections.stream[index]
+                                        );
+                                        connections.stream.splice(index, 1);
+                                    }
+                                } else if (sourceOutput === "tools") {
+                                    const index = connections.tools.findIndex(
+                                        (connection) =>
+                                            connection.from ===
+                                                sourceId.split("-").pop() &&
+                                            connection.to ===
+                                                targetId.split("-").pop()
+                                    );
+                                    if (index !== -1) {
+                                        connections.tools.splice(index, 1);
+                                    }
+                                }
+                                operable.write.config$.next(config);
+                                break;
+
+                            case "noderemoved":
+                                console.log("GOT NODE REMOVED EVENT", event);
+                                const { id } = event.data;
+                                const { operables } = config;
+                                const operableIndex = operables.findIndex(
+                                    (operable) =>
+                                        operable === id.split("-").pop()
+                                );
+                                if (operableIndex !== -1) {
+                                    operables.splice(operableIndex, 1);
+                                }
+
+                                const streamCleanup =
+                                    config.connections.stream.filter(
+                                        (connection) =>
+                                            !(
+                                                connection.from ===
+                                                    id.split("-").pop() ||
+                                                connection.to ===
+                                                    id.split("-").pop()
+                                            )
+                                    );
+
+                                const toolsCleanup =
+                                    config.connections.tools.filter(
+                                        (connection) =>
+                                            !(
+                                                connection.from ===
+                                                    id.split("-").pop() ||
+                                                connection.to ===
+                                                    id.split("-").pop()
+                                            )
+                                    );
+
+                                console.log(
+                                    "GOT NODE REMOVED EVENT",
+                                    config.connections,
+                                    streamCleanup,
+                                    toolsCleanup
+                                );
+                                config.connections.stream = streamCleanup;
+                                config.connections.tools = toolsCleanup;
+
+                                operable.write.config$.next(config);
+                                break;
+                        }
+
+                        return EMPTY;
+                    })
+                )
+                .subscribe();
+            document.body.appendChild(el);
+        </script>
+    </body>
+</html>
