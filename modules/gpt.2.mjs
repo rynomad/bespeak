@@ -187,12 +187,16 @@ export const statusOperator = (operable, runner) => {
             ];
 
             events.forEach((event) => {
-                runner.on(event, (detail) => {
+                runner.on(event, (detail, snapshot) => {
                     operable.status$.next({
                         status: event,
                         message: `Event ${event} received`,
                         detail,
                     });
+
+                    if (snapshot) {
+                        console.log("SNAPSHOT", snapshot);
+                    }
                 });
             });
         },

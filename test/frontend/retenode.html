@@ -24,12 +24,16 @@
     <body style="margin: 0px; font-family: sans-serif; height: 100vh">
         <script type="module">
             import "./modules/install.mjs";
-            import "./modules/persist.mjs";
+            import { SESSION_KEY } from "./modules/persist.mjs";
             import "./modules/frontend/operable.mjs";
             import { ReteNode } from "./modules/frontend/rete/nodes.mjs";
             import "./modules/frontend/renderers/flow.mjs";
             import Operable from "./modules/operable.mjs";
 
+            import { v4 as uuidv4 } from "https://esm.sh/uuid";
+            const session = uuidv4();
+
+            sessionStorage.setItem(SESSION_KEY, session);
             const operable = new Operable("test-operable-back");
             const reteNode = new ReteNode(operable);
 

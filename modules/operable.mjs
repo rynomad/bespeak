@@ -130,6 +130,11 @@ export default class Operable {
             .pipe(
                 filter((operator) => operator),
                 switchMap((operator) => {
+                    console.log(
+                        "PROCESS OPERATOR",
+                        this.id,
+                        operator?.toString()
+                    );
                     return this.read.input$.pipe(operator);
                 })
             )

@@ -26,11 +26,7 @@ db.write.config$.next(dbConfig);
 const imports = new Operable("system:imports");
 imports.process.module$.next(await import("./imports.1.mjs"));
 
-const SESSION_KEY = "operable_process_session";
-
-const session = uuidv4();
-
-sessionStorage.setItem(SESSION_KEY, session);
+export const SESSION_KEY = "operable_process_session";
 
 Operable.$.subscribe((operable) => {
     if (operable.id.startsWith("system")) {
@@ -80,7 +76,7 @@ Operable.$.subscribe((operable) => {
         operable.process.module$
             .pipe(
                 filter((module) => !!module || collection === "meta"),
-                switchMap((module) => {
+                map((module) => {
                     let selector = {};
                     switch (collection) {
                         case "config":
@@ -108,20 +104,31 @@ Operable.$.subscribe((operable) => {
                         default:
                             selector = { operable: operable.id };
                     }
-                    return of({
+                    return {
                         collection,
                         operation: "findOne",
                         params: {
                             selector,
                         },
-                    });
+                    };
                 }),
                 db.asOperator(),
                 filter((e) => e),
                 map(({ data }) => data),
-                takeUntil(operable.destroy$)
+                takeUntil(operable.destroy$),
+                tap(
+                    console.log.bind(
+                        console,
+                        collection,
+                        location.href,
+                        "got data from db"
+                    )
+                )
             )
-            .subscribe(operable.read[`${collection}$`]);
+            .subscribe((data) => {
+                console.log("send data to read." + collection, data);
+                operable.read[`${collection}$`].next(data);
+            });
 
         if (collection === "meta") {
             ["process", "ingress"].forEach((key) => {
