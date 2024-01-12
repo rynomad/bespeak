@@ -126,8 +126,8 @@ export const setupOperator = (operable) => {
 };
 
 export const toolOperator = (operable) => {
-    return operable.io.tools$.pipe(
-        switchMap((tools) => {
+    return combineLatest(operable.io.tools$, operable.io.downstream$).pipe(
+        switchMap(([tools]) => {
             if (!tools) {
                 return of([]);
             }
@@ -144,6 +144,7 @@ export const toolOperator = (operable) => {
 
                     const tool = {
                         name: toolNode.id,
+                        type: "function",
                         function: toolFunction,
                         parse: (args) =>
                             toolNode.schema.input$.getValue().parse(args),
@@ -157,6 +158,46 @@ export const toolOperator = (operable) => {
                 })
             );
         }),
+        withLatestFrom(operable.io.downstream$),
+        map(([tools, downstream]) => {
+            if (!downstream || downstream.length <= 1) {
+                return tools;
+            }
+
+            // make a zod schema for downstreamId based on the downstream nodes
+            const downstreamSchema = z.object({
+                downstreamId: z.enum(downstream.map((node) => node.id)),
+            });
+
+            return tools.concat({
+                type: "function",
+                function: {
+                    name: "downstream_router",
+                    function: (args, runner) => {
+                        const downstreamId = args.downstreamId;
+                        const _downstream = downstream.find(
+                            (node) => node.id === downstreamId
+                        );
+
+                        if (!_downstream) {
+                            return `Downstream node ${downstreamId} not found`;
+                        }
+                        runner.abort();
+                        const messages = runner.messages.filter(
+                            (message) =>
+                                ["user", "assistant"].includes(message.role) &&
+                                message.content
+                        );
+                        console.log("Downstream messages", messages);
+                        return _downstream.write.input$.next({ messages });
+                    },
+                    parse: (str) => downstreamSchema.parse(JSON.parse(str)),
+                    description:
+                        "Route to a specific downstream node. Only use this if the user has specified conditional logic for where to send messages in the prompt.",
+                    parameters: zodToJsonSchema(downstreamSchema),
+                },
+            });
+        }),
         catchError((error) => {
             console.error(`Error processing tools: ${error}`);
             return of([]);
@@ -165,41 +206,67 @@ export const toolOperator = (operable) => {
 };
 
 export const statusOperator = (operable, runner) => {
-    return tap({
-        next: () => {
-            const events = [
-                "connect",
-                "chunk",
-                "chatCompletion",
-                "message",
-                "content",
-                "functionCall",
-                "functionCallResult",
-                "finalChatCompletion",
-                "finalContent",
-                "finalMessage",
-                "finalFunctionCall",
-                "finalFunctionCallResult",
-                "error",
-                "abort",
-                "totalUsage",
-                "end",
-            ];
+    const events = [
+        "connect",
+        "chunk",
+        "chatCompletion",
+        "message",
+        "content",
+        "functionCall",
+        "functionCallResult",
+        "finalChatCompletion",
+        "finalContent",
+        "finalMessage",
+        "finalFunctionCall",
+        "finalFunctionCallResult",
+        "error",
+        "abort",
+        "totalUsage",
+        "end",
+    ];
 
-            events.forEach((event) => {
-                runner.on(event, (detail, snapshot) => {
-                    operable.status$.next({
-                        status: event,
-                        message: `Event ${event} received`,
-                        detail,
-                    });
-
-                    if (snapshot) {
-                        console.log("SNAPSHOT", snapshot);
-                    }
-                });
+    let message = "";
+    events.forEach((event) => {
+        runner.on(event, (detail, snapshot) => {
+            operable.status$.next({
+                status: event,
+                message: `Event ${event} received`,
+                detail,
             });
-        },
+
+            console.log("GPT Operator event", event, detail, snapshot);
+
+            switch (event) {
+                case "connect":
+                    operable.write.state$.next({
+                        state: "started",
+                        message: `Connected to OpenAI...`,
+                    });
+                    break;
+                case "finalContent":
+                case "content":
+                    message = snapshot || detail;
+                    operable.write.state$.next({
+                        state: "running",
+                        message,
+                    });
+                    break;
+                case "end":
+                    operable.write.state$.next({
+                        state: "stopped",
+                        message,
+                    });
+                    break;
+                case "error":
+                    operable.write.state$.next({
+                        state: "error",
+                        message: `Error: ${detail}`,
+                    });
+                    break;
+                default:
+                    break;
+            }
+        });
     });
 };
 
@@ -224,7 +291,27 @@ export default function processOperator(operable) {
                 };
                 const messages = [...input.messages, newMessage];
 
-                const useStream = config.tools !== "none" || !tools.length;
+                const useStream =
+                    (config.tools !== "none" || !tools.length) &&
+                    !tools.find(
+                        (tool) => tool.function?.name === "downstream_router"
+                    );
+
+                let toolExtra = {};
+                if (config.tools === "none") {
+                    tools = tools.filter(
+                        (tool) => tool.function?.name === "downstream_router"
+                    );
+                    toolExtra = {
+                        tool_choice: {
+                            type: "function",
+                            function: {
+                                name: "downstream_router",
+                            },
+                        },
+                    };
+                }
+
                 const runner = useStream
                     ? client.beta.chat.completions.stream({
                           model: config.model,
@@ -234,6 +321,7 @@ export default function processOperator(operable) {
                           model: config.model,
                           messages,
                           tools,
+                          ...toolExtra,
                       });
 
                 statusOperator(operable, runner);

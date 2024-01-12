@@ -3,13 +3,13 @@ import {
     of,
     merge,
     takeUntil,
-    withLatestFrom,
     switchMap,
     map,
     filter,
     tap,
     pluck,
     distinctUntilChanged,
+    scan,
     combineLatest,
     EMPTY,
 } from "https://esm.sh/rxjs";
@@ -92,117 +92,144 @@ export const output = (operable) => {
 };
 
 const setup = (operable) => {
-    const currentConfig$ = new BehaviorSubject({
-        operables: [],
-        connections: {
-            stream: [],
-            tools: [],
-        },
-    });
     const Operable = operable.constructor;
 
     operable.read.config$
-        .pipe(takeUntil(operable.destroy$))
-        .subscribe((newConfig) => {
-            const tools$ = operable.io.tools$;
-            const oldConfig = currentConfig$.getValue();
-            if (
-                newConfig &&
-                JSON.stringify(newConfig) !== JSON.stringify(oldConfig)
-            ) {
-                currentConfig$.next(newConfig);
-                const { operables } = newConfig;
+        .pipe(
+            takeUntil(operable.destroy$),
+            scan(
+                (oldConfig, newConfig) => {
+                    const tools$ = operable.io.tools$;
+                    if (
+                        !oldConfig ||
+                        JSON.stringify(newConfig) !== JSON.stringify(oldConfig)
+                    ) {
+                        const { operables } = newConfig;
 
-                // insert and new tools
-                for (const name of operables) {
-                    const id = `${operable.id}-${name}`;
-                    if (!tools$.getValue().find((tool) => tool.id === id)) {
-                        tools$.next([...tools$.getValue(), new Operable(id)]);
-                    }
-                }
+                        // insert and new tools
+                        for (const name of operables) {
+                            const id = `${operable.id}-${name}`;
+                            if (
+                                !tools$
+                                    .getValue()
+                                    .find((tool) => tool.id === id)
+                            ) {
+                                tools$.next([
+                                    ...tools$.getValue(),
+                                    new Operable(id),
+                                ]);
+                            }
+                        }
 
-                // remove old tools
-                for (const tool of tools$.getValue()) {
-                    if (!operables.includes(tool.id.split("-").pop())) {
-                        tool.destroy();
-                        tool.io.upstream$.getValue().forEach((upstream) => {
-                            upstream.disconnect(tool);
-                        });
-                        tool.io.downstream$.getValue().forEach((downstream) => {
-                            tool.disconnect(downstream);
-                        });
-                        tool.io.tools$.getValue().forEach((_tool) => {
-                            tool.remove(_tool);
-                        });
-                        tool.io.users$.getValue().forEach((user) => {
-                            user.remove(tool);
-                        });
+                        // remove old tools
+                        for (const tool of tools$.getValue()) {
+                            if (!operables.includes(tool.id.split("-").pop())) {
+                                tool.destroy();
+                                tool.io.upstream$
+                                    .getValue()
+                                    .forEach((upstream) => {
+                                        upstream.disconnect(tool);
+                                    });
+                                tool.io.downstream$
+                                    .getValue()
+                                    .forEach((downstream) => {
+                                        tool.disconnect(downstream);
+                                    });
+                                tool.io.tools$.getValue().forEach((_tool) => {
+                                    tool.remove(_tool);
+                                });
+                                tool.io.users$.getValue().forEach((user) => {
+                                    user.remove(tool);
+                                });
 
-                        tools$.next(
-                            tools$.getValue().filter((t) => t.id !== tool.id)
+                                tools$.next(
+                                    tools$
+                                        .getValue()
+                                        .filter((t) => t.id !== tool.id)
+                                );
+                            }
+                        }
+
+                        const newTools = tools$.getValue();
+                        const findTool = (tools, name) =>
+                            tools.find(
+                                (tool) => tool.id === `${operable.id}-${name}`
+                            );
+
+                        const getDiff = (aConnections, bConnections) => {
+                            return aConnections.filter(
+                                ({ from, to }) =>
+                                    !bConnections.some(
+                                        ({ from: bFrom, to: bTo }) =>
+                                            from === bFrom && to === bTo
+                                    )
+                            );
+                        };
+
+                        const toAddStream = getDiff(
+                            newConfig.connections.stream,
+                            oldConfig.connections.stream
                         );
+
+                        const toRemoveStream = getDiff(
+                            oldConfig.connections.stream,
+                            newConfig.connections.stream
+                        );
+
+                        const toAddTools = getDiff(
+                            newConfig.connections.tools,
+                            oldConfig.connections.tools
+                        );
+
+                        const toRemoveTools = getDiff(
+                            oldConfig.connections.tools,
+                            newConfig.connections.tools
+                        );
+
+                        const manageConnection = ({ from, to }, action) => {
+                            console.log("manageConnection", from, to, action);
+                            const fromOperable = findTool(newTools, from);
+                            const toOperable = findTool(newTools, to);
+                            if (fromOperable && toOperable) {
+                                console.log(
+                                    "manageConnection",
+                                    fromOperable,
+                                    toOperable
+                                );
+                                fromOperable[action](toOperable);
+                            }
+                        };
+
+                        toAddStream.forEach((connection) => {
+                            manageConnection(connection, "connect");
+                        });
+
+                        toRemoveStream.forEach((connection) => {
+                            manageConnection(connection, "disconnect");
+                        });
+
+                        toAddTools.forEach((connection) => {
+                            manageConnection(connection, "use");
+                        });
+
+                        toRemoveTools.forEach((connection) => {
+                            manageConnection(connection, "remove");
+                        });
                     }
+
+                    return newConfig;
+                },
+                {
+                    operables: [],
+                    connections: {
+                        stream: [],
+                        tools: [],
+                    },
                 }
-
-                const newTools = tools$.getValue();
-                const findTool = (tools, name) =>
-                    tools.find((tool) => tool.id === `${operable.id}-${name}`);
-
-                const getDiff = (aConnections, bConnections) => {
-                    return aConnections.filter(
-                        ({ from, to }) =>
-                            !bConnections.some(
-                                ({ from: bFrom, to: bTo }) =>
-                                    from === bFrom && to === bTo
-                            )
-                    );
-                };
-
-                const toAddStream = getDiff(
-                    newConfig.connections.stream,
-                    oldConfig.connections.stream
-                );
-
-                const toRemoveStream = getDiff(
-                    oldConfig.connections.stream,
-                    newConfig.connections.stream
-                );
-
-                const toAddTools = getDiff(
-                    newConfig.connections.tools,
-                    oldConfig.connections.tools
-                );
-
-                const toRemoveTools = getDiff(
-                    oldConfig.connections.tools,
-                    newConfig.connections.tools
-                );
-
-                const manageConnection = ({ from, to }, action) => {
-                    const fromOperable = findTool(newTools, from);
-                    const toOperable = findTool(newTools, to);
-                    if (fromOperable && toOperable) {
-                        fromOperable[action](toOperable);
-                    }
-                };
-
-                toAddStream.forEach((connection) => {
-                    manageConnection(connection, "connect");
-                });
-
-                toRemoveStream.forEach((connection) => {
-                    manageConnection(connection, "disconnect");
-                });
-
-                toAddTools.forEach((connection) => {
-                    manageConnection(connection, "use");
-                });
-
-                toRemoveTools.forEach((connection) => {
-                    manageConnection(connection, "remove");
-                });
-            }
-        });
+            ),
+            takeUntil(operable.destroy$)
+        )
+        .subscribe();
 };
 
 export default function FlowConstructor(operable) {

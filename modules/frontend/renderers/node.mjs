@@ -6,9 +6,8 @@ export class LitNode extends LitElement {
     static get properties() {
         return {
             operable: { type: Object },
-            status: { type: Object },
-            error: { type: Error },
-            output: { type: Object },
+            display: { type: String },
+            status: { type: String },
         };
     }
 
@@ -28,36 +27,21 @@ export class LitNode extends LitElement {
         }
     `;
 
-    connectedCallback() {
-        super.connectedCallback();
-        clearTimeout(this.unmountTimeout);
-    }
-
-    disconnectedCallback() {
-        this.unmountTimeout = setTimeout(() => {
-            this.subscriptions?.forEach((sub) => sub.unsubscribe());
-        }, 1000);
-        super.disconnectedCallback();
-    }
-
-    updated(changedProperties) {
-        super.updated(changedProperties);
-        if (changedProperties.has("operable")) {
+    updated(c) {
+        console.log("operable changed", this.operable);
+        super.updated(c);
+        if (this.operable && !this.subscriptions) {
+            console.log("subscribing to operable");
             this.subscriptions = [
-                this.operable.error$.subscribe((error) => {
-                    this.error = error;
+                this.operable.read.state$.subscribe((status) => {
+                    console.log("status", status);
+                    this.display = status.message || this.display;
+                    this.status = status.state;
                 }),
-                this.operable.status$.subscribe((status) => {
-                    if (status.status === "display") {
-                        this.display = status;
-                    } else {
-                        this.status = status;
-                    }
-                }),
-                this.operable.output$.subscribe((output) => {
+                this.operable.read.output$.subscribe((output) => {
                     this.output = output;
                 }),
-                this.operable.input$.subscribe((input) => {
+                this.operable.read.input$.subscribe((input) => {
                     this.input = input;
                 }),
             ];
@@ -68,36 +52,13 @@ export class LitNode extends LitElement {
         return html`<bespeak-operable
             .operable=${this.operable}
             class="flex-column">
-            <bespeak-operable-form
-                .label=${"Config"}
-                .basic=${true}
-                .operable=${this.operable}></bespeak-operable-form>
-            ${this.display
-                ? html`<bespeak-markdown
-                      .content=${this.display.detail}></bespeak-markdown>`
-                : ""}
-            ${this.input
-                ? html`<details class="item">
-                      <summary>Input</summary>
-                      <yaml-renderer .data=${this.input}></yaml-renderer>
-                  </details>`
-                : ""}
-            ${this.output
-                ? html`<details class="item">
-                      <summary>Output</summary>
-                      <yaml-renderer .data=${this.output}></yaml-renderer>
-                  </details>`
-                : ""}
-            ${this.status
-                ? html`<details class="item">
-                      <summary>${this.status?.message}</summary>
-                      <yaml-renderer
-                          .data=${this.status?.detail}></yaml-renderer>
-                  </details>`
-                : ""}
-            ${this.error
-                ? html`<div class="item">Error: ${this.error}</div>`
-                : ""}
+            <div>
+                ${this.display
+                    ? html`<bespeak-markdown
+                          .content=${this.display}></bespeak-markdown>`
+                    : ""}
+                ${this.status ? html`<div>${this.status}</div>` : ""}
+            </div>
         </bespeak-operable>`;
     }
 }

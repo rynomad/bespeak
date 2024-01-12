@@ -5,8 +5,10 @@ import {
     map,
     withLatestFrom,
     switchMap,
+    mergeMap,
     toArray,
     take,
+    tap,
 } from "rxjs";
 import Operable from "./operable.mjs";
 
@@ -20,7 +22,6 @@ const getText = async (path) => {
         const cwd = Deno.realPathSync(".");
         return await Deno.readTextFile(`${cwd}/${path}`);
     } catch (e) {
-        console.warn(e);
         return await fetch(path).then((res) => res.text());
     }
 };
@@ -44,16 +45,18 @@ const paths = [
 from(paths)
     .pipe(
         // map(([paths, tools]) => [paths.map(getAbsoluteUrl), tools]),
-        concatMap(async (path) => {
+        mergeMap(async (path) => {
             return await getText(path);
         }),
-        switchMap((data) => {
+        mergeMap((data) => {
+            console.log();
             return of({ data }).pipe(
                 imports.asOperator(),
                 withLatestFrom(of(data))
             );
         }),
         map(([module, data]) => {
+            console.log("prep upsert for module", module);
             return {
                 collection: "modules",
                 operation: "upsert",
@@ -68,6 +71,9 @@ from(paths)
             };
         }),
         db.asOperator(),
+        tap((v) => {
+            console.log("did upsert for", v);
+        }),
         take(paths.length),
         toArray()
     )

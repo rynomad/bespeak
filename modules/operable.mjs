@@ -12,6 +12,8 @@ import {
     tap,
     takeUntil,
     Subject,
+    delayWhen,
+    mergeMap,
 } from "https://esm.sh/rxjs@7.8.1";
 
 import { v4 as uuidv4 } from "https://esm.sh/uuid";
@@ -52,6 +54,7 @@ export default class Operable {
             output$: new ReplaySubject(1),
             config$: new ReplaySubject(1),
             keys$: new ReplaySubject(1),
+            state$: new BehaviorSubject(null),
         };
         this.write = {
             meta$: new ReplaySubject(1),
@@ -161,7 +164,7 @@ export default class Operable {
                 .subscribe((data) => this.read[`${key}$`].next(data));
         };
         this.ioReset$.next(true);
-        ["config", "keys", "input", "output", "meta"].forEach(fn);
+        ["config", "keys", "input", "output", "meta", "state"].forEach(fn);
     }
 
     // RxJS interoperability functions
@@ -181,13 +184,15 @@ export default class Operable {
 
     asOperator() {
         return (input$) =>
-            combineLatest(
-                input$,
-                this.process.operator$.pipe(filter((e) => e))
-            ).pipe(switchMap(([input, operator]) => of(input).pipe(operator)));
+            input$.pipe(
+                delayWhen(() => this.process.operator$.pipe(filter((e) => e))),
+                withLatestFrom(this.process.operator$.pipe(filter((e) => e))),
+                mergeMap(([input, operator]) => of(input).pipe(operator))
+            );
     }
 
     connect(operable) {
+        console.log("CONNECT", this.id, operable.id);
         operable.io.upstream$.next(
             Array.from(new Set([...operable.io.upstream$.getValue(), this]))
         );

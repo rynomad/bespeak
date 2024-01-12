@@ -8,7 +8,7 @@ class FlipperComponent extends LitElement {
             position: relative;
             transition: transform 1s 0s; // Added 0s delay
             width: 100%;
-            height: 100%;
+            height: 100vh;
         }
 
         :host(.front) {

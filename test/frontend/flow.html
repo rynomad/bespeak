@@ -31,7 +31,7 @@
         ">
         <script type="module">
             import "./modules/install.mjs";
-            import "./modules/persist.mjs";
+            import { SESSION_KEY } from "./modules/persist.mjs";
             import "./modules/frontend/operable.mjs";
             import "./modules/frontend/renderers/flow.mjs";
             import "./modules/frontend/renderers/pallet.mjs";
@@ -49,6 +49,7 @@
                 merge,
             } from "rxjs";
             import operable from "./test/flow.mjs";
+            import { v4 as uuidv4 } from "https://esm.sh/uuid";
             function generateRandomString() {
                 let result = "";
                 const characters =
@@ -62,6 +63,9 @@
                 return result;
             }
 
+            const session = uuidv4();
+
+            sessionStorage.setItem(SESSION_KEY, session);
             const dbModule = await import("./modules/db.2.mjs");
             const { config: dbConfig } = await import(
                 "./modules/db.schemas.mjs"
@@ -201,7 +205,8 @@
                     withLatestFrom(
                         merge(operable.read.config$, operable.write.config$)
                     ),
-                    mergeMap(([event, config]) => {
+                    mergeMap(([event, _config]) => {
+                        const config = JSON.parse(JSON.stringify(_config));
                         console.log("GOT EVENT IN FLOW.HTML", event);
                         let sourceId, targetId, sourceOutput;
                         if (
@@ -217,9 +222,16 @@
                                 console.log("GOT DROP EVENT", event);
                                 const { data } = event;
                                 // use data.name or a short nonce
-                                const name =
-                                    data.name || generateRandomString();
+                                const name = (data.name =
+                                    data.name || generateRandomString());
                                 config.operables.push(name);
+
+                                const meta = {
+                                    id: `${operable.id}-${name}`,
+                                    name,
+                                    description: data.description,
+                                    process: data.id,
+                                };
 
                                 operable.write.config$.next(config);
 
@@ -233,7 +245,7 @@
                                     ),
                                     filter((tool) => tool !== undefined),
                                     take(1),
-                                    tap((tool) => tool.write.meta$.next(data))
+                                    tap((tool) => tool.write.meta$.next(meta))
                                 );
                                 break;
                             case "connectioncreated":
