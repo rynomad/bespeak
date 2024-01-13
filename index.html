@@ -57,7 +57,7 @@
             }
 
             if (location.search.includes("import")) {
-                const input = await fetch("/db.json");
+                const input = await fetch("/bespeak/db.json");
                 const json = await input.json();
                 await db.importJSON(json);
             }
