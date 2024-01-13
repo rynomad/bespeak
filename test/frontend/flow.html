@@ -68,7 +68,7 @@
             sessionStorage.setItem(SESSION_KEY, session);
             const dbModule = await import("./bespeak/modules/db.2.mjs");
             const { config: dbConfig } = await import(
-                "./modules/db.schemas.mjs"
+                "./bespeak/modules/db.schemas.mjs"
             );
 
             const db = new Operable("system:db");
