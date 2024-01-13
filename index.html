@@ -11,78 +11,55 @@
                     "rxjs": "https://esm.sh/rxjs",
                     "rxdb": "https://esm.sh/rxdb",
                     "rxdb/plugins/storage-dexie": "https://esm.sh/rxdb/plugins/storage-dexie",
+                    "rxdb/plugins/storage-memory": "https://esm.sh/rxdb/plugins/storage-memory",
+                    "zod": "https://esm.sh/zod",
                     "rxdb/plugins/dev-mode": "https://esm.sh/rxdb/plugins/dev-mode",
+                    "rxdb/plugins/json-dump": "https://esm.sh/rxdb/plugins/json-dump",
+                    "@deboxsoft/zod-to-json-schema": "https://esm.sh/@deboxsoft/zod-to-json-schema",
                     "openai": "https://cdn.jsdelivr.net/npm/openai/+esm"
                 }
             }
         </script>
-        <script type="module" src="/modules/frontend/index.mjs"></script>
     </head>
     <body style="margin: 0px; font-family: sans-serif; height: 100vh">
-        <style>
-            @font-face {
-                font-family: "Font Awesome 5 Brands";
-                font-style: normal;
-                font-weight: 400;
-                font-display: block;
-                src: url("./app/webfonts/fa-brands-400.eot");
-                src: url("./app/webfonts/fa-brands-400.eot?#iefix")
-                        format("embedded-opentype"),
-                    url("./app/webfonts/fa-brands-400.woff2") format("woff2"),
-                    url("./app/webfonts/fa-brands-400.woff") format("woff"),
-                    url("./app/webfonts/fa-brands-400.ttf") format("truetype"),
-                    url("./app/webfonts/fa-brands-400.svg#fontawesome")
-                        format("svg");
+        <iframe
+            src="/test/frontend/flow.html"
+            style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border: none;
+            "></iframe>
+        <script type="module">
+            import { addRxPlugin } from "rxdb";
+            import { config } from "/modules/db.schemas.mjs";
+            import { initializeDatabase } from "/modules/db.2.mjs";
+            import { RxDBJsonDumpPlugin } from "rxdb/plugins/json-dump";
+            addRxPlugin(RxDBJsonDumpPlugin);
+
+            const db = await initializeDatabase(config);
+
+            if (location.search.includes("dump")) {
+                const json = await db.exportJSON();
+                console.log(json);
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(
+                    new Blob([JSON.stringify(json, null, 2)], {
+                        type: "application/json",
+                    })
+                );
+
+                a.download = "db.json";
+                a.click();
             }
-            @font-face {
-                font-family: "Font Awesome 5 Free";
-                font-style: normal;
-                font-weight: 400;
-                font-display: block;
-                src: url("./app/webfonts/fa-regular-400.eot");
-                src: url("./app/webfonts/fa-regular-400.eot?#iefix")
-                        format("embedded-opentype"),
-                    url("./app/webfonts/fa-regular-400.woff2") format("woff2"),
-                    url("./app/webfonts/fa-regular-400.woff") format("woff"),
-                    url("./app/webfonts/fa-regular-400.ttf") format("truetype"),
-                    url("./app/webfonts/fa-regular-400.svg#fontawesome")
-                        format("svg");
+
+            if (location.search.includes("import")) {
+                const input = await fetch("/db.json");
+                const json = await input.json();
+                await db.importJSON(json);
             }
-            @font-face {
-                font-family: "Font Awesome 5 Free";
-                font-style: normal;
-                font-weight: 900;
-                font-display: block;
-                src: url("./app/webfonts/fa-solid-900.eot");
-                src: url("./app/webfonts/fa-solid-900.eot?#iefix")
-                        format("embedded-opentype"),
-                    url("./app/webfonts/fa-solid-900.woff2") format("woff2"),
-                    url("./app/webfonts/fa-solid-900.woff") format("woff"),
-                    url("./app/webfonts/fa-solid-900.ttf") format("truetype"),
-                    url("./app/webfonts/fa-solid-900.svg#fontawesome")
-                        format("svg");
-            }
-        </style>
-        <bespeak-ide></bespeak-ide>
-        <script>
-            // if ("serviceWorker" in navigator) {
-            //     window.addEventListener("load", function () {
-            //         navigator.serviceWorker.register("/service-worker.js").then(
-            //             function (registration) {
-            //                 console.log(
-            //                     "ServiceWorker registration successful with scope: ",
-            //                     registration.scope
-            //                 );
-            //             },
-            //             function (err) {
-            //                 console.log(
-            //                     "ServiceWorker registration failed: ",
-            //                     err
-            //                 );
-            //             }
-            //         );
-            //     });
-            // }
         </script>
     </body>
 </html>

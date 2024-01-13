@@ -1,0 +1,1774 @@
+{
+  "name": "operable",
+  "instanceToken": "yieqezjtid",
+  "collections": [
+    {
+      "name": "keys",
+      "schemaHash": "cba3095fc1fee9b17292c89cd8b891474ce2f3fd84da150d151f269f32fb3867",
+      "docs": [
+        {
+          "module": "gpt@0.0.1",
+          "data": {
+            "apiKey": "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"
+          },
+          "_meta": {
+            "lwt": 1704922639443.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "schemaHash": "41c460a0a6b69f375f9bdf548c61aa437c4a45234edd0d6db105f55b46662293",
+      "docs": [
+        {
+          "operable": "test-flow-2-AhWTIn",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-AhWTIn|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705089831019.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ECylsd",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "write me another limmerick about the same subject",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-ECylsd|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705038479495.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-GNIneZ",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "Improve the paragraph.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-GNIneZ|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705089768576.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ISlmrr",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "say ack",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-ISlmrr|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705046438970.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-JQKTRN",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "say \"ACK\"",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-JQKTRN|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705043446477.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-MYYArG",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "Write a lengthy example of rxjs code featuring multiple inputs.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-MYYArG|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705040893103.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-SkYxoH",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-SkYxoH|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705089827607.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-WWbaYy",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-WWbaYy|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705043434010.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-YgDoXs",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "simply write DONE.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-YgDoXs|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705041174931.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-first",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "please rate on a scale from 1 to 10 based on how idiomatic the code is.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-first|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705041031257.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-roxUEW",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "simply output the entire paragraph.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-roxUEW|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705089824238.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uPNQxx",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-uPNQxx|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705091122489.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uoCmaF",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "say BAR",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-uoCmaF|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705043457298.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-xfoSPG",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "write me a haiku about the same subject.",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4-1106-preview",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-flow-2-xfoSPG|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705010218869.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2",
+          "module": "flow@1.0.0",
+          "data": {
+            "operables": [
+              "uPNQxx",
+              "AhWTIn",
+              "GNIneZ",
+              "SkYxoH",
+              "roxUEW"
+            ],
+            "connections": {
+              "stream": [
+                {
+                  "from": "uPNQxx",
+                  "to": "AhWTIn"
+                },
+                {
+                  "from": "AhWTIn",
+                  "to": "SkYxoH"
+                },
+                {
+                  "from": "SkYxoH",
+                  "to": "roxUEW"
+                },
+                {
+                  "from": "GNIneZ",
+                  "to": "AhWTIn"
+                },
+                {
+                  "from": "SkYxoH",
+                  "to": "GNIneZ"
+                }
+              ],
+              "tools": []
+            },
+            "input": "first",
+            "output": "third"
+          },
+          "id": "test-flow-2|flow@1.0.0",
+          "_meta": {
+            "lwt": 1705106493511.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-operable-back",
+          "module": "gpt@0.0.1",
+          "data": {
+            "prompt": "write me a haiku",
+            "role": "user",
+            "temperature": 0.3,
+            "model": "gpt-4",
+            "tools": "none",
+            "clean": false
+          },
+          "id": "test-operable-back|gpt@0.0.1",
+          "_meta": {
+            "lwt": 1705004616148.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "meta",
+      "schemaHash": "7e1171e06f1bb0e49337d6ce39f7dd4a3c0ea451544e02f99e45f9645097afa0",
+      "docs": [
+        {
+          "operable": "test-flow-2",
+          "data": {
+            "id": "test-flow-2",
+            "ingress": "default-ingress@0.0.1",
+            "process": "flow@1.0.0"
+          },
+          "_meta": {
+            "lwt": 1704918009227.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-AhWTIn",
+          "data": {
+            "id": "test-flow-2-AhWTIn",
+            "name": "AhWTIn",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705046263989.05
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-BsHeUP",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "BsHeUP",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705043285750.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ECylsd",
+          "data": {
+            "id": "test-flow-2-ECylsd",
+            "name": "hello",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705038448720.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-GNIneZ",
+          "data": {
+            "id": "test-flow-2-GNIneZ",
+            "name": "GNIneZ",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705089660342.05
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ISlmrr",
+          "data": {
+            "id": "test-flow-2-ISlmrr",
+            "name": "ISlmrr",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705046379906.05
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-IrWvNI",
+          "data": {
+            "id": "test-flow-2-IrWvNI",
+            "name": "hey",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705010486047.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-JQKTRN",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "JQKTRN",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705043376193.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-MYYArG",
+          "data": {
+            "id": "test-flow-2-MYYArG",
+            "name": "hello",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705011703316.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-SkYxoH",
+          "data": {
+            "id": "test-flow-2-SkYxoH",
+            "name": "SkYxoH",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705089676159.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-TnbmLO",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "TnbmLO",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705041186309.06
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-WWbaYy",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "WWbaYy",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705043336787.06
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-YgDoXs",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "YgDoXs",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705041109080.03
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-bInKhv",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "bInKhv",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705046162030.03
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-first",
+          "data": {
+            "id": "test-flow-2-first",
+            "name": "ok",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1704922204019.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-oxxCCI",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "oxxCCI",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705042410278.05
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-roxUEW",
+          "data": {
+            "id": "test-flow-2-roxUEW",
+            "name": "roxUEW",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705089698551.06
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uPNQxx",
+          "data": {
+            "id": "test-flow-2-uPNQxx",
+            "name": "uPNQxx",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705046258802.06
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uoCmaF",
+          "data": {
+            "id": "gpt@0.0.1",
+            "name": "uoCmaF",
+            "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705043382722.06
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-xfoSPG",
+          "data": {
+            "id": "test-flow-2-xfoSPG",
+            "name": "dd",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1705004518114.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-operable-back",
+          "data": {
+            "id": "test-operable-back",
+            "name": "sa",
+            "ingress": "default-ingress@0.0.1",
+            "process": "gpt@0.0.1"
+          },
+          "_meta": {
+            "lwt": 1704923111532.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "modules",
+      "schemaHash": "6e448a0edf89512ee97b5a97f69ccca6bddcb1de9e262f4b29e407dd331dae90",
+      "docs": [
+        {
+          "id": "dbOperation@0.0.1",
+          "description": "Performs operations on a database using RxDB.",
+          "key": "dbOperation",
+          "version": "0.0.1",
+          "type": "",
+          "data": "import {\n    BehaviorSubject,\n    from,\n    isObservable,\n    of,\n    switchMap,\n    pipe,\n    mergeMap,\n    withLatestFrom,\n    combineLatest,\n    map,\n    tap,\n} from \"rxjs\";\nimport { createRxDatabase, addRxPlugin } from \"rxdb\";\nimport { RxDBDevModePlugin } from \"rxdb/plugins/dev-mode\";\nimport { getRxStorageDexie } from \"rxdb/plugins/storage-dexie\";\nimport { getRxStorageMemory } from \"rxdb/plugins/storage-memory\";\nimport { z } from \"zod\";\n\naddRxPlugin(RxDBDevModePlugin);\n\nconst dbInstances = new Map();\n\nexport async function initializeDatabase(config) {\n    let db;\n    if (typeof indexedDB !== \"undefined\") {\n        db = await createRxDatabase({\n            name: config.dbName,\n            storage: getRxStorageDexie(),\n        });\n    } else {\n        db = await createRxDatabase({\n            name: config.dbName,\n            storage: getRxStorageMemory(),\n        });\n    }\n    await db.addCollections(config.collections);\n    return db;\n}\n\nexport const setupOperator = (operable) => {\n    return operable.read.config$.pipe(\n        switchMap(async (config) => {\n            let db = dbInstances.get(config.dbName);\n            if (!db) {\n                db = initializeDatabase(config);\n                dbInstances.set(config.dbName, db);\n            }\n            return await db;\n        })\n    );\n};\n\nexport const inputSchema = (operable) => {\n    return of(\n        z.object({\n            operation: z.enum([\n                \"findOne\",\n                \"upsert\",\n                \"patch\",\n                \"find\",\n                \"insert\",\n                \"remove\",\n            ]),\n            collection: z.string(),\n            params: z.record(z.any()).optional(),\n        })\n    );\n};\n\nexport const outputSchema = (operable) => {\n    return of(\n        z.union([\n            z.object({\n                result: z.any(),\n            }),\n            z.array(z.any()),\n        ])\n    );\n};\n\nexport const configSchema = (operable) => {\n    return of(\n        z.object({\n            dbName: z.string(),\n            collections: z.record(\n                z.object({\n                    schema: z.object({\n                        version: z.number(),\n                        primaryKey: z.string(),\n                        type: z.literal(\"object\"),\n                        properties: z.record(z.any()),\n                        required: z.array(z.string()),\n                        encrypted: z.array(z.string()).optional(),\n                        attachments: z\n                            .object({\n                                encrypted: z.boolean(),\n                            })\n                            .optional(),\n                    }),\n                })\n            ),\n        })\n    );\n};\n\nconst dbOperation = (operable) => {\n    const db$ = setupOperator(operable);\n    return (input$) =>\n        combineLatest(input$, db$).pipe(\n            mergeMap(([input, db]) => {\n                const { operation, collection, params } = input;\n                const collectionInstance = db[collection];\n                let result;\n                switch (operation) {\n                    case \"findOne\":\n                    case \"find\":\n                        result = collectionInstance[operation](params).$;\n                        break;\n                    case \"insert\":\n                    case \"upsert\":\n                    case \"patch\":\n                    case \"remove\":\n                        result = from(collectionInstance[operation](params));\n                        break;\n                    default:\n                        throw new Error(`Unsupported operation: ${operation}`);\n                }\n\n                if (!isObservable(result)) {\n                    result = of(result);\n                }\n\n                return result;\n            }),\n            map((result) => {\n                return result?.toMutableJSON\n                    ? result.toMutableJSON()\n                    : result?.map((r) => r.toMutableJSON?.() || r);\n            })\n        );\n};\n\nexport const key = \"dbOperation\";\nexport const version = \"0.0.1\";\nexport const description = \"Performs operations on a database using RxDB.\";\nexport const pallet = false;\n\nexport default dbOperation;\n",
+          "_meta": {
+            "lwt": 1705106493458.02
+          },
+          "_deleted": false
+        },
+        {
+          "id": "default-ingress@0.0.1",
+          "key": "default-ingress",
+          "version": "0.0.1",
+          "type": "",
+          "data": "import { jsonPreset } from \"https://esm.sh/json-schema-preset\";\nimport empty from \"https://esm.sh/json-schema-empty\";\nimport Ajv from \"https://esm.sh/ajv\";\nimport {\n    withLatestFrom,\n    map,\n    zip,\n    pipe,\n    switchMap,\n    combineLatest,\n    merge,\n    of,\n} from \"rxjs\";\n\nexport const role = \"ingress\";\nexport const key = \"default-ingress\";\nexport const version = \"0.0.1\";\n\nconst DefaultIngress = (operable) => {\n    return operable.io.upstream$.pipe(\n        switchMap((upstreams) => {\n            return merge(...upstreams.map(({ read: { output$ } }) => output$));\n        })\n    );\n};\n\nexport default DefaultIngress;\n",
+          "_meta": {
+            "lwt": 1705106493458.04
+          },
+          "_deleted": false
+        },
+        {
+          "id": "fetch@1.0.0",
+          "description": "An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.",
+          "key": "fetch",
+          "version": "1.0.0",
+          "type": "process",
+          "data": "import { z } from \"zod\";\nimport {\n    from,\n    switchMap,\n    catchError,\n    of,\n    combineLatest,\n    map,\n    withLatestFrom,\n} from \"https://esm.sh/rxjs\";\nimport { Readability } from \"https://esm.sh/@mozilla/readability\";\n\nexport const key = \"fetch\";\nexport const version = \"1.0.0\";\nexport const type = \"process\";\nexport const description =\n    \"An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.\";\n\nexport const inputSchema = z.object({\n    url: z.string().url(),\n    includeImages: z.boolean().optional().default(false),\n    includeLinks: z.boolean().optional().default(false),\n});\n\nexport const outputSchema = z.object({\n    title: z.string(),\n    content: z.string(),\n    textContent: z.string(),\n    length: z.number(),\n    excerpt: z.string().optional(),\n    siteName: z.string().optional(),\n});\n\nexport const keysSchema = z.object({\n    proxy: z.string().url().optional(),\n});\n\nconst statusOperator = (operable) => {\n    return {\n        success: (message, detail) => {\n            operable.status$.next({\n                status: \"success\",\n                message,\n                detail,\n            });\n        },\n        error: (message, detail) => {\n            operable.status$.next({\n                status: \"error\",\n                message,\n                detail,\n            });\n        },\n        debug: (message, detail) => {\n            operable.status$.next({\n                status: \"debug\",\n                message,\n                detail,\n            });\n        },\n        info: (message, detail) => {\n            operable.status$.next({\n                status: \"info\",\n                message,\n                detail,\n            });\n        },\n    };\n};\n\nconst replaceContent = (doc, selector, configKey, config, article) => {\n    console.log(\"REPLACE CONTENT\", selector, configKey, config);\n    if (!config[configKey]) return;\n    doc.querySelectorAll(selector).forEach(({ textContent, outerHTML }) => {\n        console.log(\"FOUND SELECTOR\", selector, textContent, outerHTML);\n        article.textContent = article.textContent.replace(\n            textContent,\n            outerHTML\n        );\n    });\n};\n\nconst setupOperator = (operable) => {\n    if (window.DOMParser) {\n        return of(window.DOMParser);\n    } else {\n        return from(\n            import(\"https://deno.land/x/deno_dom/deno-dom-wasm.ts\")\n        ).pipe(map(({ DOMParser }) => DOMParser));\n    }\n};\n\nexport default function fetchReadabilityOperator(operable) {\n    const status = statusOperator(operable);\n    const setup$ = setupOperator(operable);\n\n    return (input$) =>\n        combineLatest(input$, operable.read.keys$).pipe(\n            switchMap(([input, keys]) => {\n                console.log(\"INPUT\", input, keys);\n                const fetchUrl = keys?.proxy\n                    ? `${keys.proxy}/${input.url}`\n                    : input.url;\n                return from(fetch(fetchUrl)).pipe(\n                    switchMap((response) => response.text()),\n                    withLatestFrom(setup$),\n                    switchMap(([html, DOMParser]) => {\n                        const doc = new DOMParser().parseFromString(\n                            html,\n                            \"text/html\"\n                        );\n                        const reader = new Readability(doc);\n                        const article = reader.parse();\n                        if (!article) {\n                            throw new Error(\n                                \"Failed to parse the article using Readability\"\n                            );\n                        }\n\n                        if (input.includeImages) {\n                            replaceContent(\n                                doc,\n                                \"img\",\n                                \"includeImages\",\n                                input,\n                                article\n                            );\n                            // Logic to reinsert images\n                        }\n                        if (input.includeLinks) {\n                            replaceContent(\n                                doc,\n                                \"a\",\n                                \"includeLinks\",\n                                input,\n                                article\n                            );\n                            // Logic to reinsert links\n                        }\n\n                        status.success(\n                            \"Article fetched and parsed successfully\",\n                            { url: input.url }\n                        );\n\n                        return of({\n                            title: article.title,\n                            content: article.content,\n                            textContent: article.textContent,\n                            length: article.textContent.length,\n                            excerpt: article.excerpt,\n                            siteName: article.siteName,\n                        });\n                    }),\n                    catchError((error) => {\n                        status.error(\"Error fetching or parsing article\", {\n                            error: error.message,\n                            url: input.url,\n                        });\n                        return of({});\n                    })\n                );\n            })\n        );\n}\n",
+          "_meta": {
+            "lwt": 1705106493458.05
+          },
+          "_deleted": false
+        },
+        {
+          "id": "flow@1.0.0",
+          "description": "This operator encapsulates a flow of other operables.",
+          "key": "flow",
+          "version": "1.0.0",
+          "type": "",
+          "data": "import {\n    BehaviorSubject,\n    of,\n    merge,\n    takeUntil,\n    switchMap,\n    map,\n    filter,\n    tap,\n    pluck,\n    distinctUntilChanged,\n    scan,\n    combineLatest,\n    EMPTY,\n} from \"https://esm.sh/rxjs\";\nimport { z } from \"zod\";\n\nexport const key = \"flow\";\nexport const version = \"1.0.0\";\nexport const description =\n    \"This operator encapsulates a flow of other operables.\";\n\nexport const config = () => {\n    const schema = z.object({\n        operables: z\n            .array(z.string())\n            .min(1, \"At least one operable is required\"),\n        connections: z\n            .object({\n                stream: z\n                    .array(\n                        z.object({\n                            from: z.string(),\n                            to: z.string(),\n                        })\n                    )\n                    .default([]),\n                tools: z\n                    .array(\n                        z.object({\n                            from: z.string(),\n                            to: z.string(),\n                        })\n                    )\n                    .default([]),\n            })\n            .default({ stream: [], tools: [] }),\n        input: z.string().optional(),\n        output: z.string().optional(),\n    });\n\n    return of(schema);\n};\n\nconst getIOTool = (operable, role) =>\n    combineLatest(\n        operable.io.tools$,\n        operable.read.config$.pipe(pluck(role), distinctUntilChanged())\n    ).pipe(\n        switchMap(([tools, name]) => {\n            const tool = tools.find(\n                (tool) => tool.id.split(\"-\").pop() === name\n            );\n            return tool ? of(tool) : EMPTY;\n        })\n    );\n\nexport const input = (operable) => {\n    return combineLatest(\n        operable.io.tools$,\n        operable.read.config$.pipe(pluck(\"input\"), distinctUntilChanged())\n    ).pipe(\n        switchMap(([tools, id]) => {\n            const inputTool = tools.find((tool) => tool.id === id);\n            return inputTool ? of(inputTool.schema.input$) : of(z.any());\n        }),\n        map((schema) => schema || z.any())\n    );\n};\n\nexport const output = (operable) => {\n    return combineLatest(\n        operable.io.tools$,\n        operable.read.config$.pipe(pluck(\"output\"), distinctUntilChanged())\n    ).pipe(\n        switchMap(([tools, id]) => {\n            const outputTool = tools.find((tool) => tool.id === id);\n            return outputTool ? of(outputTool.schema.output$) : of(z.any());\n        }),\n        map((schema) => schema || z.any())\n    );\n};\n\nconst setup = (operable) => {\n    const Operable = operable.constructor;\n\n    operable.read.config$\n        .pipe(\n            takeUntil(operable.destroy$),\n            scan(\n                (oldConfig, newConfig) => {\n                    const tools$ = operable.io.tools$;\n                    if (\n                        !oldConfig ||\n                        JSON.stringify(newConfig) !== JSON.stringify(oldConfig)\n                    ) {\n                        const { operables } = newConfig;\n\n                        // insert and new tools\n                        for (const name of operables) {\n                            const id = `${operable.id}-${name}`;\n                            if (\n                                !tools$\n                                    .getValue()\n                                    .find((tool) => tool.id === id)\n                            ) {\n                                tools$.next([\n                                    ...tools$.getValue(),\n                                    new Operable(id),\n                                ]);\n                            }\n                        }\n\n                        // remove old tools\n                        for (const tool of tools$.getValue()) {\n                            if (!operables.includes(tool.id.split(\"-\").pop())) {\n                                tool.destroy();\n                                tool.io.upstream$\n                                    .getValue()\n                                    .forEach((upstream) => {\n                                        upstream.disconnect(tool);\n                                    });\n                                tool.io.downstream$\n                                    .getValue()\n                                    .forEach((downstream) => {\n                                        tool.disconnect(downstream);\n                                    });\n                                tool.io.tools$.getValue().forEach((_tool) => {\n                                    tool.remove(_tool);\n                                });\n                                tool.io.users$.getValue().forEach((user) => {\n                                    user.remove(tool);\n                                });\n\n                                tools$.next(\n                                    tools$\n                                        .getValue()\n                                        .filter((t) => t.id !== tool.id)\n                                );\n                            }\n                        }\n\n                        const newTools = tools$.getValue();\n                        const findTool = (tools, name) =>\n                            tools.find(\n                                (tool) => tool.id === `${operable.id}-${name}`\n                            );\n\n                        const getDiff = (aConnections, bConnections) => {\n                            return aConnections.filter(\n                                ({ from, to }) =>\n                                    !bConnections.some(\n                                        ({ from: bFrom, to: bTo }) =>\n                                            from === bFrom && to === bTo\n                                    )\n                            );\n                        };\n\n                        const toAddStream = getDiff(\n                            newConfig.connections.stream,\n                            oldConfig.connections.stream\n                        );\n\n                        const toRemoveStream = getDiff(\n                            oldConfig.connections.stream,\n                            newConfig.connections.stream\n                        );\n\n                        const toAddTools = getDiff(\n                            newConfig.connections.tools,\n                            oldConfig.connections.tools\n                        );\n\n                        const toRemoveTools = getDiff(\n                            oldConfig.connections.tools,\n                            newConfig.connections.tools\n                        );\n\n                        const manageConnection = ({ from, to }, action) => {\n                            console.log(\"manageConnection\", from, to, action);\n                            const fromOperable = findTool(newTools, from);\n                            const toOperable = findTool(newTools, to);\n                            if (fromOperable && toOperable) {\n                                console.log(\n                                    \"manageConnection\",\n                                    fromOperable,\n                                    toOperable\n                                );\n                                fromOperable[action](toOperable);\n                            }\n                        };\n\n                        toAddStream.forEach((connection) => {\n                            manageConnection(connection, \"connect\");\n                        });\n\n                        toRemoveStream.forEach((connection) => {\n                            manageConnection(connection, \"disconnect\");\n                        });\n\n                        toAddTools.forEach((connection) => {\n                            manageConnection(connection, \"use\");\n                        });\n\n                        toRemoveTools.forEach((connection) => {\n                            manageConnection(connection, \"remove\");\n                        });\n                    }\n\n                    return newConfig;\n                },\n                {\n                    operables: [],\n                    connections: {\n                        stream: [],\n                        tools: [],\n                    },\n                }\n            ),\n            takeUntil(operable.destroy$)\n        )\n        .subscribe();\n};\n\nexport default function FlowConstructor(operable) {\n    setup(operable);\n\n    return (input$) => {\n        const inputFlow$ = combineLatest(\n            input$,\n            getIOTool(operable, \"input\")\n        ).pipe(\n            tap(([inputValue, target]) => {\n                console.log(\"input\", inputValue, target);\n                if (target) {\n                    target.write.input$.next(inputValue);\n                }\n            }),\n            filter(() => false)\n        );\n\n        const outputFlow$ = getIOTool(operable, \"output\").pipe(\n            switchMap((target) => {\n                return target ? target.read.output$ : of(null);\n            })\n        );\n\n        return merge(inputFlow$, outputFlow$);\n    };\n}\n",
+          "_meta": {
+            "lwt": 1705106493458.01
+          },
+          "_deleted": false
+        },
+        {
+          "id": "gpt@0.0.1",
+          "description": "The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.",
+          "key": "gpt",
+          "version": "0.0.1",
+          "type": "process",
+          "data": "import { z } from \"zod\";\nimport { zodToJsonSchema } from \"@deboxsoft/zod-to-json-schema\";\nimport { OpenAI } from \"openai\";\nimport {\n    combineLatest,\n    map,\n    switchMap,\n    tap,\n    catchError,\n    debounceTime,\n    share,\n    of,\n    from,\n    withLatestFrom,\n    pipe,\n    concat,\n    Observable,\n    skipUntil,\n    filter,\n    buffer,\n    Subject,\n    take,\n} from \"rxjs\";\n\nexport const key = \"gpt\";\nexport const version = \"0.0.1\";\nexport const type = \"process\";\nexport const description =\n    \"The operator takes an array of messages as input, appends a configured message, and then calls the openai chat endpoint.\";\n\nexport const input = (operable) => {\n    const schema = z.object({\n        messages: z.array(\n            z.object({\n                role: z.enum([\"user\", \"assistant\", \"system\"]),\n                content: z.string(),\n            })\n        ),\n    });\n    return of(schema);\n};\n\nexport const output = (operable) => {\n    const schema = z.object({\n        messages: z.array(\n            z.object({\n                role: z.enum([\"user\", \"assistant\", \"system\"]),\n                content: z.string(),\n            })\n        ),\n    });\n    return of(schema);\n};\n\nexport const config = (operable) => {\n    console.log(\"CONFIG\");\n    const models$ = operable.read.keys$.pipe(\n        switchMap((keys) =>\n            keys?.apiKey\n                ? from(getModels(keys))\n                : of([\n                      \"gpt-4\",\n                      \"gpt-3.5-turbo-0613\",\n                      \"gpt-4-1106-preview\",\n                      \"gpt-3.5-turbo-1106\",\n                      \"gpt-4-vision-preview\",\n                  ])\n        )\n    );\n\n    return models$.pipe(\n        tap((models) => console.log(\"GPT Operator models\", models)),\n        map((models) => {\n            return z.object({\n                prompt: z.string(),\n                role: z.enum([\"user\", \"assistant\", \"system\"]).default(\"user\"),\n                temperature: z.number().min(0).max(1).step(0.1).default(0.3),\n                model: z.enum(models).default(\"gpt-4\"),\n                tools: z.enum([\"user\", \"none\", \"all\"]).default(\"none\"),\n                clean: z.boolean().default(false),\n            });\n        })\n    );\n};\n\nexport const keys = (operable) => {\n    const schema = z.object({\n        apiKey: z.string(),\n    });\n    return of(schema);\n};\n\nconst getModels = async ({ apiKey }) => {\n    const openai = new OpenAI({\n        apiKey,\n        dangerouslyAllowBrowser: true,\n    });\n    const response = await openai.models.list();\n    try {\n        return response.data\n            .map((model) => model.id)\n            .filter((id) => id.startsWith(\"gpt\"));\n    } catch (e) {\n        console.warn(e);\n        return [\n            \"gpt-4\",\n            \"gpt-3.5-turbo-0613\",\n            \"gpt-4-1106-preview\",\n            \"gpt-3.5-turbo-1106\",\n            \"gpt-4-vision-preview\",\n        ];\n    }\n};\n\nexport const setupOperator = (operable) => {\n    return operable.read.keys$.pipe(\n        filter((keys) => keys?.apiKey),\n        map((keys) => {\n            const client = new OpenAI({\n                apiKey: keys.apiKey,\n                dangerouslyAllowBrowser: true,\n            });\n            return client;\n        })\n    );\n};\n\nexport const toolOperator = (operable) => {\n    return combineLatest(operable.io.tools$, operable.io.downstream$).pipe(\n        switchMap(([tools]) => {\n            if (!tools) {\n                return of([]);\n            }\n\n            return of(\n                tools.map((toolNode) => {\n                    const toolFunction = async (args) => {\n                        try {\n                            return await toolNode.invokeAsFunction(args);\n                        } catch (error) {\n                            return `Error invoking tool function: ${error}`;\n                        }\n                    };\n\n                    const tool = {\n                        name: toolNode.id,\n                        type: \"function\",\n                        function: toolFunction,\n                        parse: (args) =>\n                            toolNode.schema.input$.getValue().parse(args),\n                        description: toolNode.meta$.getValue().description,\n                        parameters: zodToJsonSchema(\n                            toolNode.schema.input$.getValue()\n                        ),\n                    };\n\n                    return tool;\n                })\n            );\n        }),\n        withLatestFrom(operable.io.downstream$),\n        map(([tools, downstream]) => {\n            if (!downstream || downstream.length <= 1) {\n                return tools;\n            }\n\n            // make a zod schema for downstreamId based on the downstream nodes\n            const downstreamSchema = z.object({\n                downstreamId: z.enum(downstream.map((node) => node.id)),\n            });\n\n            return tools.concat({\n                type: \"function\",\n                function: {\n                    name: \"downstream_router\",\n                    function: (args, runner) => {\n                        const downstreamId = args.downstreamId;\n                        const _downstream = downstream.find(\n                            (node) => node.id === downstreamId\n                        );\n\n                        if (!_downstream) {\n                            return `Downstream node ${downstreamId} not found`;\n                        }\n                        runner.abort();\n                        const messages = runner.messages.filter(\n                            (message) =>\n                                [\"user\", \"assistant\"].includes(message.role) &&\n                                message.content\n                        );\n                        console.log(\"Downstream messages\", messages);\n                        return _downstream.write.input$.next({ messages });\n                    },\n                    parse: (str) => downstreamSchema.parse(JSON.parse(str)),\n                    description:\n                        \"Route to a specific downstream node. Only use this if the user has specified conditional logic for where to send messages in the prompt.\",\n                    parameters: zodToJsonSchema(downstreamSchema),\n                },\n            });\n        }),\n        catchError((error) => {\n            console.error(`Error processing tools: ${error}`);\n            return of([]);\n        })\n    );\n};\n\nexport const statusOperator = (operable, runner) => {\n    const events = [\n        \"connect\",\n        \"chunk\",\n        \"chatCompletion\",\n        \"message\",\n        \"content\",\n        \"functionCall\",\n        \"functionCallResult\",\n        \"finalChatCompletion\",\n        \"finalContent\",\n        \"finalMessage\",\n        \"finalFunctionCall\",\n        \"finalFunctionCallResult\",\n        \"error\",\n        \"abort\",\n        \"totalUsage\",\n        \"end\",\n    ];\n\n    let message = \"\";\n    events.forEach((event) => {\n        runner.on(event, (detail, snapshot) => {\n            operable.status$.next({\n                status: event,\n                message: `Event ${event} received`,\n                detail,\n            });\n\n            console.log(\"GPT Operator event\", event, detail, snapshot);\n\n            switch (event) {\n                case \"connect\":\n                    operable.write.state$.next({\n                        state: \"started\",\n                        message: `Connected to OpenAI...`,\n                    });\n                    break;\n                case \"finalContent\":\n                case \"content\":\n                    message = snapshot || detail;\n                    operable.write.state$.next({\n                        state: \"running\",\n                        message,\n                    });\n                    break;\n                case \"end\":\n                    operable.write.state$.next({\n                        state: \"stopped\",\n                        message,\n                    });\n                    break;\n                case \"error\":\n                    operable.write.state$.next({\n                        state: \"error\",\n                        message: `Error: ${detail}`,\n                    });\n                    break;\n                default:\n                    break;\n            }\n        });\n    });\n};\n\nexport default function processOperator(operable) {\n    console.log(\"GPT Operator operable\", operable.id);\n\n    const setup$ = new Subject();\n\n    combineLatest(\n        setupOperator(operable),\n        toolOperator(operable),\n        operable.read.config$\n    ).subscribe(setup$);\n\n    return (input$) =>\n        combineLatest(input$, setup$).pipe(\n            switchMap(([input, [client, tools, config]]) => {\n                console.log(\"GPT Operator input\", input, tools, config);\n                const newMessage = {\n                    role: config.role,\n                    content: config.prompt,\n                };\n                const messages = [...input.messages, newMessage];\n\n                const useStream =\n                    (config.tools !== \"none\" || !tools.length) &&\n                    !tools.find(\n                        (tool) => tool.function?.name === \"downstream_router\"\n                    );\n\n                let toolExtra = {};\n                if (config.tools === \"none\") {\n                    tools = tools.filter(\n                        (tool) => tool.function?.name === \"downstream_router\"\n                    );\n                    toolExtra = {\n                        tool_choice: {\n                            type: \"function\",\n                            function: {\n                                name: \"downstream_router\",\n                            },\n                        },\n                    };\n                }\n\n                const runner = useStream\n                    ? client.beta.chat.completions.stream({\n                          model: config.model,\n                          messages,\n                      })\n                    : client.beta.chat.completions.runTools({\n                          model: config.model,\n                          messages,\n                          tools,\n                          ...toolExtra,\n                      });\n\n                statusOperator(operable, runner);\n\n                return from(runner.finalMessage()).pipe(\n                    map((finalMessage) => {\n                        const updatedMessages = [...messages, finalMessage];\n                        return {\n                            messages: updatedMessages,\n                        };\n                    }),\n                    catchError((error) => {\n                        console.error(`Error in processOperator: ${error}`);\n                        operable.status$.next({\n                            status: \"error\",\n                            message: `Error in processOperator: ${error.message}`,\n                        });\n                        throw error;\n                    })\n                );\n            })\n        );\n}\n",
+          "_meta": {
+            "lwt": 1705106493458.03
+          },
+          "_deleted": false
+        },
+        {
+          "id": "imports@0.0.1",
+          "description": "imports takes a module document and returns a memoized import",
+          "key": "imports",
+          "version": "0.0.1",
+          "type": "",
+          "data": "import { of, switchMap, catchError, pipe } from \"https://esm.sh/rxjs\";\nimport { z } from \"https://esm.sh/zod\";\n\nexport const key = \"imports\";\nexport const version = \"0.0.1\";\nexport const description =\n    \"imports takes a module document and returns a memoized import\";\n\nexport const input = () => {\n    const schema = z.object({\n        data: z.string(),\n    });\n    return of(schema);\n};\n\nexport const output = () => {\n    const schema = z.any();\n    return of(schema);\n};\n\nconst memoizationCache = new Map();\n\nexport const setupOperator = () => {\n    return of(memoizationCache);\n};\n\nconst processOperator = (operable) => {\n    return pipe(\n        switchMap(async (input) => {\n            const { data } = input;\n            if (memoizationCache.has(data)) {\n                return await memoizationCache.get(data);\n            } else {\n                const blob = new Blob([data], {\n                    type: \"application/javascript\",\n                });\n                const url = URL.createObjectURL(blob);\n                try {\n                    const module = import(url);\n                    memoizationCache.set(data, module);\n                    return await module;\n                } catch (error) {\n                    console.error(error);\n                    throw new Error(`Error importing module: ${error.message}`);\n                }\n            }\n        }),\n        catchError((error) => {\n            throw error;\n        })\n    );\n};\n\nexport default processOperator;\n",
+          "_meta": {
+            "lwt": 1705106493433.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "input",
+      "schemaHash": "b4dffccbc5c4373d3112bccb91b8e1611b9e41bcc9484047dc7297534676e69b",
+      "docs": [
+        {
+          "operable": "test-flow-2-AhWTIn",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091509729.03
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ECylsd",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041051543.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-GNIneZ",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091488667.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-JQKTRN",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code."
+              },
+              {
+                "role": "assistant",
+                "content": "Depending on your software and infrastructure, the process to route to one of the downstreams can vary. Here are a few general steps that you may follow:\n\n1. Identify the Number of Downstreams: The first step involves identifying how many downstream infrastructures are available for rerouting the traffic.\n\n2. Choose the Downstream: Once you have the list ready, you can choose any downstream for testing. Ideally, you would want to choose a downstream that is least likely to affect your productivity if something goes wrong.\n\n3. Change the Routing Configuration: Depending on the technology you're using, find the configuration file or settings page where you can edit the routes. This can usually involve two parts one is where the routing path is defined and one is where the target (downstream) is specified.\n\n4. Redirect the Traffic: Change the downstream server route to your desired route and save the changes.\n\n5. Evaluate: You should then monitor the changes to ensure the routing is working as expected. Detailing logs or using monitoring tools can help in this regard.\n\n6. Test: After ensuring that the configuration has worked, start testing your downstream routing handling code.\n\nThis is quite a generic guide as the specific process can be different due to the potential complexity and differences of systems. It would be more helpful if you could specify the technology you're using for a more specific guide."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705044679700.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-MYYArG",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": []
+          },
+          "_meta": {
+            "lwt": 1705040779643.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-SkYxoH",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091516105.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-TnbmLO",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              },
+              {
+                "role": "user",
+                "content": "write me another limmerick about the same subject"
+              },
+              {
+                "role": "assistant",
+                "content": "To fetch user data on the run,\nAn RxJS script has begun.\nWith streams it does play,\nIn its own clever way,\nDisplaying results when it's done."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041222689.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-WWbaYy",
+          "session": "12993dbc-4aed-4d14-a76d-84fa364c9518",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": []
+          },
+          "_meta": {
+            "lwt": 1705045765215.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-YgDoXs",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              },
+              {
+                "role": "user",
+                "content": "write me another limmerick about the same subject"
+              },
+              {
+                "role": "assistant",
+                "content": "To fetch user data on the run,\nAn RxJS script has begun.\nWith streams it does play,\nIn its own clever way,\nDisplaying results when it's done."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041171851.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-first",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705040953238.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-roxUEW",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091518382.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uPNQxx",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091453639.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uoCmaF",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code."
+              },
+              {
+                "role": "assistant",
+                "content": "Depending on your software and infrastructure, the process to route to one of the downstreams can vary. Here are a few general steps that you may follow:\n\n1. Identify the Number of Downstreams: The first step involves identifying how many downstream infrastructures are available for rerouting the traffic.\n\n2. Choose the Downstream: Once you have the list ready, you can choose any downstream for testing. Ideally, you would want to choose a downstream that is least likely to affect your productivity if something goes wrong.\n\n3. Change the Routing Configuration: Depending on the technology you're using, find the configuration file or settings page where you can edit the routes. This can usually involve two parts one is where the routing path is defined and one is where the target (downstream) is specified.\n\n4. Redirect the Traffic: Change the downstream server route to your desired route and save the changes.\n\n5. Evaluate: You should then monitor the changes to ensure the routing is working as expected. Detailing logs or using monitoring tools can help in this regard.\n\n6. Test: After ensuring that the configuration has worked, start testing your downstream routing handling code.\n\nThis is quite a generic guide as the specific process can be different due to the potential complexity and differences of systems. It would be more helpful if you could specify the technology you're using for a more specific guide."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705044732904.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-xfoSPG",
+          "session": "f17ca22b-9362-424f-9f55-2c0ae61ef31f",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "write me a limmerick"
+              },
+              {
+                "role": "assistant",
+                "content": "A writer sat down on a stump,\nSeeking inspiration, not in a slump.\nWith AI by his side, \nOn a creative tide,\nThey composed poetry with a thump."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705035856023.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-operable-back",
+          "session": "ca4fbdb4-0f86-4725-94c2-78ccecd166b8",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "I like space"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705006644413.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "output",
+      "schemaHash": "1b5d9ecc537a2b3f87522361b538c842bc44788abcbc4645cbf1e5a7516c1784",
+      "docs": [
+        {
+          "operable": "test-flow-2-AhWTIn",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091516077.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ECylsd",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              },
+              {
+                "role": "user",
+                "content": "write me another limmerick about the same subject"
+              },
+              {
+                "role": "assistant",
+                "content": "To fetch user data on the run,\nAn RxJS script has begun.\nWith streams it does play,\nIn its own clever way,\nDisplaying results when it's done."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041054836.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-GNIneZ",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091509707.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-JQKTRN",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code."
+              },
+              {
+                "role": "assistant",
+                "content": "Depending on your software and infrastructure, the process to route to one of the downstreams can vary. Here are a few general steps that you may follow:\n\n1. Identify the Number of Downstreams: The first step involves identifying how many downstream infrastructures are available for rerouting the traffic.\n\n2. Choose the Downstream: Once you have the list ready, you can choose any downstream for testing. Ideally, you would want to choose a downstream that is least likely to affect your productivity if something goes wrong.\n\n3. Change the Routing Configuration: Depending on the technology you're using, find the configuration file or settings page where you can edit the routes. This can usually involve two parts one is where the routing path is defined and one is where the target (downstream) is specified.\n\n4. Redirect the Traffic: Change the downstream server route to your desired route and save the changes.\n\n5. Evaluate: You should then monitor the changes to ensure the routing is working as expected. Detailing logs or using monitoring tools can help in this regard.\n\n6. Test: After ensuring that the configuration has worked, start testing your downstream routing handling code.\n\nThis is quite a generic guide as the specific process can be different due to the potential complexity and differences of systems. It would be more helpful if you could specify the technology you're using for a more specific guide."
+              },
+              {
+                "role": "user",
+                "content": "say \"ACK\""
+              },
+              {
+                "role": "assistant",
+                "content": "ACK"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705044680568.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-MYYArG",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705040953214.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-WWbaYy",
+          "session": "12993dbc-4aed-4d14-a76d-84fa364c9518",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code."
+              },
+              {
+                "role": "assistant",
+                "content": "1. Specify the Destination\nFirst, you need to identify your destination or downstream. This could be a server or device in your network that will receive the traffic.\n\n2. Ping the Downstream\nTo ensure that your device can reach the destination, ping that device. This simply involves typing \"ping\" followed by the IP address into your command prompt. A successful ping means your device is able to reach the destination.\n\n3. Review Your Current Routes\nReview your current routing table. You can access this by typing \"route print\" or \"netstat -r\" into your command prompt. This returns a list of destinations and their associated routers (gateways).\n\n4. Add the Route \nIf the destination isn't included in your current routing table, you need to add it. Type \"route add\" followed by the destination IP address, then the mask, and finally the gateway IP address.\n\nFor example: `route add 192.0.2.0 mask 255.255.255.0 192.0.2.1`\n\nThis command tells your computer to direct all traffic for the destination (192.0.2.0) through the gateway (192.0.2.1).\n\n5. Test the Route\nOnce you've added the route, you'll want to test it. Simply try to send a packet to the destination from your device. This will travel through the gateway you've specified.\n\nPlease note that some commands may vary depending on the operating system. Make sure to replace the IP addresses in the example with the actual downstream IP addresses."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705046189237.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-YgDoXs",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              },
+              {
+                "role": "user",
+                "content": "write me another limmerick about the same subject"
+              },
+              {
+                "role": "assistant",
+                "content": "To fetch user data on the run,\nAn RxJS script has begun.\nWith streams it does play,\nIn its own clever way,\nDisplaying results when it's done."
+              },
+              {
+                "role": "user",
+                "content": "simply write DONE."
+              },
+              {
+                "role": "assistant",
+                "content": "DONE"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041176135.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-first",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a lengthy example of rxjs code featuring multiple inputs."
+              },
+              {
+                "role": "assistant",
+                "content": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+              },
+              {
+                "role": "user",
+                "content": "please rate on a scale from 1 to 10 based on how idiomatic the code is."
+              },
+              {
+                "role": "assistant",
+                "content": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705041051523.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-roxUEW",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "As an AI, I don't have personal feelings or opinions, but based on objective analysis, the paragraph seems to cover all the requested information regarding magnesium in a clear and straightforward manner, and it is extensively detailed on the nutritional role of magnesium, symptoms of deficiency and toxicity, its interaction with other nutrients, as well as the impact of genetic and environmental factors. Therefore, it could be considered as a 9 in thoroughness and clarity, considering that there's always room for more in-depth information and context-specific details."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "Improve the paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              },
+              {
+                "role": "user",
+                "content": "Evaluate the paragraph on a scale from 1 to 10 for thoroughness and clarity."
+              },
+              {
+                "role": "assistant",
+                "content": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+              },
+              {
+                "role": "user",
+                "content": "was the paragraph rated 10? if so, route to test-flow-2-roxUEW. otherwise route to test-flow-2-GNIneZ"
+              },
+              {
+                "role": "user",
+                "content": "simply output the entire paragraph."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091542791.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uPNQxx",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "magnesium"
+              },
+              {
+                "role": "user",
+                "content": "Write a paragraph about dietary sources and nutritional role of the given nutrient. Include symptoms of deficiency and toxicity, as well as genetic and environmental effects on uptake and usage. Mention other nutrients that are relevant to the effect of the nutrient in question, being specific about desired ratios in diet to maintain optimal health."
+              },
+              {
+                "role": "assistant",
+                "content": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705091477185.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uoCmaF",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "route to one of the downstreams. I don't care which, I'm testing out the downstream routing handling code."
+              },
+              {
+                "role": "assistant",
+                "content": "Depending on your software and infrastructure, the process to route to one of the downstreams can vary. Here are a few general steps that you may follow:\n\n1. Identify the Number of Downstreams: The first step involves identifying how many downstream infrastructures are available for rerouting the traffic.\n\n2. Choose the Downstream: Once you have the list ready, you can choose any downstream for testing. Ideally, you would want to choose a downstream that is least likely to affect your productivity if something goes wrong.\n\n3. Change the Routing Configuration: Depending on the technology you're using, find the configuration file or settings page where you can edit the routes. This can usually involve two parts one is where the routing path is defined and one is where the target (downstream) is specified.\n\n4. Redirect the Traffic: Change the downstream server route to your desired route and save the changes.\n\n5. Evaluate: You should then monitor the changes to ensure the routing is working as expected. Detailing logs or using monitoring tools can help in this regard.\n\n6. Test: After ensuring that the configuration has worked, start testing your downstream routing handling code.\n\nThis is quite a generic guide as the specific process can be different due to the potential complexity and differences of systems. It would be more helpful if you could specify the technology you're using for a more specific guide."
+              },
+              {
+                "role": "user",
+                "content": "say BAR"
+              },
+              {
+                "role": "assistant",
+                "content": "BAR"
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705044734117.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-xfoSPG",
+          "session": "f17ca22b-9362-424f-9f55-2c0ae61ef31f",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "write me a limmerick"
+              },
+              {
+                "role": "assistant",
+                "content": "A writer sat down on a stump,\nSeeking inspiration, not in a slump.\nWith AI by his side, \nOn a creative tide,\nThey composed poetry with a thump."
+              },
+              {
+                "role": "user",
+                "content": "write me a haiku about the same subject."
+              },
+              {
+                "role": "assistant",
+                "content": "AI and mind entwined,\nWords flow from a jointed spring.\nVerse blossoms in sync."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705035858502.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-operable-back",
+          "session": "ca4fbdb4-0f86-4725-94c2-78ccecd166b8",
+          "module": "gpt@0.0.1",
+          "data": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "I like space"
+              },
+              {
+                "role": "user",
+                "content": "write me a haiku"
+              },
+              {
+                "role": "assistant",
+                "content": "Stars twinkling above,\nGalaxies whisper secrets,\nIn the vast, endless space."
+              }
+            ]
+          },
+          "_meta": {
+            "lwt": 1705006646164.01
+          },
+          "_deleted": false
+        }
+      ]
+    },
+    {
+      "name": "state",
+      "schemaHash": "75d1655e387a984bf5b6fb0669535b7272a60716afdd0cf81371e7271101596a",
+      "docs": [
+        {
+          "operable": "test-flow-2-AhWTIn",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+          },
+          "_meta": {
+            "lwt": 1705091516106.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-ECylsd",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "To fetch user data on the run,\nAn RxJS script has begun.\nWith streams it does play,\nIn its own clever way,\nDisplaying results when it's done."
+          },
+          "_meta": {
+            "lwt": 1705041054866.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-GNIneZ",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+          },
+          "_meta": {
+            "lwt": 1705091509755.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-JQKTRN",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "ACK"
+          },
+          "_meta": {
+            "lwt": 1705044680594.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-MYYArG",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Here's a lengthy and relatively complex example of RxJS code with multiple inputs:\n\n```ts\nimport { fromEvent, combineLatest, merge, of } from 'rxjs';\nimport { map, pluck, startWith, switchMap, catchError, tap } from 'rxjs/operators';\n\n// Simulate HTTP requests \nfunction makeRequest() {\n  return fetch('https://randomuser.me/api/')\n    .then(response => {\n      if (response.ok) {\n        return response.json();\n      } else {\n        throw new Error('Request Failed!');\n      }\n    }, networkError => console.log(networkError.message))\n    .then(jsonResponse => jsonResponse);\n}\n// HTTP request for users\nfunction requestUsers() {\n  return from(makeRequest()).pipe(\n    pluck('results'),\n    catchError(error => {\n      console.error('ERROR in requestUsers:', error);\n      return of([]);\n    })\n  );\n}\n\n// DOM Elements\nconst userNameInput = document.getElementById('userName') as HTMLInputElement;\nconst refreshButton = document.getElementById('refresh');\n\n// Streams\nconst userNameInput$ = fromEvent(userNameInput, 'input').pipe(\n  map((e: KeyboardEvent) => (e.target as HTMLInputElement).value),\n  startWith(userNameInput.value)\n);\n\nconst refreshClick$ = fromEvent(refreshButton, 'click');\n\nconst userInput$ = merge(\n  userNameInput$.pipe(map(value => ({ user: value, refresh: false }))),\n  refreshClick$.pipe(mapTo({ user: userNameInput.value, refresh: true }))\n);\n\nconst users$ = userInput$.pipe(\n  switchMap(({user, refresh}) => refresh ? requestUsers() : of([]))\n);\n\n// Subscribe : Combines latest values and sends requests \ncombineLatest([userInput$, users$])\n  .pipe(\n    tap(([userInput, users]) => {\n        console.log(`User \"${userInput.user}\" asked for new users:`, users);\n    }),\n    map(([userInput, users]) => {\n      if (users.length === 0) {\n        return `No users found for \"${userInput.user}\".`;\n      }\n      return `Found users for \"${userInput.user}\": ${users.map(user => user.name).join(', ')}`;\n    })\n  )\n  .subscribe({\n    next: message => console.log(message),\n    error: err => console.error('ERROR in subscribe:', err)\n  });\n```\n\nIn this example, we simulate making an HTTP request for usernames from the `https://randomuser.me/api/` API. We are use the `fetch` method of the global `window` object to make the request, and wrap it in a promise.\n\nOperations in the code include:\n\n1. Listening for user inputs and button click events as observables using the `fromEvent` creation method.\n2. Merging the two input event streams using the `merge` method, and mapping the event streams to objects using the `map` operator.\n3. 'Switching' to a new observable every time a user input comes in using the `switchMap` operator.\n4. Combining the latest values from each observable using the `combineLatest` function.\n5. Projecting the data from the resulting observable and handling errors using operators such as `tap`, `map`, and `catchError`.\n6. Subscribing to the resulting observable stream and logging the data received, or errors that are thrown.\n\nRemember that this code requires a compatible environment - a modern browser or a Node.js setup with appropriate polyfills and transpiler settings to run. Also, it depends on the web page containing certain HTML elements with given IDs."
+          },
+          "_meta": {
+            "lwt": 1705040953250.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-SkYxoH",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Based on the objective considerations, the paragraph provides a comprehensive overview about magnesium. It discusses the dietary sources, its role in the body, symptoms of deficiency and toxicity, factors affecting its uptake, and its interplay with other nutrients. The explanation is clear, using accessible language that can be easily understood. Therefore, it can be rated 10 for both thoroughness and clarity."
+          },
+          "_meta": {
+            "lwt": 1705091518423.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-WWbaYy",
+          "session": "12993dbc-4aed-4d14-a76d-84fa364c9518",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Routing to a downstream service or system varies depending on the specific architecture of your system. However, generally, the process can involve the following steps:\n\n1. Identify the Request:\nAfter receiving a demand or query request, the first step in the routing process is to identify the request. Checking if it's a read or write request, the importance of the request, and the resources required by the request is crucial.\n\n2. Choose Downstream:\nBased on the request type, you can choose one downstream from the available downstreams. This might depend on factors like which downstreams are currently active, the load they're handling, their responsiveness, etc. Some downstreams might perform better with certain requests than others.\n\n3. Create Route:\nOnce you've chosen a downstream, you can now create a route to it. This would typically involve setting up an HTTP, TCP, or another type of connection to the downstream, and would involve taking into account network and performance considerations. You might also have to create routing rules if you're using a router or load balancer.\n\n4. Send the Request:\nAfter creating the route, you can send off the request to the chosen downstream. This might involve sending some data and waiting for a response, or might be a more complex process depending on the specific downstream and the request.\n\nNote: This is a generalized process, it will depend on your architecture like microservices, serverless architecture, monolithic, etc. Also, a developer might automate this process using various tools and routing algorithms that can make the decision more efficiently."
+          },
+          "_meta": {
+            "lwt": 1705046193023.02
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-YgDoXs",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "DONE"
+          },
+          "_meta": {
+            "lwt": 1705041176187.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-first",
+          "session": "5e5609ae-cd41-4d76-873a-dbec412fd548",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "I would rate this code 8 out of 10 in terms of idiomatic RxJS usage.\n\nThe code effectively uses some of the primary RxJS concepts like Observables, Subjects, Operators and Subscription. It employs a set of operators (`map`, `switchMap`, `startWith`, `catchError`, `merge`, `combineLatest`, etc.) to handle and manipulate Observables. It demonstrates a good understanding of creating observables from events, merging multiple observables, and handling asynchronous operations with switchMap, which are all common RxJS idiomatic ways of handling multiple streams of data.\n\nHowever, for a complete 10, the code could be refactored and improved for better error handling, and more sophisticated use of operators could be employed. For instance, the error handling within the `requestUsers` function and `subscribe` block could be enhanced. The use of TypeScript could also be improved to provide stricter type checking in several places.\n\nAs always, idiomaticity also somewhat depends on conventions and practices used in a certain team or project."
+          },
+          "_meta": {
+            "lwt": 1705041051553.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-roxUEW",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Magnesium, an essential mineral, is found abundantly in an array of food sources like almonds, spinach, black beans, peas, whole-grain products, and even dark chocolate. The nutrient's significant roles within our body include facilitating protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. It also contributes to the construction of our bone structure and the production of energy. Despite being relatively rare, a deficiency in magnesium can cause symptoms such as muscle cramps, mental disorders, osteoporosis, and high blood pressure. Conversely, an overabundance, or toxicity, could result in digestive issues, lethargy, and irregular heartbeat. Both genetic and environmental factors, such as inborn Vitamin D metabolism rates or the soil composition of the food we consume, can impact uptake and usage of magnesium. The dietary ratio for optimal magnesium to calcium intake stands at approximately 1:2. Excessive dietary fiber intake can hinder the absorption of magnesium. Furthermore, for steadfast bone health, magnesium needs to work synergistically with Vitamin D, Vitamin K, and Calcium. Maintaining a balanced diet with these nutrients in their appropriate proportions is crucial for optimal health."
+          },
+          "_meta": {
+            "lwt": 1705091542807.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uPNQxx",
+          "session": "dcc63c49-8ad7-4dca-85c3-3fa378afded7",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "Magnesium is a crucial mineral that is significantly present in various food items, including nuts, spinach, black beans, peas, whole wheat, and even dark chocolate. Its nutritional role is far-reaching, assisting in protein synthesis, muscle and nerve function, blood glucose control, and blood pressure regulation. Magnesium is also linked to the bone structure development process and aids energy production. Magnesium deficiency, although rare, might lead to conditions like muscle cramps, mental disorders, osteoporosis, and high blood pressure. Magnesium toxicity, on the other hand, can cause symptoms such as digestive problems, lethargy, and irregular heartbeat. Genetic factors such as innate vitamin D metabolism or absorption rate may affect magnesium uptake and usage, as can environmental factors like soil composition. The optimal dietary magnesium/calcium intake ratio is about 1:2. Magnesium’s absorption can be impeded by an excessive intake of dietary fiber, and it works together with Vitamin D, Vitamin K, and Calcium for optimum bone health. Therefore, while planning for a balanced diet, the significance of embracing an optimal ratio of these vitamins and minerals can't be stressed enough."
+          },
+          "_meta": {
+            "lwt": 1705091477205.03
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-uoCmaF",
+          "session": "28960e6d-a1c6-4101-b683-632c600d9665",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "BAR"
+          },
+          "_meta": {
+            "lwt": 1705044734150.01
+          },
+          "_deleted": false
+        },
+        {
+          "operable": "test-flow-2-xfoSPG",
+          "session": "f17ca22b-9362-424f-9f55-2c0ae61ef31f",
+          "module": "gpt@0.0.1",
+          "data": {
+            "state": "stopped",
+            "message": "AI and mind entwined,\nWords flow from a jointed spring.\nVerse blossoms in sync."
+          },
+          "_meta": {
+            "lwt": 1705035858527.02
+          },
+          "_deleted": false
+        }
+      ]
+    }
+  ]
+}

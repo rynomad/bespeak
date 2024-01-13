@@ -21,7 +21,7 @@ addRxPlugin(RxDBDevModePlugin);
 
 const dbInstances = new Map();
 
-async function initializeDatabase(config) {
+export async function initializeDatabase(config) {
     let db;
     if (typeof indexedDB !== "undefined") {
         db = await createRxDatabase({
