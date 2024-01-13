@@ -34,12 +34,12 @@ db.process.module$.next(dbModule);
 db.write.config$.next(dbConfig);
 
 const paths = [
-    "./modules/db.2.mjs",
-    "./modules/imports.1.mjs",
-    "./modules/gpt.2.mjs",
-    "./modules/flow.3.mjs",
-    "./modules/ingress.mjs",
-    "./modules/fetch.1.mjs",
+    "./bespeak/modules/db.2.mjs",
+    "./bespeak/modules/imports.1.mjs",
+    "./bespeak/modules/gpt.2.mjs",
+    "./bespeak/modules/flow.3.mjs",
+    "./bespeak/modules/ingress.mjs",
+    "./bespeak/modules/fetch.1.mjs",
 ];
 
 from(paths)
