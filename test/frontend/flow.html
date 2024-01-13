@@ -66,7 +66,7 @@
             const session = uuidv4();
 
             sessionStorage.setItem(SESSION_KEY, session);
-            const dbModule = await import("./modules/db.2.mjs");
+            const dbModule = await import("./bespeak/modules/db.2.mjs");
             const { config: dbConfig } = await import(
                 "./modules/db.schemas.mjs"
             );
