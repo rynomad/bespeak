@@ -30,13 +30,13 @@
             flex-direction: row;
         ">
         <script type="module">
-            import "/modules/install.mjs";
-            import { SESSION_KEY } from "./modules/persist.mjs";
-            import "/modules/frontend/operable.mjs";
-            import "/modules/frontend/renderers/flow.mjs";
-            import "/modules/frontend/renderers/pallet.mjs";
-            import { ReteNode } from "/modules/frontend/rete/nodes.mjs";
-            import Operable from "/modules/operable.mjs";
+            import "/bespeak/modules/install.mjs";
+            import { SESSION_KEY } from "/bespeak/modules/persist.mjs";
+            import "/bespeak/modules/frontend/operable.mjs";
+            import "/bespeak/modules/frontend/renderers/flow.mjs";
+            import "/bespeak/modules/frontend/renderers/pallet.mjs";
+            import { ReteNode } from "/bespeak/modules/frontend/rete/nodes.mjs";
+            import Operable from "/bespeak/modules/operable.mjs";
             import {
                 withLatestFrom,
                 mergeMap,
@@ -48,7 +48,7 @@
                 EMPTY,
                 merge,
             } from "rxjs";
-            import operable from "/test/flow.mjs";
+            import operable from "/bespeak/test/flow.mjs";
             import { v4 as uuidv4 } from "https://esm.sh/uuid";
             function generateRandomString() {
                 let result = "";
