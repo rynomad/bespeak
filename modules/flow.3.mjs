@@ -47,6 +47,17 @@ export const config = () => {
             .default({ stream: [], tools: [] }),
         input: z.string().optional(),
         output: z.string().optional(),
+        positions: z
+            .array(
+                z.object({
+                    name: z.string(),
+                    position: z.object({
+                        x: z.number(),
+                        y: z.number(),
+                    }),
+                })
+            )
+            .optional(),
     });
 
     return of(schema);

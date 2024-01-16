@@ -115,18 +115,17 @@ Operable.$.subscribe((operable) => {
                 db.asOperator(),
                 filter((e) => e),
                 map(({ data }) => data),
-                takeUntil(operable.destroy$),
-                tap(
-                    console.log.bind(
-                        console,
-                        collection,
-                        location.href,
-                        "got data from db"
-                    )
-                )
+                takeUntil(operable.destroy$)
+                // tap(
+                //     console.log.bind(
+                //         console,
+                //         collection,
+                //         location.href,
+                //         "got data from db"
+                //     )
+                // )
             )
             .subscribe((data) => {
-                console.log("send data to read." + collection, data);
                 operable.read[`${collection}$`].next(data);
             });
 
@@ -149,7 +148,6 @@ Operable.$.subscribe((operable) => {
                         filter((e) => e),
                         imports.asOperator(),
                         take(1),
-                        tap(console.log.bind(console, "got module")),
                         takeUntil(operable.destroy$)
                     )
                     .subscribe(operable[key].module$);

@@ -49,14 +49,12 @@ from(paths)
             return await getText(path);
         }),
         mergeMap((data) => {
-            console.log();
             return of({ data }).pipe(
                 imports.asOperator(),
                 withLatestFrom(of(data))
             );
         }),
         map(([module, data]) => {
-            console.log("prep upsert for module", module);
             return {
                 collection: "modules",
                 operation: "upsert",
@@ -71,9 +69,6 @@ from(paths)
             };
         }),
         db.asOperator(),
-        tap((v) => {
-            console.log("did upsert for", v);
-        }),
         take(paths.length),
         toArray()
     )

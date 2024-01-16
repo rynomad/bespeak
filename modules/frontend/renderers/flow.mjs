@@ -199,10 +199,16 @@ export class Flow extends LitElement {
                 event.type === "connectionremoved" ||
                 event.type === "noderemoved"
             ) {
-                console.log("EDITOR EVENT", event);
                 this.events$.next(event);
             }
 
+            return event;
+        });
+
+        this.area.addPipe((event) => {
+            if (event.type === "nodetranslated") {
+                this.events$.next(event);
+            }
             return event;
         });
     }
