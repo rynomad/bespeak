@@ -116,15 +116,15 @@
                                 (position) =>
                                     position.name === tool.id.split("-").pop()
                             )?.position;
-                            console.log("!!!POSITION", tool.id, position);
+                            // console.log("!!!POSITION", tool.id, position);
                             if (position) {
                                 setTimeout(() => {
                                     el.area.translate(tool.id, position);
-                                    console.log(
-                                        "!!!TRANSLATE",
-                                        tool.id,
-                                        position
-                                    );
+                                    // console.log(
+                                    //     "!!!TRANSLATE",
+                                    //     tool.id,
+                                    //     position
+                                    // );
                                 }, 0);
                             }
                         });
@@ -132,7 +132,7 @@
                     take(1),
                     tap(() => {
                         setTimeout(() => {
-                            console.log("!!!ZOOM");
+                            // console.log("!!!ZOOM");
                             AreaExtensions.zoomAt(
                                 el.area,
                                 el.editor.getNodes(),
@@ -166,11 +166,11 @@
                                 (position) =>
                                     position.name === tool.id.split("-").pop()
                             )?.position;
-                            console.log("POSITION", tool.id, position);
+                            // console.log("POSITION", tool.id, position);
                             if (position) {
                                 setTimeout(() => {
                                     el.area.translate(tool.id, position);
-                                    console.log("TRANSLATE", tool.id, position);
+                                    // console.log("TRANSLATE", tool.id, position);
                                 }, 0);
                             }
                         }
@@ -332,6 +332,7 @@
                         }
                         switch (event.type) {
                             case "drop":
+                                console.log("DROP", event);
                                 const { data } = event;
                                 // use data.name or a short nonce
                                 const name = (data.name =
@@ -357,7 +358,32 @@
                                     ),
                                     filter((tool) => tool !== undefined),
                                     take(1),
-                                    tap((tool) => tool.write.meta$.next(meta))
+                                    tap((tool) => tool.write.meta$.next(meta)),
+                                    tap((tool) => {
+                                        const offset =
+                                            el.getBoundingClientRect();
+                                        const transform =
+                                            el.area.area.transform;
+                                        const x =
+                                            (event.position.x -
+                                                offset.x -
+                                                transform.x) /
+                                            transform.k;
+                                        const y =
+                                            (event.position.y -
+                                                offset.y -
+                                                transform.y) /
+                                            transform.k;
+
+                                        console.log("ADD NODE", el.area, x, y);
+                                        el.editor.addNode(new ReteNode(tool));
+                                        setTimeout(() => {
+                                            el.area.translate(tool.id, {
+                                                x,
+                                                y,
+                                            });
+                                        }, 0);
+                                    })
                                 );
                                 break;
                             case "connectioncreated":
