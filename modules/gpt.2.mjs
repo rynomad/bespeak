@@ -10,16 +10,20 @@ import {
     debounceTime,
     share,
     of,
+    concatMap,
+    zip,
     from,
     withLatestFrom,
     pipe,
     concat,
     Observable,
+    startWith,
     skipUntil,
     filter,
     buffer,
     Subject,
     take,
+    toArray,
 } from "rxjs";
 
 export const key = "gpt";
@@ -127,39 +131,52 @@ export const setupOperator = (operable) => {
 };
 
 export const toolOperator = (operable) => {
-    return combineLatest(operable.io.tools$, operable.io.downstream$).pipe(
-        switchMap(([tools]) => {
+    return operable.io.tools$.pipe(
+        switchMap((tools) => {
+            console.log("TOOLS", tools);
             if (!tools) {
                 return of([]);
             }
 
-            return of(
-                tools.map((toolNode) => {
-                    const toolFunction = async (args) => {
-                        try {
-                            return await toolNode.invokeAsFunction(args);
-                        } catch (error) {
-                            return `Error invoking tool function: ${error}`;
-                        }
-                    };
+            return from(tools).pipe(
+                concatMap((tool) =>
+                    zip(of(tool), tool.read.meta$, tool.schema.input$).pipe(
+                        take(1),
+                        map(([toolNode, meta, schema]) => {
+                            const toolFunction = async (args) => {
+                                try {
+                                    return await toolNode.invokeAsFunction(
+                                        args
+                                    );
+                                } catch (error) {
+                                    return `Error invoking tool function: ${error}`;
+                                }
+                            };
 
-                    const tool = {
-                        name: toolNode.id,
-                        type: "function",
-                        function: toolFunction,
-                        parse: (args) =>
-                            toolNode.schema.input$.getValue().parse(args),
-                        description: toolNode.meta$.getValue().description,
-                        parameters: zodToJsonSchema(
-                            toolNode.schema.input$.getValue()
-                        ),
-                    };
+                            console.log("toolNode", toolNode.id, toolNode);
 
-                    return tool;
-                })
+                            const tool = {
+                                type: "function",
+                                function: {
+                                    name: toolNode.id,
+                                    function: toolFunction,
+                                    parse: (args) =>
+                                        schema.parse(JSON.parse(args)),
+                                    description:
+                                        meta.description ||
+                                        "unknown description",
+                                    parameters: zodToJsonSchema(schema),
+                                },
+                            };
+
+                            return tool;
+                        })
+                    )
+                ),
+                toArray()
             );
         }),
-        withLatestFrom(operable.io.downstream$),
+        withLatestFrom(operable.io.downstream$.pipe(startWith([]))),
         map(([tools, downstream]) => {
             if (!downstream || downstream.length <= 1) {
                 return tools;
@@ -290,17 +307,10 @@ export default function processOperator(operable) {
                     role: config.role,
                     content: config.prompt,
                 };
-                const messages = [
-                    {
-                        role: "system",
-                        content: "respond with json (jsend). use strict mode.",
-                    },
-                    ...input.messages,
-                    newMessage,
-                ];
+                const messages = [...input.messages, newMessage];
 
                 const useStream =
-                    (config.tools !== "none" || !tools.length) &&
+                    (config.tools === "none" || !tools.length) &&
                     !tools.find(
                         (tool) => tool.function?.name === "downstream_router"
                     );
@@ -324,9 +334,6 @@ export default function processOperator(operable) {
                     ? client.beta.chat.completions.stream({
                           model: config.model,
                           messages,
-                          response_format: {
-                              type: "json_object",
-                          },
                       })
                     : client.beta.chat.completions.runTools({
                           model: config.model,

@@ -140,11 +140,13 @@ const setup = (operable) => {
                                     .forEach((upstream) => {
                                         upstream.disconnect(tool);
                                     });
+
                                 tool.io.downstream$
                                     .getValue()
                                     .forEach((downstream) => {
                                         tool.disconnect(downstream);
                                     });
+
                                 tool.io.tools$.getValue().forEach((_tool) => {
                                     tool.remove(_tool);
                                 });

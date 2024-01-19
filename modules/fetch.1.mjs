@@ -6,6 +6,7 @@ import {
     of,
     combineLatest,
     map,
+    tap,
     withLatestFrom,
     startWith,
 } from "https://esm.sh/rxjs";
@@ -49,6 +50,7 @@ export const config = () =>
 export const keys = () =>
     of(
         z.object({
+            useProxy: z.boolean().optional(),
             proxy: z.string().url().optional(),
         })
     );
@@ -134,10 +136,10 @@ export default function fetchReadabilityOperator(operable) {
         combineLatest(
             input$,
             operable.read.config$.pipe(startWith({})),
-            operable.read.keys$
+            operable.read.keys$.pipe(startWith({})),
+            setup$
         ).pipe(
-            withLatestFrom(setup$),
-            switchMap(([[input, config, keys], { fetch }]) => {
+            switchMap(([input, config, keys, { fetch }]) => {
                 console.log("INPUT", input, keys, fetch);
                 const includeImages = [true, false].includes(
                     input.includeImages
@@ -149,9 +151,10 @@ export default function fetchReadabilityOperator(operable) {
                     ? input.includeLinks
                     : config.includeLinks;
 
-                const fetchUrl = keys?.proxy
-                    ? `${keys.proxy}/${input.url}`
-                    : input.url;
+                const fetchUrl =
+                    keys?.useProxy && keys?.proxy
+                        ? `${keys.proxy}/${input.url}`
+                        : input.url;
 
                 operable.write.state$.next({
                     state: "started",

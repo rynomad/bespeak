@@ -184,10 +184,16 @@ export default class Operable {
 
     asOperator() {
         return (input$) =>
-            input$.pipe(
-                delayWhen(() => this.process.operator$.pipe(filter((e) => e))),
-                withLatestFrom(this.process.operator$.pipe(filter((e) => e))),
-                mergeMap(([input, operator]) => of(input).pipe(operator))
+            combineLatest(input$, this.process.operator$).pipe(
+                mergeMap(([input, operator]) => {
+                    console.log(
+                        "AS OPERATOR",
+                        this.id,
+                        input,
+                        operator?.toString()
+                    );
+                    return of(input).pipe(operator);
+                })
             );
     }
 
@@ -238,7 +244,8 @@ export default class Operable {
                 .pipe(
                     withLatestFrom(this.schema.input$),
                     map(([input, schema]) => schema.parse(input)),
-                    this.asOperator(),
+                    tap((input) => console.log("INVOKE", this.id, input)),
+                    this.process.operator$.getValue(),
                     take(1)
                 )
                 .subscribe({
