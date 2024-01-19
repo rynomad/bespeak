@@ -34,6 +34,7 @@ class LitOperable extends LitElement {
             height: 100%;
             padding-left: 2rem;
             padding-right: 2rem;
+            overflow-y: auto; /* Add overflow-y to the content to create a scrollbar within the sidebar */
         }
     `;
 
