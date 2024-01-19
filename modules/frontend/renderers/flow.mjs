@@ -38,12 +38,12 @@ export class Flow extends LitElement {
                 display: block;
                 position: relative;
                 width: 100%;
-                flex-grow: 1;
+                height: 100%;
             }
 
             .column {
-                display: flex;
-                flex-direction: column;
+                display: block;
+                width: 100%;
                 height: 100%;
             }
 

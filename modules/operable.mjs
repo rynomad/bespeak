@@ -133,11 +133,11 @@ export default class Operable {
             .pipe(
                 filter((operator) => operator),
                 switchMap((operator) => {
-                    console.log(
-                        "PROCESS OPERATOR",
-                        this.id,
-                        operator?.toString()
-                    );
+                    // console.log(
+                    //     "PROCESS OPERATOR",
+                    //     this.id,
+                    //     operator?.toString()
+                    // );
                     return this.read.input$.pipe(operator);
                 })
             )
@@ -146,7 +146,7 @@ export default class Operable {
 
     rolesIO(fn) {
         const nonce = uuidv4();
-        console.log("ROLE IO", this.id, nonce, fn?.toString().length);
+        // console.log("ROLE IO", this.id, nonce, fn?.toString().length);
         fn ||= (key) => {
             combineLatest(this.write[`${key}$`], this.schema[`${key}$`])
                 .pipe(
@@ -158,8 +158,8 @@ export default class Operable {
                     map((res) => (res.success ? res.data : null)),
                     filter((data) => !!data),
                     distinctUntilChanged(deepEqual),
-                    takeUntil(this.ioReset$),
-                    tap(() => console.log(key, nonce, 'THIS SHOULDN"T BE HERE'))
+                    takeUntil(this.ioReset$)
+                    // tap(() => console.log(key, nonce, 'THIS SHOULDN"T BE HERE'))
                 )
                 .subscribe((data) => this.read[`${key}$`].next(data));
         };
@@ -192,7 +192,7 @@ export default class Operable {
     }
 
     connect(operable) {
-        console.log("CONNECT", this.id, operable.id);
+        // console.log("CONNECT", this.id, operable.id);
         operable.io.upstream$.next(
             Array.from(new Set([...operable.io.upstream$.getValue(), this]))
         );

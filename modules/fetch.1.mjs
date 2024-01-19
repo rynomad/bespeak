@@ -7,6 +7,7 @@ import {
     combineLatest,
     map,
     withLatestFrom,
+    startWith,
 } from "https://esm.sh/rxjs";
 import { Readability } from "https://esm.sh/@mozilla/readability";
 
@@ -16,24 +17,41 @@ export const type = "process";
 export const description =
     "An operator that fetches HTML content from a specified URL, parses it using readability.js, and optionally reinserts image and/or anchor tags into the parsed content.";
 
-export const inputSchema = z.object({
-    url: z.string().url(),
-    includeImages: z.boolean().optional().default(false),
-    includeLinks: z.boolean().optional().default(false),
-});
+export const input = () =>
+    of(
+        z.object({
+            url: z.string().url(),
+            includeImages: z.boolean().optional(),
+            includeLinks: z.boolean().optional(),
+        })
+    );
 
-export const outputSchema = z.object({
-    title: z.string(),
-    content: z.string(),
-    textContent: z.string(),
-    length: z.number(),
-    excerpt: z.string().optional(),
-    siteName: z.string().optional(),
-});
+export const output = () =>
+    of(
+        z.object({
+            title: z.string(),
+            content: z.string(),
+            textContent: z.string(),
+            length: z.number(),
+            excerpt: z.string().optional(),
+            siteName: z.string().optional(),
+        })
+    );
 
-export const keysSchema = z.object({
-    proxy: z.string().url().optional(),
-});
+export const config = () =>
+    of(
+        z.object({
+            includeImages: z.boolean().optional(),
+            includeLinks: z.boolean().optional(),
+        })
+    );
+
+export const keys = () =>
+    of(
+        z.object({
+            proxy: z.string().url().optional(),
+        })
+    );
 
 const statusOperator = (operable) => {
     return {
@@ -82,11 +100,29 @@ const replaceContent = (doc, selector, configKey, config, article) => {
 
 const setupOperator = (operable) => {
     if (window.DOMParser) {
-        return of(window.DOMParser);
+        if (localStorage.getItem("PROXY_EXTENSION_ID")) {
+            return from(
+                import("https://esm.sh/gh/rynomad/lpc@11ca84012e")
+            ).pipe(
+                map(({ ChromeExtensionTransport, Client }) => {
+                    console.log(
+                        "CHROME EXTENSION TRANSPORT",
+                        ChromeExtensionTransport
+                    );
+                    const transport = new ChromeExtensionTransport(
+                        localStorage.getItem("PROXY_EXTENSION_ID")
+                    );
+
+                    const fetch = Client.create("fetch", transport);
+                    return { DOMParser, fetch };
+                })
+            );
+        }
+        return of({ DOMParser: window.DOMParser, fetch });
     } else {
         return from(
             import("https://deno.land/x/deno_dom/deno-dom-wasm.ts")
-        ).pipe(map(({ DOMParser }) => DOMParser));
+        ).pipe(map(({ DOMParser }) => ({ DOMParser, fetch })));
     }
 };
 
@@ -95,16 +131,36 @@ export default function fetchReadabilityOperator(operable) {
     const setup$ = setupOperator(operable);
 
     return (input$) =>
-        combineLatest(input$, operable.read.keys$).pipe(
-            switchMap(([input, keys]) => {
-                console.log("INPUT", input, keys);
+        combineLatest(
+            input$,
+            operable.read.config$.pipe(startWith({})),
+            operable.read.keys$
+        ).pipe(
+            withLatestFrom(setup$),
+            switchMap(([[input, config, keys], { fetch }]) => {
+                console.log("INPUT", input, keys, fetch);
+                const includeImages = [true, false].includes(
+                    input.includeImages
+                )
+                    ? input.includeImages
+                    : config.includeImages;
+
+                const includeLinks = [true, false].includes(input.includeLinks)
+                    ? input.includeLinks
+                    : config.includeLinks;
+
                 const fetchUrl = keys?.proxy
                     ? `${keys.proxy}/${input.url}`
                     : input.url;
+
+                operable.write.state$.next({
+                    state: "started",
+                    message: `Issuing fetch...`,
+                });
                 return from(fetch(fetchUrl)).pipe(
                     switchMap((response) => response.text()),
                     withLatestFrom(setup$),
-                    switchMap(([html, DOMParser]) => {
+                    switchMap(([html, { DOMParser }]) => {
                         const doc = new DOMParser().parseFromString(
                             html,
                             "text/html"
@@ -117,7 +173,7 @@ export default function fetchReadabilityOperator(operable) {
                             );
                         }
 
-                        if (input.includeImages) {
+                        if (includeImages) {
                             replaceContent(
                                 doc,
                                 "img",
@@ -127,7 +183,7 @@ export default function fetchReadabilityOperator(operable) {
                             );
                             // Logic to reinsert images
                         }
-                        if (input.includeLinks) {
+                        if (includeLinks) {
                             replaceContent(
                                 doc,
                                 "a",
@@ -138,11 +194,10 @@ export default function fetchReadabilityOperator(operable) {
                             // Logic to reinsert links
                         }
 
-                        status.success(
-                            "Article fetched and parsed successfully",
-                            { url: input.url }
-                        );
-
+                        operable.write.state$.next({
+                            state: "stopped",
+                            message: article.content,
+                        });
                         return of({
                             title: article.title,
                             content: article.content,

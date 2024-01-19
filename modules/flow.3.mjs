@@ -22,9 +22,7 @@ export const description =
 
 export const config = () => {
     const schema = z.object({
-        operables: z
-            .array(z.string())
-            .min(1, "At least one operable is required"),
+        operables: z.array(z.string()),
         connections: z
             .object({
                 stream: z
@@ -110,6 +108,7 @@ const setup = (operable) => {
             takeUntil(operable.destroy$),
             scan(
                 (oldConfig, newConfig) => {
+                    console.log("FLOW NEW CONFIG", newConfig);
                     const tools$ = operable.io.tools$;
                     if (
                         !oldConfig ||
@@ -198,15 +197,15 @@ const setup = (operable) => {
                         );
 
                         const manageConnection = ({ from, to }, action) => {
-                            console.log("manageConnection", from, to, action);
+                            // console.log("manageConnection", from, to, action);
                             const fromOperable = findTool(newTools, from);
                             const toOperable = findTool(newTools, to);
                             if (fromOperable && toOperable) {
-                                console.log(
-                                    "manageConnection",
-                                    fromOperable,
-                                    toOperable
-                                );
+                                // console.log(
+                                //     "manageConnection",
+                                //     fromOperable,
+                                //     toOperable
+                                // );
                                 fromOperable[action](toOperable);
                             }
                         };

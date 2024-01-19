@@ -136,7 +136,7 @@
                             AreaExtensions.zoomAt(
                                 el.area,
                                 el.editor.getNodes(),
-                                { scale: 0.6 }
+                                { scale: 0.4 }
                             );
                         }, 200);
                     })
@@ -471,6 +471,7 @@
                                 config.connections.stream = streamCleanup;
                                 config.connections.tools = toolsCleanup;
 
+                                console.log("!!!REMOVE NODE", id, config);
                                 operable.write.config$.next(config);
                                 break;
                         }

@@ -53,7 +53,7 @@ export const output = (operable) => {
 };
 
 export const config = (operable) => {
-    console.log("CONFIG");
+    // console.log("CONFIG");
     const models$ = operable.read.keys$.pipe(
         switchMap((keys) =>
             keys?.apiKey
@@ -69,7 +69,7 @@ export const config = (operable) => {
     );
 
     return models$.pipe(
-        tap((models) => console.log("GPT Operator models", models)),
+        // tap((models) => console.log("GPT Operator models", models)),
         map((models) => {
             return z.object({
                 prompt: z.string(),
@@ -78,6 +78,7 @@ export const config = (operable) => {
                 model: z.enum(models).default("gpt-4"),
                 tools: z.enum(["user", "none", "all"]).default("none"),
                 clean: z.boolean().default(false),
+                json: z.boolean().default(false),
             });
         })
     );
@@ -234,7 +235,7 @@ export const statusOperator = (operable, runner) => {
                 detail,
             });
 
-            console.log("GPT Operator event", event, detail, snapshot);
+            // console.log("GPT Operator event", event, detail, snapshot);
 
             switch (event) {
                 case "connect":
@@ -271,7 +272,7 @@ export const statusOperator = (operable, runner) => {
 };
 
 export default function processOperator(operable) {
-    console.log("GPT Operator operable", operable.id);
+    // console.log("GPT Operator operable", operable.id);
 
     const setup$ = new Subject();
 
@@ -284,12 +285,19 @@ export default function processOperator(operable) {
     return (input$) =>
         combineLatest(input$, setup$).pipe(
             switchMap(([input, [client, tools, config]]) => {
-                console.log("GPT Operator input", input, tools, config);
+                // console.log("GPT Operator input", input, tools, config);
                 const newMessage = {
                     role: config.role,
                     content: config.prompt,
                 };
-                const messages = [...input.messages, newMessage];
+                const messages = [
+                    {
+                        role: "system",
+                        content: "respond with json (jsend). use strict mode.",
+                    },
+                    ...input.messages,
+                    newMessage,
+                ];
 
                 const useStream =
                     (config.tools !== "none" || !tools.length) &&
@@ -316,6 +324,9 @@ export default function processOperator(operable) {
                     ? client.beta.chat.completions.stream({
                           model: config.model,
                           messages,
+                          response_format: {
+                              type: "json_object",
+                          },
                       })
                     : client.beta.chat.completions.runTools({
                           model: config.model,

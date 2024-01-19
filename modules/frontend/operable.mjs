@@ -188,7 +188,7 @@ class LitOperableLog extends LitElement {
 
     updated(changedProperties) {
         if (this.operable && this.label && !this.subscriptions) {
-            console.log("subscribing to", `${this.label.toLowerCase()}$`);
+            // console.log("subscribing to", `${this.label.toLowerCase()}$`);
             this.subscriptions = [
                 this.operable[`${this.label.toLowerCase()}$`].subscribe(
                     (log) => {
@@ -276,11 +276,11 @@ class LitOperableForm extends LitElement {
 
     updated(changedProperties) {
         if (this.operable && this.label && !this.subscriptions) {
-            console.log("subscribing to", `${this.label.toLowerCase()}$`);
+            // console.log("subscribing to", `${this.label.toLowerCase()}$`);/\
             const role = this.label.toLowerCase();
             this.subscriptions = [
                 this.operable.schema[`${role}$`].subscribe((schema) => {
-                    console.log("schema", schema);
+                    // console.log("schema", schema);
                     this.schema = zodToJsonSchema(schema);
                 }),
                 this.operable.read[`${role}$`].subscribe((data) => {

@@ -28,13 +28,13 @@ export class LitNode extends LitElement {
     `;
 
     updated(c) {
-        console.log("operable changed", this.operable);
+        // console.log("operable changed", this.operable);
         super.updated(c);
         if (this.operable && !this.subscriptions) {
-            console.log("subscribing to operable");
+            // console.log("subscribing to operable");
             this.subscriptions = [
                 this.operable.read.state$.subscribe((status) => {
-                    console.log("status", status);
+                    // console.log("status", status);
                     this.display = status.message || this.display;
                     this.status = status.state;
                 }),
