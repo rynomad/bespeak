@@ -339,6 +339,7 @@ export default function processOperator(operable) {
                           model: config.model,
                           messages,
                           tools,
+                          stream: true,
                           ...toolExtra,
                       });
 
